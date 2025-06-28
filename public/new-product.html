@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Thêm Sản Phẩm Mới</title>
+    <style>body { font-family: sans-serif; max-width: 800px; margin: auto; padding: 20px; } form { display: flex; flex-direction: column; gap: 15px; } input, button { padding: 12px; font-size: 16px; border-radius: 5px; border: 1px solid #ccc;} button { background-color: #007bff; color: white; border: none; cursor: pointer; } .form-group { display: flex; flex-direction: column; } label { margin-bottom: 5px; font-weight: bold; }</style>
+</head>
+<body>
+    <h1>Thêm Sản Phẩm Mới</h1>
+    <form id="product-form">
+        <div class="form-group"><label for="id">Mã Sản Phẩm (ID)</label><input type="text" id="id" name="id" required></div>
+        <div class="form-group"><label for="name_vi">Tên Sản Phẩm (Tiếng Việt)</label><input type="text" id="name_vi" name="name_vi" required></div>
+        <div class="form-group"><label for="name_en">Product Name (English)</label><input type="text" id="name_en" name="name_en" required></div>
+        <div class="form-group"><label for="collection_vi">Bộ Sưu Tập (VI)</label><input type="text" id="collection_vi" name="collection_vi"></div>
+        <div class="form-group"><label for="collection_en">Collection (EN)</label><input type="text" id="collection_en" name="collection_en"></div>
+        <div class="form-group"><label for="company">Công ty</label><input type="text" id="company" name="company"></div>
+        <div class="form-group"><label for="customer">Khách hàng</label><input type="text" id="customer" name="customer"></div>
+        <div class="form-group"><label for="specification">Thông số</label><input type="text" id="specification" name="specification"></div>
+        <div class="form-group"><label for="material_vi">Chất liệu (VI)</label><input type="text" id="material_vi" name="material_vi"></div>
+        <div class="form-group"><label for="material_en">Material (EN)</label><input type="text" id="material_en" name="material_en"></div>
+        <div class="form-group"><label for="imageUrl">Link Hình Ảnh</label><input type="text" id="imageUrl" name="imageUrl"></div>
+        <button type="submit">Lưu Sản Phẩm</button>
+    </form>
+    <script>
+        document.getElementById('product-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData.entries());
+            fetch('/api/products', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data),
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.error) { throw new Error(result.error); }
+                alert('Đã thêm sản phẩm thành công! ID: ' + result.id);
+                document.getElementById('product-form').reset();
+            })
+            .catch(error => {
+                alert('Có lỗi xảy ra: ' + error.message);
+            });
+        });
+    </script>
+</body>
+</html>
