@@ -269,7 +269,7 @@
                     renderPage();
                 });
 
-            fetch(`/api/products/${productId}/reviews`)
+            fetch(`https://my-product-api.onrender.com/api/products/${productId}/reviews`)
                 .then(res => res.json())
                 .then(data => renderReviews(data.reviews));
         }
@@ -277,7 +277,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             loadPageData();
 
-            fetch('/api/me')
+            fetch(`https://my-product-api.onrender.com/api/products/${productId}/reviews`)
                 .then(res => res.json())
                 .then(user => {
                     if (user && user.id) {
@@ -317,7 +317,7 @@
             event.preventDefault();
             const formData = new FormData(this);
             const data = Object.fromEntries(formData.entries());
-            fetch(`/api/products/${productId}/reviews`, {
+            fetch(`https://my-product-api.onrender.com/api/products/${productId}/reviews`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(data),
@@ -327,7 +327,7 @@
                 if (result.error) throw new Error(result.error);
                 alert(result.message);
                 document.getElementById('review-form').reset();
-                fetch(`/api/products/${productId}/reviews`).then(res => res.json()).then(data => renderReviews(data.reviews));
+               fetch(`https://my-product-api.onrender.com/api/products/${productId}/reviews`).then(res => res.json()).then(data => renderReviews(data.reviews));
             })
             .catch(error => alert('Lỗi: ' + error.message));
         });
