@@ -261,7 +261,7 @@
             
             generateQRCode(productId);
             
-            fetch(`/api/products/${productId}`)
+            fetch(`https://my-product-api.onrender.com/api/products/${productId}`)
                 .then(res => res.json())
                 .then(product => {
                     if (!product) throw new Error('Không tìm thấy sản phẩm.');
@@ -277,7 +277,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             loadPageData();
 
-            fetch('https://https://my-product-api.onrender.com/api/products/')
+            fetch('/api/me')
                 .then(res => res.json())
                 .then(user => {
                     if (user && user.id) {
@@ -298,7 +298,7 @@
             event.preventDefault();
             const formData = new FormData(this);
             const data = Object.fromEntries(formData.entries());
-            fetch('https://https://my-product-api.onrender.com/api/products/users/login', {
+            fetch('/api/users/login', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(data),
