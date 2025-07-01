@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng Nhập Nhân Viên KT</title>
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            max-width: 500px; 
+            margin: 40px auto; 
+            padding: 20px; 
+            background-color: #f4f4f9; 
+        }
+        h1 { 
+            text-align: center; 
+            color: #333; 
+        }
+        form { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 15px; 
+            background-color: white; 
+            padding: 30px; 
+            border-radius: 8px; 
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1); 
+        }
+        input, button { 
+            padding: 12px; 
+            font-size: 16px; 
+            border-radius: 5px; 
+            border: 1px solid #ccc;
+        }
+        button { 
+            background-color: #007bff; 
+            color: white; 
+            border: none; 
+            cursor: pointer; 
+            font-weight: bold; 
+        }
+        .form-group { 
+            display: flex; 
+            flex-direction: column; 
+        }
+        label { 
+            margin-bottom: 5px; 
+            font-weight: bold; 
+            color: #555 
+        }
+        .register-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Đăng Nhập Nhân Viên KT / KT Employee Login</h1>
+
+    <form id="login-form">
+        <div class="form-group">
+            <label for="ma_nhan_vien">Mã Nhân Viên / Employee ID</label>
+            <input type="text" id="ma_nhan_vien" name="ma_nhan_vien" required>
+        </div>
+        <div class="form-group">
+            <label for="password">Mật khẩu / Password</label>
+            <input type="password" id="password" name="password" required>
+        </div>
+        <button type="submit">Đăng Nhập / Login</button>
+    </form>
+
+    <div class="register-link">
+        <p>Chưa có tài khoản? / No account yet? <a href="/register.html">Đăng ký tại đây / Register here</a></p>
+    </div>
+
+    <script>
+        document.getElementById('login-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData.entries());
+
+            fetch('/api/users/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data),
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.error) {
+                    throw new Error(result.error);
+                }
+                alert(result.message);
+                // Nếu đăng nhập thành công, chuyển hướng đến trang dashboard
+                window.location.href = '/dashboard.html';
+            })
+            .catch(error => {
+                alert('Lỗi: ' + error.message);
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thêm Sản Phẩm Thành Công</title>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/qrcode-generator/qrcode.js"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; max-width: 800px; margin: auto; padding: 20px; background-color: #f4f4f9; }
+        .container { background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); text-align: center; }
+        h1 { color: #28a745; }
+        .product-details { text-align: left; border-top: 1px solid #eee; margin-top: 20px; padding-top: 20px; }
+        .product-details p { font-size: 16px; }
+        strong { color: #333; }
+        #qrcode-image { margin-top: 15px; border: 1px solid #ccc; padding: 10px; }
+        .action-buttons { margin-top: 30px; }
+        .action-buttons a { text-decoration: none; display: inline-block; padding: 12px 20px; color: white; border-radius: 5px; margin: 0 10px; font-size: 16px; }
+        .add-more-btn { background-color: #007bff; }
+        .view-list-btn { background-color: #6c757d; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 id="status-message">Đang tải...</h1>
+        
+        <div id="product-review">
+            <h2>Xem lại thông tin sản phẩm vừa tạo</h2>
+            <div id="details-content" class="product-details"></div>
+            
+            <h3>Mã QR Code</h3>
+            <div id="qrcode-image"></div>
+            <p><i>(Quét mã này để xem trang công khai của sản phẩm)</i></p>
+        </div>
+
+        <div class="action-buttons">
+            <a href="/new-product.html" class="add-more-btn">Thêm sản phẩm khác</a>
+            <a href="/product-list.html" class="view-list-btn">Xem danh sách sản phẩm</a>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const productId = urlParams.get('id');
+
+            if (!productId) {
+                document.getElementById('status-message').textContent = 'Lỗi: Không tìm thấy ID sản phẩm.';
+                return;
+            }
+
+            document.getElementById('status-message').textContent = 'Thêm sản phẩm ' + productId + ' thành công!';
+
+            // Gọi API để lấy lại thông tin chi tiết của sản phẩm vừa tạo
+            fetch(`/api/products/${productId}`)
+                .then(response => response.json())
+                .then(product => {
+                    if (!product) throw new Error('Không thể tải lại dữ liệu sản phẩm.');
+
+                    // Hiển thị thông tin chi tiết
+                    const detailsDiv = document.getElementById('details-content');
+                    detailsDiv.innerHTML = `
+                        <p><strong>Tên (VI):</strong> ${product.name_vi}</p>
+                        <p><strong>Tên (EN):</strong> ${product.name_en}</p>
+                        <p><strong>Bộ sưu tập:</strong> ${product.collection_vi}</p>
+                        <p><strong>Màu sắc:</strong> ${product.color_vi}</p>
+                        <p><strong>Chất liệu:</strong> ${product.material_vi}</p>
+                        <p><strong>Đường dẫn ảnh:</strong> ${product.imageUrl}</p>
+                    `;
+
+                    // Tạo và hiển thị mã QR
+                    // Lưu ý: Thay 'YOUR-APP-NAME.onrender.com' bằng tên app của bạn khi deploy
+                    const publicUrl = `${window.location.origin}/product-view.html?id=${productId}`;
+                    const qr = qrcode(0, 'H');
+                    qr.addData(publicUrl);
+                    qr.make();
+                    document.getElementById('qrcode-image').innerHTML = qr.createImgTag(8, 10);
+                })
+                .catch(error => {
+                    console.error('Lỗi:', error);
+                    document.getElementById('status-message').textContent = 'Lỗi khi tải dữ liệu xem trước.';
+                });
+        });
+    </script>
+</body>
+</html>

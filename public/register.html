@@ -2,46 +2,66 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Đăng Ký Tài Khoản Nhân Viên</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>body{font-family:sans-serif;max-width:500px;margin:40px auto;padding:20px;background-color:#f4f4f9}h1{text-align:center;color:#333}form{display:flex;flex-direction:column;gap:15px;background-color:white;padding:30px;border-radius:8px;box-shadow:0 4px 8px rgba(0,0,0,.1)}input,button{padding:12px;font-size:16px;border-radius:5px;border:1px solid #ccc}button{background-color:#28a745;color:white;border:none;cursor:pointer;font-weight:bold}.form-group{display:flex;flex-direction:column}label{margin-bottom:5px;font-weight:bold;color:#555}</style>
+    <title>Đăng Ký Nhân Viên KT</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; max-width: 500px; margin: 40px auto; padding: 20px; background-color: #f4f4f9; }
+        h1 { text-align: center; color: #333; }
+        form { display: flex; flex-direction: column; gap: 15px; background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        input, button { padding: 12px; font-size: 16px; border-radius: 5px; border: 1px solid #ccc; }
+        button { background-color: #28a745; color: white; border: none; cursor: pointer; font-weight: bold; }
+        .form-group { display: flex; flex-direction: column; }
+        label { margin-bottom: 5px; font-weight: bold; color: #555; }
+        .login-link { text-align: center; margin-top: 20px; }
+    </style>
 </head>
 <body>
-    <h1>Đăng Ký Tài Khoản Nhân Viên</h1>
+    <h1>Đăng Ký Nhân Viên KT / KT Employee Registration</h1>
+
     <form id="register-form">
-        <div class="form-group"><label for="ho_ten">Họ và Tên</label><input type="text" id="ho_ten" name="ho_ten" required placeholder="Ví dụ: Nguyễn Văn A"></div>
-        <div class="form-group"><label for="ma_nhan_vien">Mã Nhân Viên</label><input type="text" id="ma_nhan_vien" name="ma_nhan_vien" required placeholder="Ví dụ: KT01"></div>
-        <div class="form-group"><label for="password">Mật khẩu</label><input type="password" id="password" name="password" required></div>
-        <button type="submit">Đăng Ký</button>
+        <div class="form-group">
+            <label for="ho_ten">Họ và Tên / Full Name</label>
+            <input type="text" id="ho_ten" name="ho_ten" required placeholder="Ví dụ: Nguyễn Văn A">
+        </div>
+        <div class="form-group">
+            <label for="ma_nhan_vien">Mã Nhân Viên / Employee ID</label>
+            <input type="text" id="ma_nhan_vien" name="ma_nhan_vien" required placeholder="Ví dụ: KT03">
+        </div>
+        <div class="form-group">
+            <label for="password">Mật khẩu / Password</label>
+            <input type="password" id="password" name="password" required>
+        </div>
+        <button type="submit">Đăng Ký & Đăng Nhập / Register & Login</button>
     </form>
+
+    <div class="login-link">
+        <p>Đã có tài khoản? / Already have an account? <a href="/login.html">Đăng nhập tại đây / Login here</a></p>
+    </div>
+
     <script>
         document.getElementById('register-form').addEventListener('submit', function(event) {
             event.preventDefault();
             const formData = new FormData(this);
             const data = Object.fromEntries(formData.entries());
 
-            // === DÒNG FETCH GỌI ĐẾN ĐÚNG ĐỊA CHỈ API ===
             fetch('/api/users/register', {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data),
             })
-            .then(response => {
-                // Kiểm tra xem server có trả về lỗi không
-                if (!response.ok) {
-                    // Nếu có lỗi, đọc nó như text để xem server nói gì
-                    return response.text().then(text => { throw new Error(text) });
-                }
-                // Nếu không có lỗi, đọc nó như JSON
-                return response.json();
-            })
+            .then(response => response.json())
             .then(result => {
-                if (result.error) { throw new Error(result.error); }
+                if (result.error) {
+                    throw new Error(result.error);
+                }
+                
+                // Hiển thị thông báo thành công
                 alert(result.message);
-                document.getElementById('register-form').reset();
+                
+                // Tự động chuyển hướng đến trang dashboard
+                window.location.href = '/dashboard.html';
             })
             .catch(error => {
-                console.error('Chi tiết lỗi:', error);
                 alert('Lỗi: ' + error.message);
             });
         });

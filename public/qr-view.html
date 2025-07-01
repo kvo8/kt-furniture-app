@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xem Mã QR Sản Phẩm</title>
+    
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/qrcode-generator/qrcode.js"></script>
+    
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f0f2f5;
+        }
+        .qr-container {
+            padding: 40px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            text-align: center;
+        }
+        #qrcode-image {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-top: 15px;
+            display: inline-block; /* Giúp border bao quanh mã QR */
+        }
+        h1 {
+            color: #333;
+        }
+        p {
+            font-size: 14px;
+            color: #555;
+            margin-top: 15px;
+        }
+        a {
+            margin-top: 25px;
+            display: inline-block;
+            color: #007bff;
+            text-decoration: none;
+            font-size: 16px;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="qr-container">
+        <h1 id="product-title">Mã QR cho sản phẩm</h1>
+        <div id="qrcode-image">
+            </div>
+        <p><i>(Nhấp chuột phải vào ảnh QR để lưu về máy hoặc in ra)</i></p>
+        <a href="/product-list.html">Quay lại danh sách sản phẩm</a>
+    </div>
+
+    <script>
+        // Đoạn code này sẽ tự động chạy khi trang được tải xong
+        document.addEventListener('DOMContentLoaded', () => {
+            // 1. Lấy ID sản phẩm từ địa chỉ URL (ví dụ: qr-view.html?id=KT123)
+            const urlParams = new URLSearchParams(window.location.search);
+            const productId = urlParams.get('id');
+
+            // 2. Kiểm tra xem có ID không
+            if (!productId) {
+                document.getElementById('product-title').textContent = 'Lỗi: Không tìm thấy ID sản phẩm!';
+                return;
+            }
+
+            document.getElementById('product-title').textContent = `Mã QR cho sản phẩm: ${productId}`;
+            
+            // 3. Tạo đường link công khai đầy đủ
+            // Lưu ý: Khi deploy, bạn cần thay 'http://localhost:3000' bằng link onrender.com
+            const publicUrl = `${window.location.origin}/product-view.html?id=${productId}`;
+
+            // 4. Sử dụng thư viện để tạo mã QR
+            try {
+                const qr = qrcode(0, 'H'); // 'H' là mức độ sửa lỗi cao nhất, giúp mã dễ quét hơn
+                qr.addData(publicUrl);
+                qr.make();
+                
+                // 5. Hiển thị ảnh mã QR ra màn hình
+                document.getElementById('qrcode-image').innerHTML = qr.createImgTag(8, 10); // size=8, margin=10
+            } catch (e) {
+                console.error("Lỗi khi tạo mã QR:", e);
+                document.getElementById('qrcode-image').textContent = "Không thể tạo mã QR.";
+            }
+        });
+    </script>
+
+</body>
+</html>

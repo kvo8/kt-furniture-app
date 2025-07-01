@@ -1,18 +1,21 @@
 {
-  "name": "cms-project",
+  "name": "cms-final-project",
   "version": "1.0.0",
-  "description": "A simple CMS for products",
+  "description": "A complete CMS for products with user authentication",
   "main": "index.js",
   "scripts": {
     "start": "nodemon index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
+  "author": "Vo Nguyen Duy Khoi",
   "license": "ISC",
   "dependencies": {
-    "bcrypt": "^6.0.0",
+    "bcrypt": "^5.1.1",
+    "connect-sqlite3": "^0.9.16",
     "cors": "^2.8.5",
     "express": "^4.19.2",
+    "express-session": "^1.18.0",
+    "multer": "^2.0.1",
     "sqlite3": "^5.1.7"
   },
   "devDependencies": {

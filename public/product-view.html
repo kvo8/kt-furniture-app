@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thông Tin Chi Tiết Sản Phẩm</title>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/qrcode-generator/qrcode.js"></script>
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            max-width: 900px; 
+            margin: auto; 
+            padding: 20px; 
+            background-color: #f4f4f9; 
+        }
+        .container { 
+            background-color: white; 
+            padding: 20px 30px; 
+            border-radius: 8px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1); 
+            margin-bottom: 25px; 
+        }
+        .product-image { 
+            width: 100%; 
+            border-radius: 8px; 
+            margin-bottom: 20px; 
+        }
+        h1, h2 { 
+            color: #333; 
+            border-bottom: 2px solid #eee; 
+            padding-bottom: 10px; 
+        }
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .details-grid {
+            display: grid;
+            grid-template-columns: 1fr; /* 1 cột trên màn hình nhỏ */
+        }
+        @media (min-width: 768px) {
+            .details-grid {
+                grid-template-columns: 1fr 1fr; /* 2 cột trên màn hình lớn hơn */
+                gap: 15px 25px;
+            }
+        }
+        .details-grid p { 
+            font-size: 17px; 
+            line-height: 1.6; 
+            color: #555; 
+            border-bottom: 1px solid #f0f0f0;
+            padding-bottom: 8px;
+            margin: 0;
+        }
+        strong { 
+            color: #000; 
+            min-width: 150px; 
+            display: inline-block;
+        }
+        #qrcode-container { 
+            text-align: center; 
+            padding: 20px; 
+        }
+        #qrcode-image { 
+            border: 1px solid #ccc; 
+            padding: 10px; 
+            display: inline-block; 
+        }
+        .review { border-top: 1px solid #eee; padding: 15px 0; }
+        .review-author { font-weight: bold; }
+        .review-rating span { color: #ffc107; font-size: 20px; }
+        .review-form form { display: flex; flex-direction: column; gap: 10px; margin-top: 20px;}
+        .review-form input, .review-form textarea, .review-form select, .review-form button { padding: 12px; font-size: 16px; border: 1px solid #ccc; border-radius: 5px; }
+        .review-form button { background-color: #007bff; color: white; cursor: pointer; font-weight: bold; }
+        .lang-switcher { text-align: right; }
+        .lang-switcher button { padding: 8px 12px; border: 1px solid #333; background-color: white; cursor: pointer; border-radius: 5px; margin-left: 5px; }
+        .lang-switcher button.active { background-color: #333; color: white; }
+        #internal-details-section { display: none; border-top: 2px dashed #007bff; margin-top: 20px; padding-top: 20px; }
+        #view-internal-btn { font-size: 16px; padding: 12px 20px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; display: block; margin: 20px auto; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: white; padding: 30px; border-radius: 8px; width: 90%; max-width: 400px; text-align: center; }
+        .modal-content form { display: flex; flex-direction: column; gap: 15px; }
+        .modal-content input, .modal-content button { padding: 12px; font-size: 16px; }
+        .modal-content button[type="submit"] { background-color: #28a745; color: white; border: none; }
+        .modal-content button[type="button"] { background-color: #6c757d; color: white; border: none; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div id="product-details" class="container"><h1>Đang tải dữ liệu...</h1></div>
+
+    <div id="internal-details-container" class="container">
+        <div id="view-internal-btn-container">
+             <button id="view-internal-btn">Sign In to Unlock / Đăng Nhập để Xem Chi Tiết Nội Bộ</button>
+        </div>
+        <div id="internal-details-section">
+            <h2 id="internal-title">Chi tiết Nội bộ</h2>
+            <div id="internal-content" class="details-grid"></div>
+        </div>
+    </div>
+
+    <div id="qr-code-section" class="container">
+        <h2 id="qr-title">Mã QR của sản phẩm</h2>
+        <div id="qrcode-container"></div>
+    </div>
+    
+    <div id="reviews-section" class="container">
+        <h2 id="reviews-title">Đánh giá của khách hàng</h2>
+        <div id="review-list"></div>
+        <hr>
+        <div class="review-form">
+            <h3 id="form-title">Để lại đánh giá của bạn</h3>
+            <form id="review-form">
+                <input type="text" name="author_name" placeholder="Tên của bạn (không bắt buộc)">
+                <select name="rating" required><option value="">-- Chọn số sao --</option><option value="5">⭐⭐⭐⭐⭐</option><option value="4">⭐⭐⭐⭐</option><option value="3">⭐⭐⭐</option><option value="2">⭐⭐</option><option value="1">⭐</option></select>
+                <textarea name="comment" rows="4" placeholder="Viết bình luận của bạn..." required></textarea>
+                <button type="submit" id="submit-review-btn">Gửi Đánh Giá</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="login-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>Đăng Nhập</h2>
+            <form id="internal-login-form">
+                <input type="text" name="ma_nhan_vien" placeholder="Mã Nhân Viên / Employee ID" required>
+                <input type="password" name="password" placeholder="Mật khẩu / Password" required>
+                <button type="submit">Đăng Nhập</button>
+                <button type="button" id="close-modal-btn">Đóng</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let fullProductData = null;
+        let currentLang = 'vi';
+        const urlParams = new URLSearchParams(window.location.search);
+        const productId = urlParams.get('id');
+
+        const labels = {
+            vi: {
+                productCode: 'Mã sản phẩm', company: 'Công ty', collection: 'Bộ sưu tập', color: 'Màu sắc',
+                material: 'Chất liệu', spec: 'Thông số', profile: 'Biên dạng nhôm', customer: 'Khách hàng',
+                creator: 'Người tạo', qrTitle: 'Mã QR của sản phẩm', reviewsTitle: 'Đánh giá của khách hàng',
+                formTitle: 'Để lại đánh giá của bạn', submitReview: 'Gửi Đánh Giá', 
+                internalTitle: 'Chi tiết Nội bộ', drawing: 'Bản vẽ', materials: 'Vật tư',
+                fabric: 'Vải', wicker: 'Dây', productionPlace: 'Nơi sản xuất', otherDetails: 'Chi tiết khác'
+            },
+            en: {
+                productCode: 'Product ID', company: 'Company', collection: 'Collection', color: 'Color',
+                material: 'Material', spec: 'Specification', profile: 'Aluminum Profile', customer: 'Customer',
+                creator: 'Created By', qrTitle: 'Product QR Code', reviewsTitle: 'Customer Reviews',
+                formTitle: 'Leave Your Review', submitReview: 'Submit Review',
+                internalTitle: 'Internal Details', drawing: 'Drawing', materials: 'Materials',
+                fabric: 'Fabric', wicker: 'Wicker', productionPlace: 'Production Place', otherDetails: 'Other Details'
+            }
+        };
+
+              function renderPage() {
+            if (!fullProductData) return;
+            const l = labels[currentLang];
+            
+            document.title = fullProductData[`name_${currentLang}`] || fullProductData.name_vi;
+
+            const detailsDiv = document.getElementById('product-details');
+            detailsDiv.innerHTML = `
+                <div class="header-container">
+                    <h1>${fullProductData[`name_${currentLang}`] || 'N/A'}</h1>
+                    <div class="lang-switcher">
+                        <button id="btn-vi">Tiếng Việt</button>
+                        <button id="btn-en">English</button>
+                    </div>
+                </div>
+                <img class="product-image" src="${fullProductData.imageUrl}" alt="${fullProductData.name_vi}">
+                <div class="details-grid">
+                    ${fullProductData.scanned_id ? `
+                        <p><strong>Mã quét (Scanned ID):</strong> ${fullProductData.scanned_id}</p>
+                        <p><strong>Mã sản phẩm (Gốc):</strong> ${fullProductData.id}</p>
+                    ` : `
+                        <p><strong>${l.productCode}:</strong> ${fullProductData.id}</p>
+                    `}
+                    <p><strong>${l.company}:</strong> ${fullProductData.company || 'N/A'}</p>
+                    <p><strong>${l.collection}:</strong> ${fullProductData[`collection_${currentLang}`] || 'N/A'}</p>
+                    <p><strong>${l.color}:</strong> ${fullProductData[`color_${currentLang}`] || 'N/A'}</p>
+                    <p><strong>${l.material}:</strong> ${fullProductData[`material_${currentLang}`] || 'N/A'}</p>
+                    <p><strong>${l.spec}:</strong> ${fullProductData.specification || 'N/A'}</p>
+                    <p><strong>${l.profile}:</strong> ${fullProductData.aluminum_profile || 'N/A'}</p>
+                    <p><strong>${l.customer}:</strong> ${fullProductData.customer || 'N/A'}</p>
+                    <p><strong>${l.creator}:</strong> ${fullProductData.created_by_name || 'N/A'}</p>
+                    <p><strong>${l.fabric}:</strong> ${fullProductData[`fabric_${currentLang}`] || 'N/A'}</p>
+                    <p><strong>${l.wicker}:</strong> ${fullProductData[`wicker_${currentLang}`] || 'N/A'}</p>
+                    <p><strong>${l.productionPlace}:</strong> ${fullProductData.production_place || 'N/A'}</p>
+                    <p><strong>${l.otherDetails}:</strong> ${fullProductData.other_details || 'N/A'}</p>
+                </div>
+            `;
+            
+            // Cập nhật các tiêu đề khác
+            document.getElementById('internal-title').textContent = l.internalTitle;
+            document.getElementById('qr-title').textContent = l.qrTitle;
+            document.getElementById('reviews-title').textContent = l.reviewsTitle;
+            document.getElementById('form-title').textContent = l.formTitle;
+            document.getElementById('submit-review-btn').textContent = l.submitReview;
+
+            // Xử lý nút active cho ngôn ngữ
+            document.getElementById(`btn-${currentLang}`).classList.add('active');
+            document.getElementById('btn-vi').addEventListener('click', () => { currentLang = 'vi'; renderPage(); });
+            document.getElementById('btn-en').addEventListener('click', () => { currentLang = 'en'; renderPage(); });
+        }
+        
+        // Các hàm khác giữ nguyên như bạn đã cung cấp
+        // ...
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            // ...
+        });
+        function renderInternalInfo() {
+            const internalDiv = document.getElementById('internal-content');
+            const l = labels[currentLang];
+            internalDiv.innerHTML = `
+                <p><strong>${l.drawing}:</strong> <a href="${fullProductData.drawingUrl || '#'}" target="_blank">Tải về / Download</a></p>
+                <p><strong>${l.materials}:</strong> <a href="${fullProductData.materialsUrl || '#'}" target="_blank">Tải về / Download</a></p>
+            `;
+            document.getElementById('internal-details-section').style.display = 'block';
+            document.getElementById('view-internal-btn-container').style.display = 'none';
+        }
+
+        function renderReviews(reviews) {
+            const reviewListDiv = document.getElementById('review-list');
+            reviewListDiv.innerHTML = '';
+            if (!reviews || reviews.length === 0) {
+                reviewListDiv.innerHTML = '<p>Chưa có đánh giá nào cho sản phẩm này.</p>';
+                return;
+            }
+            reviews.forEach(review => {
+                const reviewDiv = document.createElement('div');
+                reviewDiv.className = 'review';
+                reviewDiv.innerHTML = `
+                    <p class="review-author">${review.author_name || 'Khách'}</p>
+                    <p class="review-rating"><span>${'⭐'.repeat(review.rating)}</span></p>
+                    <p>${review.comment}</p>
+                    <small>${new Date(review.created_at).toLocaleString('vi-VN')}</small>
+                `;
+                reviewListDiv.appendChild(reviewDiv);
+            });
+        }
+        
+        function generateQRCode(productId) {
+            const publicUrl = window.location.href;
+            const qr = qrcode(0, 'H');
+            qr.addData(publicUrl);
+            qr.make();
+            document.getElementById('qrcode-container').innerHTML = qr.createImgTag(8, 10);
+        }
+        
+        function loadPageData() {
+            if (!productId) {
+                document.getElementById('product-details').innerHTML = '<h1>Lỗi: Không có ID sản phẩm.</h1>';
+                return;
+            }
+            
+            generateQRCode(productId);
+            
+            fetch(`/api/products/${productId}`)
+                .then(res => res.json())
+                .then(product => {
+                    if (!product) throw new Error('Không tìm thấy sản phẩm.');
+                    fullProductData = product;
+                    renderPage();
+                });
+
+            fetch(`/api/products/${productId}/reviews`)
+                .then(res => res.json())
+                .then(data => renderReviews(data.reviews));
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadPageData();
+
+            fetch('https://https://my-product-api.onrender.com/api/products/')
+                .then(res => res.json())
+                .then(user => {
+                    if (user && user.id) {
+                        renderInternalInfo();
+                    }
+                });
+        });
+
+        document.getElementById('view-internal-btn').addEventListener('click', () => {
+            document.getElementById('login-modal').style.display = 'flex';
+        });
+
+        document.getElementById('close-modal-btn').addEventListener('click', () => {
+            document.getElementById('login-modal').style.display = 'none';
+        });
+
+        document.getElementById('internal-login-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData.entries());
+            fetch('https://https://my-product-api.onrender.com/api/products/users/login', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data),
+            })
+            .then(res => res.json())
+            .then(result => {
+                if (result.error) throw new Error(result.error);
+                alert('Đăng nhập thành công!');
+                document.getElementById('login-modal').style.display = 'none';
+                renderInternalInfo();
+            })
+            .catch(error => alert('Đăng nhập thất bại: ' + error.message));
+        });
+
+        document.getElementById('review-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData.entries());
+            fetch(`/api/products/${productId}/reviews`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data),
+            })
+            .then(res => res.json())
+            .then(result => {
+                if (result.error) throw new Error(result.error);
+                alert(result.message);
+                document.getElementById('review-form').reset();
+                fetch(`/api/products/${productId}/reviews`).then(res => res.json()).then(data => renderReviews(data.reviews));
+            })
+            .catch(error => alert('Lỗi: ' + error.message));
+        });
+    </script>
+</body>
+</html>
