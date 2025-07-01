@@ -94,8 +94,8 @@ app.post("/api/users/login", (req, res) => {
 });
 
 // API lấy thông tin 1 sản phẩm công khai, có gộp cả đánh giá (Nâng cấp)
+// === Thay thế API GET /api/products/:id cũ ===
 // === THAY THẾ API GET /api/products/:id CŨ BẰNG PHIÊN BẢN NÀY ===
-
 app.get("/api/products/:id", (req, res) => {
     const requestedId = req.params.id;
 
@@ -104,22 +104,35 @@ app.get("/api/products/:id", (req, res) => {
         if (err) return res.status(400).json({ "error": err.message });
         if (!product) return res.status(404).json({ error: "Sản phẩm không tồn tại" });
 
-        // Nếu sản phẩm này có parent_id, tìm thông tin của sản phẩm cha
         if (product.parent_id) {
-            const findParentSql = "SELECT * FROM products WHERE id = ?";
-            db.get(findParentSql, [product.parent_id], (err, parentProduct) => {
+            // Nếu là sản phẩm "con", tìm thông tin của sản phẩm "cha"
+            db.get(findProductSql, [product.parent_id], (err, parentProduct) => {
                 if (err) return res.status(400).json({ "error": err.message });
-                if (!parentProduct) return res.status(404).json({ error: "Không tìm thấy sản phẩm gốc." });
-
-                // Trả về thông tin của sản phẩm cha
-                res.json(parentProduct);
+                // Trả về thông tin của cha, nhưng thêm vào mã của con đã được quét
+                res.json({ ...parentProduct, reviews: [], scanned_id: requestedId });
             });
         } else {
-            // Nếu không có parent_id, đây là sản phẩm gốc, trả về chính nó
-            res.json(product);
+            // Nếu là sản phẩm "cha", lấy thêm thông tin review của nó
+            const reviewsSql = "SELECT * FROM reviews WHERE product_id = ? ORDER BY created_at DESC";
+            db.all(reviewsSql, [requestedId], (err, reviews) => {
+                if (err) return res.status(400).json({ "error": err.message });
+                // Trả về thông tin của chính nó, kèm theo reviews
+                res.json({ ...product, reviews: reviews });
+            });
         }
     });
 });
+// API để khách hàng gửi đánh giá mới
+app.post("/api/products/:id/reviews", (req, res) => {
+    const { rating, comment, author_name } = req.body;
+    const sql = 'INSERT INTO reviews (product_id, rating, comment, author_name) VALUES (?,?,?,?)';
+    const params = [req.params.id, rating, comment, author_name || 'Khách'];
+    db.run(sql, params, function (err) {
+        if (err){ return res.status(400).json({"error": err.message}); }
+        res.status(201).json({ "message": "Gửi đánh giá thành công! Cảm ơn bạn." });
+    });
+});
+
 
 // === B. CÁC API CẦN BẢO VỆ (PHẢI ĐĂNG NHẬP MỚI DÙNG ĐƯỢC) ===
 
@@ -138,6 +151,7 @@ app.get("/api/products", isLoggedIn, (req, res) => {
 });
 
 // API thêm sản phẩm mới (sửa lại để nhận nhiều file)
+// === Thay thế API POST /api/products cũ ===
 app.post("/api/products", isLoggedIn, upload, (req, res) => {
     const data = req.body;
     const user = req.session.user;
@@ -146,13 +160,23 @@ app.post("/api/products", isLoggedIn, upload, (req, res) => {
     const drawingUrl = req.files['drawingFile'] ? '/uploads/' + req.files['drawingFile'][0].filename : '';
     const materialsUrl = req.files['materialsFile'] ? '/uploads/' + req.files['materialsFile'][0].filename : '';
 
-    const sql = `INSERT INTO products (id, name_vi, name_en, collection_vi, collection_en, color_vi, color_en, fabric_vi, fabric_en, wicker_vi, wicker_en, production_place, company, customer, specification, material_vi, material_en, aluminum_profile, imageUrl, drawingUrl, materialsUrl, other_details, created_by_name, created_by_id, data.parent_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
+    const sql = `
+        INSERT INTO products (
+            id, name_vi, name_en, collection_vi, collection_en, color_vi, color_en, 
+            fabric_vi, fabric_en, wicker_vi, wicker_en, production_place,
+            company, customer, specification, material_vi, material_en, aluminum_profile, 
+            imageUrl, drawingUrl, materialsUrl, other_details,
+            created_by_name, created_by_id, parent_id /* Thêm cột mới */
+        ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) /* Thêm một dấu ? */
+    `;
+    
     const params = [
-        data.id, data.name_vi, data.name_en, data.collection_vi, data.collection_en, 
+        data.id, data.name_vi, data.name_en, data.collection_vi, data.collection_en,
         data.color_vi, data.color_en, data.fabric_vi, data.fabric_en, data.wicker_vi, data.wicker_en,
         data.production_place, data.company, data.customer, data.specification,
         data.material_vi, data.material_en, data.aluminum_profile, imageUrl,
-        drawingUrl, materialsUrl, data.other_details, user.name, user.id, data.parent_id
+        drawingUrl, materialsUrl, data.other_details,
+        user.name, user.id, data.parent_id // Thêm parent_id vào đây
     ];
     
     db.run(sql, params, function (err) {

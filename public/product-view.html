@@ -157,7 +157,7 @@
             }
         };
 
-              function renderPage() {
+             function renderPage() {
             if (!fullProductData) return;
             const l = labels[currentLang];
             
@@ -261,7 +261,7 @@
             
             generateQRCode(productId);
             
-            fetch(`https://my-product-api.onrender.com/api/products/${productId}`)
+            fetch(`/api/products/${productId}`)
                 .then(res => res.json())
                 .then(product => {
                     if (!product) throw new Error('Không tìm thấy sản phẩm.');
@@ -269,7 +269,7 @@
                     renderPage();
                 });
 
-            fetch(`https://my-product-api.onrender.com/api/products/${productId}/reviews`)
+            fetch(`/api/products/${productId}/reviews`)
                 .then(res => res.json())
                 .then(data => renderReviews(data.reviews));
         }
@@ -277,7 +277,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             loadPageData();
 
-            fetch(`https://my-product-api.onrender.com/api/products/${productId}/reviews`)
+            fetch('/api/me')
                 .then(res => res.json())
                 .then(user => {
                     if (user && user.id) {
@@ -317,7 +317,7 @@
             event.preventDefault();
             const formData = new FormData(this);
             const data = Object.fromEntries(formData.entries());
-            fetch(`https://my-product-api.onrender.com/api/products/${productId}/reviews`, {
+            fetch(`/api/products/${productId}/reviews`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(data),
@@ -327,7 +327,7 @@
                 if (result.error) throw new Error(result.error);
                 alert(result.message);
                 document.getElementById('review-form').reset();
-               fetch(`https://my-product-api.onrender.com/api/products/${productId}/reviews`).then(res => res.json()).then(data => renderReviews(data.reviews));
+                fetch(`/api/products/${productId}/reviews`).then(res => res.json()).then(data => renderReviews(data.reviews));
             })
             .catch(error => alert('Lỗi: ' + error.message));
         });
