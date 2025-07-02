@@ -10,23 +10,49 @@
             padding: 40px; 
             background-color: #f4f4f9;
         }
+
         h1 {
             color: #333;
+            /* === THAY ĐỔI 1: Tăng kích thước chữ chào mừng === */
+            font-size: 2.8rem; /* Trước đây không có, dùng size mặc định. Giờ lớn hơn nhiều. */
+            margin-bottom: 8px; /* Giảm khoảng cách với dòng mô tả */
         }
+
+        /* === THÊM MỚI: Định dạng cho dòng mô tả === */
+        p {
+            font-size: 1.2rem; /* Làm chữ to hơn */
+            color: #666;      /* Làm màu chữ dịu hơn */
+            margin-bottom: 40px; /* Tăng khoảng cách tới nút bấm */
+        }
+
         .nav-links a { 
             display: inline-block; 
             margin: 10px; 
-            font-size: 18px; 
-            padding: 12px 20px; 
+            font-size: 18px; /* Kích thước này đã khá ổn cho nút bấm */
+            padding: 12px 25px; /* Tăng nhẹ padding ngang cho nút to hơn */
             background-color: #007bff; 
             color: white; 
             text-decoration: none; 
             border-radius: 5px;
             transition: background-color 0.2s;
         }
+
         .nav-links a:hover {
             background-color: #0056b3;
         }
+        
+        /* === THÊM MỚI: CSS CHO HÌNH ẢNH DASHBOARD === */
+        .dashboard-image-container {
+            margin-top: 50px; /* Tạo khoảng cách với nút ở trên */
+        }
+        .dashboard-image-container img {
+            max-width: 100%; /* Đảm bảo hình không bị tràn ra ngoài màn hình */
+            height: auto; /* Giữ đúng tỷ lệ của hình */
+            max-height: 400px; /* Giới hạn chiều cao tối đa của hình */
+            border-radius: 8px; /* Bo góc cho đẹp */
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); /* Thêm bóng đổ nhẹ */
+        }
+
     </style>
 </head>
 <body>
@@ -36,6 +62,11 @@
     <div class="nav-links">
         <a href="/product-list.html">Quản lý Sản phẩm / Manage Products</a>
     </div>
+
+    <div class="dashboard-image-container">
+        <img src="https://i.postimg.cc/0Qk1yK9q/unnamed.png" alt="KT Furniture Dashboard Image">
+    </div>
+
 
     <script>
         // Khi trang tải, gọi API để lấy thông tin người dùng

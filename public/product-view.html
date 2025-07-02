@@ -77,8 +77,27 @@
         .lang-switcher { text-align: right; }
         .lang-switcher button { padding: 8px 12px; border: 1px solid #333; background-color: white; cursor: pointer; border-radius: 5px; margin-left: 5px; }
         .lang-switcher button.active { background-color: #333; color: white; }
-        #internal-details-section { display: none; border-top: 2px dashed #007bff; margin-top: 20px; padding-top: 20px; }
-        #view-internal-btn { font-size: 16px; padding: 12px 20px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; display: block; margin: 20px auto; }
+        
+        /* CSS CHO PHẦN NỘI BỘ */
+        #internal-details-section { 
+            display: none; /* Quan trọng: Mặc định ẩn đi */
+            border-top: 2px dashed #007bff; 
+            margin-top: 20px; 
+            padding-top: 20px; 
+        }
+        #view-internal-btn { 
+            font-size: 16px; 
+            padding: 12px 20px; 
+            background-color: #007bff; 
+            color: white; 
+            border: none; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            display: block; 
+            margin: 20px auto; 
+        }
+        
+        /* CSS CHO POPUP ĐĂNG NHẬP */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 1000; }
         .modal-content { background: white; padding: 30px; border-radius: 8px; width: 90%; max-width: 400px; text-align: center; }
         .modal-content form { display: flex; flex-direction: column; gap: 15px; }
@@ -112,9 +131,9 @@
         <div class="review-form">
             <h3 id="form-title">Để lại đánh giá của bạn</h3>
             <form id="review-form">
-                <input type="text" name="author_name" placeholder="Tên của bạn (không bắt buộc)">
+                <input type="text" name="author_name" placeholder="Tên của bạn (bắt buộc)" required>
                 <select name="rating" required><option value="">-- Chọn số sao --</option><option value="5">⭐⭐⭐⭐⭐</option><option value="4">⭐⭐⭐⭐</option><option value="3">⭐⭐⭐</option><option value="2">⭐⭐</option><option value="1">⭐</option></select>
-                <textarea name="comment" rows="4" placeholder="Viết bình luận của bạn..." required></textarea>
+                <textarea name="comment" rows="4" placeholder="Viết bình luận của bạn..."></textarea>
                 <button type="submit" id="submit-review-btn">Gửi Đánh Giá</button>
             </form>
         </div>
@@ -157,7 +176,7 @@
             }
         };
 
-             function renderPage() {
+        function renderPage() {
             if (!fullProductData) return;
             const l = labels[currentLang];
             
@@ -174,12 +193,7 @@
                 </div>
                 <img class="product-image" src="${fullProductData.imageUrl}" alt="${fullProductData.name_vi}">
                 <div class="details-grid">
-                    ${fullProductData.scanned_id ? `
-                        <p><strong>Mã quét (Scanned ID):</strong> ${fullProductData.scanned_id}</p>
-                        <p><strong>Mã sản phẩm (Gốc):</strong> ${fullProductData.id}</p>
-                    ` : `
-                        <p><strong>${l.productCode}:</strong> ${fullProductData.id}</p>
-                    `}
+                    <p><strong>${l.productCode}:</strong> ${fullProductData.id}</p>
                     <p><strong>${l.company}:</strong> ${fullProductData.company || 'N/A'}</p>
                     <p><strong>${l.collection}:</strong> ${fullProductData[`collection_${currentLang}`] || 'N/A'}</p>
                     <p><strong>${l.color}:</strong> ${fullProductData[`color_${currentLang}`] || 'N/A'}</p>
@@ -195,32 +209,35 @@
                 </div>
             `;
             
-            // Cập nhật các tiêu đề khác
             document.getElementById('internal-title').textContent = l.internalTitle;
             document.getElementById('qr-title').textContent = l.qrTitle;
             document.getElementById('reviews-title').textContent = l.reviewsTitle;
             document.getElementById('form-title').textContent = l.formTitle;
             document.getElementById('submit-review-btn').textContent = l.submitReview;
 
-            // Xử lý nút active cho ngôn ngữ
-            document.getElementById(`btn-${currentLang}`).classList.add('active');
-            document.getElementById('btn-vi').addEventListener('click', () => { currentLang = 'vi'; renderPage(); });
-            document.getElementById('btn-en').addEventListener('click', () => { currentLang = 'en'; renderPage(); });
+            document.getElementById('btn-vi').classList.toggle('active', currentLang === 'vi');
+            document.getElementById('btn-en').classList.toggle('active', currentLang === 'en');
+
+            document.getElementById('btn-vi').addEventListener('click', () => { currentLang = 'vi'; renderPage(); showInternalInfo(true); });
+            document.getElementById('btn-en').addEventListener('click', () => { currentLang = 'en'; renderPage(); showInternalInfo(true); });
         }
         
-        // Các hàm khác giữ nguyên như bạn đã cung cấp
-        // ...
-        
-        document.addEventListener('DOMContentLoaded', () => {
-            // ...
-        });
-        function renderInternalInfo() {
+        // CÓ THAM SỐ `onlyIfLoggedIn` ĐỂ KHÔNG HIỂN THỊ LẠI NÚT ĐĂNG NHẬP KHI ĐỔI NGÔN NGỮ
+        function showInternalInfo(onlyIfLoggedIn = false) {
+            if (!fullProductData) return;
+            
+            if(onlyIfLoggedIn) {
+                // Nếu chỉ là đổi ngôn ngữ, chỉ render lại nếu mục nội bộ đã hiển thị
+                if(document.getElementById('internal-details-section').style.display !== 'block') return;
+            }
+
             const internalDiv = document.getElementById('internal-content');
             const l = labels[currentLang];
             internalDiv.innerHTML = `
                 <p><strong>${l.drawing}:</strong> <a href="${fullProductData.drawingUrl || '#'}" target="_blank">Tải về / Download</a></p>
                 <p><strong>${l.materials}:</strong> <a href="${fullProductData.materialsUrl || '#'}" target="_blank">Tải về / Download</a></p>
             `;
+            
             document.getElementById('internal-details-section').style.display = 'block';
             document.getElementById('view-internal-btn-container').style.display = 'none';
         }
@@ -237,8 +254,8 @@
                 reviewDiv.className = 'review';
                 reviewDiv.innerHTML = `
                     <p class="review-author">${review.author_name || 'Khách'}</p>
-                    <p class="review-rating"><span>${'⭐'.repeat(review.rating)}</span></p>
-                    <p>${review.comment}</p>
+                    <p class="review-rating"><span>${'⭐'.repeat(review.rating)}${'☆'.repeat(5 - review.rating)}</span></p>
+                    <p>${review.comment || '<i>(Không có bình luận)</i>'}</p>
                     <small>${new Date(review.created_at).toLocaleString('vi-VN')}</small>
                 `;
                 reviewListDiv.appendChild(reviewDiv);
@@ -246,14 +263,26 @@
         }
         
         function generateQRCode(productId) {
-            const publicUrl = window.location.href;
+            const publicBaseUrl = 'https://9c4d-14-224-169-193.ngrok-free.app';
+            const publicUrl = `${publicBaseUrl}/product-view.html?id=${productId}`;
             const qr = qrcode(0, 'H');
             qr.addData(publicUrl);
             qr.make();
             document.getElementById('qrcode-container').innerHTML = qr.createImgTag(8, 10);
         }
         
-        function loadPageData() {
+        async function fetchReviews() {
+             try {
+                const response = await fetch(`/api/products/${productId}/reviews`);
+                const data = await response.json();
+                renderReviews(data.reviews);
+            } catch (error) {
+                console.error('Không thể tải reviews:', error);
+                renderReviews([]);
+            }
+        }
+
+        async function loadPageData() {
             if (!productId) {
                 document.getElementById('product-details').innerHTML = '<h1>Lỗi: Không có ID sản phẩm.</h1>';
                 return;
@@ -261,75 +290,92 @@
             
             generateQRCode(productId);
             
-            fetch(`/api/products/${productId}`)
-                .then(res => res.json())
-                .then(product => {
-                    if (!product) throw new Error('Không tìm thấy sản phẩm.');
-                    fullProductData = product;
-                    renderPage();
-                });
+            try {
+                const response = await fetch(`/api/products/${productId}`);
+                const product = await response.json();
+                if (product.error) throw new Error(product.error);
+                
+                fullProductData = product;
+                renderPage(); 
+                fetchReviews();
 
-            fetch(`/api/products/${productId}/reviews`)
-                .then(res => res.json())
-                .then(data => renderReviews(data.reviews));
+            } catch (error) {
+                document.getElementById('product-details').innerHTML = `<h1>Lỗi: ${error.message}</h1>`;
+            }
         }
 
+        // === LOGIC CHÍNH KHI TẢI TRANG ===
         document.addEventListener('DOMContentLoaded', () => {
             loadPageData();
 
+            // Kiểm tra trạng thái đăng nhập
             fetch('/api/me')
-                .then(res => res.json())
-                .then(user => {
-                    if (user && user.id) {
-                        renderInternalInfo();
-                    }
-                });
-        });
+              .then(res => res.ok ? res.json() : null)
+              .then(user => {
+                  if (user && user.id) {
+                      showInternalInfo(); // Nếu đã đăng nhập, hiển thị thông tin nội bộ
+                  }
+              });
 
-        document.getElementById('view-internal-btn').addEventListener('click', () => {
-            document.getElementById('login-modal').style.display = 'flex';
-        });
+            // Gán sự kiện cho nút "Sign In to Unlock"
+            document.getElementById('view-internal-btn').addEventListener('click', () => {
+                document.getElementById('login-modal').style.display = 'flex';
+            });
 
-        document.getElementById('close-modal-btn').addEventListener('click', () => {
-            document.getElementById('login-modal').style.display = 'none';
-        });
-
-        document.getElementById('internal-login-form').addEventListener('submit', function(event) {
-            event.preventDefault();
-            const formData = new FormData(this);
-            const data = Object.fromEntries(formData.entries());
-            fetch('/api/users/login', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(data),
-            })
-            .then(res => res.json())
-            .then(result => {
-                if (result.error) throw new Error(result.error);
-                alert('Đăng nhập thành công!');
+            // Gán sự kiện cho nút đóng popup
+            document.getElementById('close-modal-btn').addEventListener('click', () => {
                 document.getElementById('login-modal').style.display = 'none';
-                renderInternalInfo();
-            })
-            .catch(error => alert('Đăng nhập thất bại: ' + error.message));
-        });
+            });
 
-        document.getElementById('review-form').addEventListener('submit', function(event) {
-            event.preventDefault();
-            const formData = new FormData(this);
-            const data = Object.fromEntries(formData.entries());
-            fetch(`/api/products/${productId}/reviews`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(data),
-            })
-            .then(res => res.json())
-            .then(result => {
-                if (result.error) throw new Error(result.error);
-                alert(result.message);
-                document.getElementById('review-form').reset();
-                fetch(`/api/products/${productId}/reviews`).then(res => res.json()).then(data => renderReviews(data.reviews));
-            })
-            .catch(error => alert('Lỗi: ' + error.message));
+            // Xử lý form đăng nhập trong popup
+            document.getElementById('internal-login-form').addEventListener('submit', async function(event) {
+                event.preventDefault();
+                const data = Object.fromEntries(new FormData(this).entries());
+                
+                try {
+                    const response = await fetch('/api/users/login', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(data),
+                    });
+                    const result = await response.json();
+                    if (!response.ok) throw new Error(result.error || 'Thông tin không chính xác.');
+
+                    alert('Đăng nhập thành công!');
+                    document.getElementById('login-modal').style.display = 'none';
+                    showInternalInfo(); // Hiển thị phần nội dung nội bộ
+                    this.reset();
+                } catch (error) {
+                    alert('Đăng nhập thất bại: ' + error.message);
+                }
+            });
+
+            // Xử lý form gửi đánh giá
+            document.getElementById('review-form').addEventListener('submit', async function(event) {
+                event.preventDefault();
+                const data = Object.fromEntries(new FormData(this).entries());
+                if (!data.author_name || !data.rating) {
+                    alert('Vui lòng nhập tên và chọn số sao đánh giá.');
+                    return;
+                }
+                const dataToSend = { ...data, productId: productId };
+                
+                try {
+                    const response = await fetch('/api/reviews', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(dataToSend),
+                    });
+                    const result = await response.json();
+                    if (!response.ok) throw new Error(result.error || 'Đã xảy ra lỗi không xác định.');
+                    
+                    alert(result.message);
+                    this.reset();
+                    fetchReviews();
+                } catch (error) {
+                    alert('Lỗi: ' + error.message);
+                }
+            });
         });
     </script>
 </body>

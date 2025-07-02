@@ -1,5 +1,5 @@
 // ===================================
-// === FILE: database.js (PHIÊN BẢN SỬA LỖI CUỐI CÙNG) ===
+// === FILE: database.js (Đã cập nhật với parent_id) ===
 // ===================================
 
 // Import thư viện sqlite3
@@ -24,18 +24,35 @@ const db = new sqlite3.Database(DBSOURCE, (err) => {
             
             // Lệnh SQL để tạo bảng 'products' với ĐẦY ĐỦ CÁC CỘT
             const productsTableSql = `
-CREATE TABLE IF NOT EXISTS products (
-    id TEXT PRIMARY KEY, 
-    name_vi TEXT, name_en TEXT, collection_vi TEXT, collection_en TEXT, 
-    color_vi TEXT, color_en TEXT, fabric_vi TEXT, fabric_en TEXT, 
-    wicker_vi TEXT, wicker_en TEXT, production_place TEXT,
-    company TEXT, customer TEXT, specification TEXT, 
-    material_vi TEXT, material_en TEXT, aluminum_profile TEXT,
-    imageUrl TEXT, drawingUrl TEXT, materialsUrl TEXT, other_details TEXT,
-    created_by_name TEXT, created_by_id INTEGER,
-    parent_id TEXT,  /* <-- THÊM CỘT MỚI QUAN TRỌNG NÀY */
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-)`;
+            CREATE TABLE IF NOT EXISTS products (
+                id TEXT PRIMARY KEY, 
+                name_vi TEXT, 
+                name_en TEXT, 
+                collection_vi TEXT, 
+                collection_en TEXT, 
+                color_vi TEXT, 
+                color_en TEXT,
+                fabric_vi TEXT,
+                fabric_en TEXT,
+                wicker_vi TEXT,
+                wicker_en TEXT,
+                production_place TEXT,
+                company TEXT, 
+                customer TEXT, 
+                specification TEXT, 
+                material_vi TEXT, 
+                material_en TEXT, 
+                aluminum_profile TEXT,
+                imageUrl TEXT,
+                drawingUrl TEXT,
+                materialsUrl TEXT,
+                other_details TEXT,
+                created_by_name TEXT,
+                created_by_id INTEGER,
+                parent_id TEXT,  /* <-- CỘT MỚI ĐÃ ĐƯỢC THÊM VÀO ĐÂY */
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )`;
+
             // Chạy lệnh tạo bảng 'products'
             db.run(productsTableSql, (err) => {
                 if (err) {

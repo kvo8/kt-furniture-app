@@ -4,7 +4,7 @@
   "description": "A complete CMS for products with user authentication",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon index.js",
+    "start": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Vo Nguyen Duy Khoi",

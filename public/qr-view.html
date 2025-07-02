@@ -76,10 +76,16 @@
 
             document.getElementById('product-title').textContent = `Mã QR cho sản phẩm: ${productId}`;
             
-            // 3. Tạo đường link công khai đầy đủ
-            // Lưu ý: Khi deploy, bạn cần thay 'http://localhost:3000' bằng link onrender.com
-            const publicUrl = `${window.location.origin}/product-view.html?id=${productId}`;
+            // ======================================================================
+            // === ▼▼▼ THAY ĐỔI QUAN TRỌNG: SỬ DỤNG ĐỊA CHỈ CÔNG KHAI TỪ NGROK ▼▼▼ ===
+            // ======================================================================
+            // Dán địa chỉ ngrok của bạn vào đây.
+            const publicBaseUrl = 'https://9c4d-14-224-169-193.ngrok-free.app'; 
 
+            // 3. Tạo đường link công khai đầy đủ
+            const publicUrl = `${publicBaseUrl}/product-view.html?id=${productId}`;
+            // ======================================================================
+            
             // 4. Sử dụng thư viện để tạo mã QR
             try {
                 const qr = qrcode(0, 'H'); // 'H' là mức độ sửa lỗi cao nhất, giúp mã dễ quét hơn

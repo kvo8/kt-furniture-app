@@ -19,6 +19,78 @@
         .delete-btn { background-color: #dc3545; }
         .nav-links { margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #ccc; display: flex; justify-content: space-between; align-items: center; }
         .nav-links a { margin-right: 20px; font-size: 18px; color: #007bff; text-decoration: none; font-weight: 500; }
+
+        /* === ▼▼▼ CSS MỚI CHO NÚT VÀ CỬA SỔ POPUP ĐÁNH GIÁ ▼▼▼ === */
+        .reviews-btn { background-color: #6f42c1; } /* Màu tím cho nút xem đánh giá */
+
+        .modal {
+            display: none; /* Ẩn mặc định */
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.6);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 10% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 60%;
+            max-width: 700px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #dee2e6;
+            padding-bottom: 1rem;
+        }
+        .modal-header h2 {
+            margin: 0;
+            border-bottom: none;
+            padding-bottom: 0;
+            font-size: 1.5rem;
+        }
+        .close-button {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close-button:hover,
+        .close-button:focus {
+            color: black;
+            text-decoration: none;
+        }
+        #reviewsList {
+            margin-top: 15px;
+            max-height: 400px; /* Giới hạn chiều cao và cho phép cuộn */
+            overflow-y: auto;
+        }
+        .review-item {
+            border-bottom: 1px solid #eee;
+            padding: 10px 0;
+        }
+        .review-item:last-child {
+            border-bottom: none;
+        }
+        .review-item p {
+            margin: 5px 0;
+        }
+        .review-author {
+            font-weight: bold;
+        }
+        .review-rating {
+            color: #f9ca24; /* Màu vàng cho ngôi sao */
+        }
+        /* === ▲▲▲ KẾT THÚC CSS MỚI ▲▲▲ === */
+
     </style>
 </head>
 <body>
@@ -34,60 +106,174 @@
         <thead><tr><th>STT</th><th>Mã SP</th><th>Tên Sản phẩm (VI)</th><th>Người tạo</th><th>Ngày tạo</th><th>Hành động / Actions</th></tr></thead>
         <tbody id="product-table-body"></tbody>
     </table>
+
+    <div id="reviewsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Đánh giá cho sản phẩm: <span id="modalProductName"></span></h2>
+                <span class="close-button">&times;</span>
+            </div>
+            <div id="reviewsList">
+                </div>
+        </div>
+    </div>
     <script>
-        let allProducts = [];
-        function renderProducts(products) {
-            const tableBody = document.getElementById('product-table-body');
-            tableBody.innerHTML = '';
-            if (products && products.length > 0) {
-                products.forEach((product, index) => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${index + 1}</td>
-                        <td>${product.id}</td>
-                        <td>${product.name_vi}</td>
-                        <td>${product.created_by_name || 'N/A'}</td>
-                        <td>${new Date(product.created_at).toLocaleString('vi-VN')}</td>
-                        <td class="actions">
-                            <a href="/product-view.html?id=${product.id}" target="_blank" class="details-btn">Chi tiết</a>
-                            <a href="/qr-view.html?id=${product.id}" target="_blank" class="qr-btn">Xem QR</a>
-                            <a href="/edit-product.html?id=${product.id}" class="edit-btn">Sửa</a>
-                            <button class="delete-btn" data-id="${product.id}">Xóa</button>
-                        </td>
-                    `;
-                    tableBody.appendChild(row);
-                });
-            } else {
-                tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Không có sản phẩm nào.</td></tr>';
-            }
+    let allProducts = [];
+
+    function renderProducts(products) {
+        const tableBody = document.getElementById('product-table-body');
+        tableBody.innerHTML = '';
+        if (products && products.length > 0) {
+            products.forEach((product, index) => {
+                const row = document.createElement('tr');
+                
+                // === ▼▼▼ CẬP NHẬT Ở ĐÂY: Thêm nút "Xem Đ.giá" ▼▼▼ ===
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${product.id || 'N/A'}</td>
+                    <td>${product.name_vi || 'N/A'}</td>
+                    <td>${product.created_by_name || 'N/A'}</td>
+                    <td>${new Date(product.created_at).toLocaleString('vi-VN')}</td>
+                    <td class="actions">
+                        <a href="/product-view.html?id=${product.id}" target="_blank" class="details-btn">Chi tiết</a>
+                        <a href="/qr-view.html?id=${product.id}" target="_blank" class="qr-btn">Xem QR</a>
+                        <a href="/edit-product.html?id=${product.id}" class="edit-btn">Sửa</a>
+                        <button class="reviews-btn" data-id="${product.id}" data-name="${product.name_vi || ''}">Xem Đ.giá</button>
+                        <button class="delete-btn" data-id="${product.id}">Xóa</button>
+                    </td>
+                `;
+                // === ▲▲▲ KẾT THÚC CẬP NHẬT ▲▲▲ ===
+
+                tableBody.appendChild(row);
+            });
+        } else {
+            tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Không có sản phẩm nào.</td></tr>';
         }
-        function loadProducts() {
-            fetch('/api/products')
-                .then(res => res.ok ? res.json() : Promise.reject(res))
-                .then(data => {
-                    allProducts = data.products || [];
-                    renderProducts(allProducts);
-                })
-                .catch(() => window.location.href = '/login.html');
-        }
-        document.getElementById('search-input').addEventListener('input', e => {
-            const searchTerm = e.target.value.toLowerCase();
-            const filtered = allProducts.filter(p => p.id.toLowerCase().includes(searchTerm) || p.name_vi.toLowerCase().includes(searchTerm) || (p.created_by_name && p.created_by_name.toLowerCase().includes(searchTerm)));
-            renderProducts(filtered);
-        });
-        document.getElementById('product-table-body').addEventListener('click', e => {
-            if (e.target && e.target.classList.contains('delete-btn')) {
-                if (confirm(`Bạn có chắc muốn xóa sản phẩm ${e.target.dataset.id}?`)) {
-                    fetch(`/api/products/${e.target.dataset.id}`, { method: 'DELETE' })
-                        .then(res => res.json())
-                        .then(result => {
-                            if (result.message === 'deleted') { alert('Xóa thành công!'); loadProducts(); } 
-                            else { alert('Xóa thất bại.'); }
-                        });
+    }
+
+    function loadProducts() {
+        fetch('/api/products')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Lỗi khi tải dữ liệu: ${response.status}`);
                 }
+                return response.json();
+            })
+            .then(data => {
+                allProducts = data.products || data || [];
+                renderProducts(allProducts);
+            })
+            .catch(error => {
+                console.error('Chi tiết lỗi tải sản phẩm:', error);
+                const tableBody = document.getElementById('product-table-body');
+                tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; color: red;">Không thể tải danh sách sản phẩm. Vui lòng kiểm tra lại server.</td></tr>`;
+            });
+    }
+
+    document.getElementById('search-input').addEventListener('input', e => {
+        const searchTerm = e.target.value.toLowerCase();
+        const filtered = allProducts.filter(p => 
+            (p.id && p.id.toLowerCase().includes(searchTerm)) || 
+            (p.name_vi && p.name_vi.toLowerCase().includes(searchTerm)) || 
+            (p.created_by_name && p.created_by_name.toLowerCase().includes(searchTerm))
+        );
+        renderProducts(filtered);
+    });
+
+    document.getElementById('product-table-body').addEventListener('click', e => {
+        const target = e.target;
+
+        // Xử lý nút Xóa
+        if (target && target.classList.contains('delete-btn')) {
+            const productId = target.dataset.id;
+            if (confirm(`Bạn có chắc chắn muốn xóa sản phẩm có mã "${productId}" không?`)) {
+                fetch(`/api/products/${productId}`, { method: 'DELETE' })
+                .then(response => {
+                    if (response.ok) {
+                        alert('Xóa thành công!');
+                        loadProducts();
+                    } else {
+                        alert(`Xóa thất bại! Server báo lỗi: ${response.status}.`);
+                        console.error('Server-side error on delete:', response);
+                    }
+                })
+                .catch(error => {
+                    console.error('Network error on delete:', error);
+                    alert('Lỗi mạng! Không thể gửi yêu cầu xóa.');
+                });
             }
-        });
-        document.addEventListener('DOMContentLoaded', loadProducts);
-    </script>
+        }
+
+        // === ▼▼▼ CODE MỚI: Xử lý nút "Xem Đ.giá" ▼▼▼ ===
+        if (target && target.classList.contains('reviews-btn')) {
+            const productId = target.dataset.id;
+            const productName = target.dataset.name;
+            showReviews(productId, productName);
+        }
+        // === ▲▲▲ KẾT THÚC CODE MỚI ▲▲▲ ===
+    });
+
+    // Tải danh sách sản phẩm lần đầu khi trang được mở
+    document.addEventListener('DOMContentLoaded', loadProducts);
+
+
+    // === ▼▼▼ CODE MỚI: CÁC HÀM ĐỂ XỬ LÝ MODAL ĐÁNH GIÁ ▼▼▼ ===
+
+    // Lấy các phần tử HTML của Modal
+    const modal = document.getElementById('reviewsModal');
+    const closeButton = document.querySelector('.close-button');
+    const reviewsListDiv = document.getElementById('reviewsList');
+    const modalProductName = document.getElementById('modalProductName');
+
+    // Hàm đóng Modal
+    function closeModal() {
+        modal.style.display = 'none';
+    }
+    closeButton.onclick = closeModal;
+    window.onclick = (event) => {
+        if (event.target == modal) {
+            closeModal();
+        }
+    };
+
+    // Hàm chính: Mở Modal và tải dữ liệu đánh giá từ server
+    async function showReviews(productId, productName) {
+        modalProductName.textContent = productName; // Hiển thị tên sản phẩm trên Modal
+        reviewsListDiv.innerHTML = '<p>Đang tải đánh giá...</p>';
+        modal.style.display = 'block'; // Hiển thị Modal
+
+        try {
+            const response = await fetch(`/api/products/${productId}/reviews`);
+            if (!response.ok) {
+                throw new Error(`Lỗi server: ${response.status}`);
+            }
+            const data = await response.json();
+
+            if (data.reviews && data.reviews.length > 0) {
+                let reviewsHtml = '';
+                data.reviews.forEach(review => {
+                    // Tạo chuỗi ngôi sao
+                    const stars = '⭐'.repeat(review.rating) + '☆'.repeat(5 - review.rating);
+                    reviewsHtml += `
+                        <div class="review-item">
+                            <p class="review-author">Tên: ${review.author_name}</p>
+                            <p class="review-rating">Đánh giá: ${stars}</p>
+                            <p class="review-comment">Bình luận: ${review.comment || '<i>Không có bình luận</i>'}</p>
+                            <p><small>${new Date(review.created_at).toLocaleString('vi-VN')}</small></p>
+                        </div>
+                    `;
+                });
+                reviewsListDiv.innerHTML = reviewsHtml;
+            } else {
+                reviewsListDiv.innerHTML = '<p>Chưa có đánh giá nào cho sản phẩm này.</p>';
+            }
+        } catch (error) {
+            console.error('Lỗi khi tải đánh giá:', error);
+            reviewsListDiv.innerHTML = '<p style="color: red;">Không thể tải danh sách đánh giá. Vui lòng thử lại.</p>';
+        }
+    }
+    // === ▲▲▲ KẾT THÚC CODE MỚI ▲▲▲ ===
+
+</script>
 </body>
 </html>
