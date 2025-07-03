@@ -5,8 +5,10 @@
 // Import thư viện sqlite3
 const sqlite3 = require('sqlite3').verbose();
 
-// Tên file database. Nó sẽ tự được tạo ra trong thư mục dự án.
-const DBSOURCE = "data.db";
+// === THAY ĐỔI DUY NHẤT ĐỂ CHẠY TRÊN RENDER ===
+// Ưu tiên lấy đường dẫn từ biến môi trường của Render, 
+// nếu không có (tức là đang chạy ở máy bạn) thì dùng file "data.db" như cũ.
+const DBSOURCE = process.env.DB_PATH || "data.db";
 
 // Tạo và mở kết nối đến database
 const db = new sqlite3.Database(DBSOURCE, (err) => {

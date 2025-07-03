@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: kt-furniture
+    runtime: node
+    region: singapore
+    plan: free
+    branch: main
+    buildCommand: "npm install"
+    startCommand: "node index.js"
+    healthCheckPath: /
+    disks:
+      - name: data-storage
+        mountPath: /data
+        sizeGB: 1
+    envVars:
+      - key: DB_PATH
+        value: /data/data.db
+      - key: UPLOAD_DIR
+        value: /data/uploads
+      - key: SESSION_SECRET
+        generateValue: true
