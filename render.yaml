@@ -1,10 +1,3 @@
-# 1. Định nghĩa ổ đĩa ở cấp cao nhất
-disks:
-  - name: data-storage
-    mountPath: /data
-    sizeGB: 1
-
-# 2. Định nghĩa dịch vụ của bạn
 services:
   - type: web
     name: kt-furniture
@@ -15,8 +8,6 @@ services:
     buildCommand: "npm install"
     startCommand: "node index.js"
     healthCheckPath: /
-    # Không cần khai báo 'disks' ở đây nữa
-    # Render sẽ tự động gắn ổ đĩa 'data-storage' vào đường dẫn '/data'
     envVars:
       - key: DB_PATH
         value: /data/data.db
@@ -24,3 +15,7 @@ services:
         value: /data/uploads
       - key: SESSION_SECRET
         generateValue: true
+    disk:
+      name: data-storage
+      mountPath: /data
+      sizeGB: 1
