@@ -1,111 +1,51 @@
-// ===================================
-// === FILE: database.js (Đã cập nhật với parent_id) ===
-// ===================================
+// ==========================================================
+// === FILE: database.js (Cập nhật để dùng PostgreSQL) ===
+// ==========================================================
 
-// Import thư viện sqlite3
-const sqlite3 = require('sqlite3').verbose();
+// Import thư viện 'pg'
+const { Pool } = require('pg');
 
-// === THAY ĐỔI DUY NHẤT ĐỂ CHẠY TRÊN RENDER ===
-// Ưu tiên lấy đường dẫn từ biến môi trường của Render, 
-// nếu không có (tức là đang chạy ở máy bạn) thì dùng file "data.db" như cũ.
-const DBSOURCE = process.env.DB_PATH || "data.db";
-
-// Tạo và mở kết nối đến database
-const db = new sqlite3.Database(DBSOURCE, (err) => {
-    // Nếu có lỗi khi kết nối
-    if (err) {
-      console.error(err.message);
-      throw err;
-    } 
-    // Nếu kết nối thành công
-    else {
-        console.log('Đã kết nối tới database SQLite.');
-        
-        // Sử dụng db.serialize để đảm bảo các lệnh được thực thi tuần tự
-        db.serialize(() => {
-            
-            // Lệnh SQL để tạo bảng 'products' với ĐẦY ĐỦ CÁC CỘT
-            const productsTableSql = `
-            CREATE TABLE IF NOT EXISTS products (
-                id TEXT PRIMARY KEY, 
-                name_vi TEXT, 
-                name_en TEXT, 
-                collection_vi TEXT, 
-                collection_en TEXT, 
-                color_vi TEXT, 
-                color_en TEXT,
-                fabric_vi TEXT,
-                fabric_en TEXT,
-                wicker_vi TEXT,
-                wicker_en TEXT,
-                production_place TEXT,
-                company TEXT, 
-                customer TEXT, 
-                specification TEXT, 
-                material_vi TEXT, 
-                material_en TEXT, 
-                aluminum_profile TEXT,
-                imageUrl TEXT,
-                drawingUrl TEXT,
-                materialsUrl TEXT,
-                other_details TEXT,
-                created_by_name TEXT,
-                created_by_id INTEGER,
-                parent_id TEXT,  /* <-- CỘT MỚI ĐÃ ĐƯỢC THÊM VÀO ĐÂY */
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )`;
-
-            // Chạy lệnh tạo bảng 'products'
-            db.run(productsTableSql, (err) => {
-                if (err) {
-                    console.error("Lỗi khi tạo bảng products:", err.message);
-                } else {
-                    console.log("Bảng 'products' đã sẵn sàng.");
-                }
-            });
-
-            // Lệnh SQL để tạo bảng 'users'
-            const usersTableSql = `
-            CREATE TABLE IF NOT EXISTS users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT, 
-                ho_ten TEXT NOT NULL, 
-                ma_nhan_vien TEXT NOT NULL UNIQUE, 
-                password TEXT NOT NULL, 
-                is_approved INTEGER DEFAULT 0, 
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )`;
-
-            // Chạy lệnh tạo bảng 'users'
-            db.run(usersTableSql, (err) => {
-                if (err) {
-                    console.error("Lỗi khi tạo bảng users:", err.message);
-                } else {
-                    console.log("Bảng 'users' đã sẵn sàng.");
-                }
-            });
-
-            // Lệnh SQL để tạo bảng 'reviews'
-            const reviewsTableSql = `
-            CREATE TABLE IF NOT EXISTS reviews (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                product_id TEXT NOT NULL,
-                rating INTEGER NOT NULL,
-                comment TEXT,
-                author_name TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )`;
-
-            // Chạy lệnh tạo bảng 'reviews'
-            db.run(reviewsTableSql, (err) => {
-                if (err) {
-                    console.error("Lỗi khi tạo bảng reviews:", err.message);
-                } else {
-                    console.log("Bảng 'reviews' đã sẵn sàng.");
-                }
-            });
-        });
+// Cấu hình kết nối database
+// Mã này sẽ đọc các biến môi trường mà bạn sẽ thiết lập trên Cloud Run
+const dbConfig = {
+    // Khi chạy trên Cloud Run, nó sẽ dùng kết nối an toàn qua Unix Socket.
+    // Biến DB_CONNECTION_NAME sẽ được Google Cloud tự động cung cấp.
+    host: `/cloudsql/${process.env.DB_CONNECTION_NAME}`,
+    database: process.env.DB_NAME || 'postgres', // Tên database, mặc định là 'postgres'
+    user: process.env.DB_USER || 'postgres',     // Tên user, mặc định là 'postgres'
+    password: process.env.DB_PASSWORD,           // Mật khẩu sẽ được đọc từ biến môi trường
+    ssl: {
+        rejectUnauthorized: false // Cần thiết cho một số kết nối
     }
+};
+
+// Tuy nhiên, nếu bạn chạy ứng dụng trên máy tính của mình (không phải production)
+// nó sẽ cần kết nối qua IP Public.
+// (Phần này dành cho việc kiểm thử nâng cao, bạn có thể bỏ qua nếu chỉ deploy)
+if (process.env.NODE_ENV !== 'production') {
+    dbConfig.host = process.env.DB_HOST; // IP Public của Cloud SQL Instance
+}
+
+
+// Tạo một "pool" kết nối. Pool giúp quản lý nhiều kết nối đến database
+// một cách hiệu quả, tái sử dụng kết nối khi có thể để tăng hiệu năng.
+const pool = new Pool(dbConfig);
+
+// Ghi log khi kết nối thành công
+pool.on('connect', () => {
+    console.log('Đã tạo kết nối tới database PostgreSQL trên Cloud SQL.');
 });
 
-// Xuất (export) đối tượng 'db' để các file khác trong dự án có thể sử dụng
-module.exports = db;
+// Ghi log khi có lỗi
+pool.on('error', (err) => {
+    console.error('Lỗi kết nối database không mong muốn', err);
+    process.exit(-1);
+});
+
+
+// Xuất (export) một object duy nhất có phương thức là 'query'.
+// Các file khác (như index.js) sẽ gọi db.query(...) để thực thi lệnh SQL.
+// Cú pháp này giúp mã nguồn của bạn gọn gàng và dễ quản lý hơn.
+module.exports = {
+    query: (text, params) => pool.query(text, params),
+};
