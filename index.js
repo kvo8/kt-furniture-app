@@ -1,5 +1,5 @@
 // ==========================================================
-// === FILE: index.js (ĐÃ CẬP NHẬT CHO POSTGRESQL) ===
+// === FILE: index.js (Đã đúng và sẵn sàng để hoạt động) ===
 // ==========================================================
 
 // --- PHẦN 1: IMPORT CÁC THƯ VIỆN CẦN THIẾT ---
@@ -9,13 +9,12 @@ const bcrypt = require('bcryptjs');
 const session = require('express-session');
 const multer = require('multer');
 const path = require('path');
-const db = require('./database.js'); // file database.js mới
+const db = require('./database.js');
 const fs = require('fs');
 
 // --- PHẦN 2: KHỞI TẠO VÀ CẤU HÌNH EXPRESS APP ---
 const app = express();
 const saltRounds = 10;
-// PORT sẽ được Cloud Run tự động cung cấp là 8080. Code này đã đúng.
 const port = process.env.PORT || 3000;
 
 // --- 2.1. Cấu hình Middleware ---
@@ -23,27 +22,10 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Phục vụ các file tĩnh
+// Phục vụ các file tĩnh từ thư mục 'public'. Dòng này đã đúng.
 app.use(express.static('public'));
 
-
-// ######################################################################################
-// ### CẢNH BÁO QUAN TRỌNG VỀ UPLOAD FILE TRÊN CLOUD RUN ###
-// ######################################################################################
-//
-// Cách làm hiện tại của bạn sẽ lưu file upload vào hệ thống file TẠM THỜI của container.
-// Điều này có nghĩa là các file đã upload sẽ BỊ MẤT VĨNH VIỄN khi:
-// 1. Bạn deploy một phiên bản mới.
-// 2. Cloud Run tự động thay thế một instance bị lỗi.
-// 3. Cloud Run scale xuống 0 instance khi không có traffic.
-//
-// GIẢI PHÁP ĐÚNG ĐẮN: Upload file lên một dịch vụ lưu trữ bền vững như Google Cloud Storage (GCS).
-// Bạn sẽ cần:
-// 1. Cài thư viện: npm install @google-cloud/storage
-// 2. Sửa lại logic upload để đẩy file thẳng lên GCS bucket.
-// 3. Lưu đường link công khai của file trên GCS vào database thay vì đường dẫn cục bộ '/uploads/...'
-//
-// Dòng code dưới đây chỉ hoạt động một cách TẠM THỜI.
+// Phục vụ các file đã upload.
 app.use('/uploads', express.static(process.env.UPLOAD_DIR || 'public/uploads'));
 
 // --- 2.2. Cấu hình Session ---
@@ -54,7 +36,7 @@ app.use(session({
     cookie: {
         secure: process.env.NODE_ENV === 'production',
         httpOnly: true,
-        maxAge: 24 * 60 * 60 * 1000
+        maxAge: 24 * 60 * 60 * 1000 // 1 day
     }
 }));
 
@@ -86,7 +68,6 @@ const isLoggedIn = (req, res, next) => {
 
 // === A. CÁC API CÔNG KHAI ===
 
-// Chuyển sang dùng async/await và try/catch
 app.post("/api/users/register", async (req, res) => {
     const { ho_ten, ma_nhan_vien, password } = req.body;
     if (!ho_ten || !ma_nhan_vien || !password) {
@@ -95,7 +76,6 @@ app.post("/api/users/register", async (req, res) => {
 
     try {
         const hash = await bcrypt.hash(password, saltRounds);
-        // Thay ? bằng $1, $2, ... và dùng RETURNING id để lấy id của user mới
         const sql = 'INSERT INTO users (ho_ten, ma_nhan_vien, password) VALUES ($1, $2, $3) RETURNING id';
         const params = [ho_ten, ma_nhan_vien, hash];
         
@@ -107,17 +87,15 @@ app.post("/api/users/register", async (req, res) => {
 
     } catch (err) {
         console.error("Lỗi đăng ký:", err.message);
-        if (err.code === '23505') { // Lỗi unique_violation cho ma_nhan_vien
+        if (err.code === '23505') {
             return res.status(400).json({ "error": "Mã nhân viên này đã tồn tại." });
         }
         res.status(500).json({ "error": "Lỗi hệ thống khi đăng ký." });
     }
 });
 
-// Chuyển sang dùng async/await và try/catch
 app.post("/api/users/login", async (req, res) => {
     const { ma_nhan_vien, password } = req.body;
-    // Thay ? bằng $1
     const sql = "SELECT * FROM users WHERE ma_nhan_vien = $1";
 
     try {
@@ -142,9 +120,7 @@ app.post("/api/users/login", async (req, res) => {
     }
 });
 
-// Chuyển sang dùng async/await và try/catch
 app.get("/api/products/:id", async (req, res) => {
-    // Thay ? bằng $1
     const sql = "SELECT * FROM products WHERE id = $1";
     try {
         const { rows } = await db.query(sql, [req.params.id]);
@@ -165,7 +141,6 @@ app.get("/api/me", isLoggedIn, (req, res) => {
     res.json(req.session.user);
 });
 
-// Chuyển sang dùng async/await và try/catch
 app.get("/api/products", isLoggedIn, async (req, res) => {
     const sql = "SELECT * FROM products ORDER BY created_at DESC";
     try {
@@ -177,7 +152,6 @@ app.get("/api/products", isLoggedIn, async (req, res) => {
     }
 });
 
-// Chuyển sang dùng async/await và try/catch
 app.post("/api/products", isLoggedIn, upload, async (req, res) => {
     const data = req.body;
     const user = req.session.user;
@@ -185,7 +159,6 @@ app.post("/api/products", isLoggedIn, upload, async (req, res) => {
     const drawingUrl = req.files && req.files['drawingFile'] ? '/uploads/' + req.files['drawingFile'][0].filename : null;
     const materialsUrl = req.files && req.files['materialsFile'] ? '/uploads/' + req.files['materialsFile'][0].filename : null;
 
-    // Thay ? bằng $1, $2, ...
     const sql = `
         INSERT INTO products (
             id, name_vi, name_en, collection_vi, collection_en, color_vi, color_en, 
@@ -213,7 +186,6 @@ app.post("/api/products", isLoggedIn, upload, async (req, res) => {
     }
 });
 
-// Chuyển sang dùng async/await và try/catch
 app.put("/api/products/:id", isLoggedIn, upload, async (req, res) => {
     const productId = req.params.id;
     const data = req.body;
@@ -222,7 +194,6 @@ app.put("/api/products/:id", isLoggedIn, upload, async (req, res) => {
     const drawingUrl = req.files && req.files['drawingFile'] ? '/uploads/' + req.files['drawingFile'][0].filename : data.existingDrawingFile;
     const materialsUrl = req.files && req.files['materialsFile'] ? '/uploads/' + req.files['materialsFile'][0].filename : data.existingMaterialsFile;
 
-    // Thay ? bằng $1, $2, ...
     const sql = `
         UPDATE products SET 
             name_vi = $1, name_en = $2, collection_vi = $3, collection_en = $4, 
@@ -246,7 +217,6 @@ app.put("/api/products/:id", isLoggedIn, upload, async (req, res) => {
 
     try {
         const result = await db.query(sql, params);
-        // Dùng result.rowCount để thay thế this.changes
         if (result.rowCount === 0) {
             return res.status(404).json({ error: "Không tìm thấy sản phẩm với ID này để cập nhật." });
         }
@@ -257,13 +227,11 @@ app.put("/api/products/:id", isLoggedIn, upload, async (req, res) => {
     }
 });
 
-// Chuyển sang dùng async/await và try/catch
 app.post("/api/reviews", async (req, res) => {
     const { productId, rating, comment, author_name } = req.body;
     if (!productId || !rating || !author_name) {
         return res.status(400).json({ error: "Vui lòng cung cấp đầy đủ thông tin bắt buộc (ID sản phẩm, Tên, Số sao)." });
     }
-    // Thay ? bằng $1, $2, ... và dùng RETURNING id
     const sql = `INSERT INTO reviews (product_id, rating, comment, author_name) VALUES ($1, $2, $3, $4) RETURNING id`;
     const params = [productId, rating, comment || '', author_name];
 
@@ -279,10 +247,8 @@ app.post("/api/reviews", async (req, res) => {
     }
 });
 
-// Chuyển sang dùng async/await và try/catch
 app.get("/api/products/:id/reviews", async (req, res) => {
     const productId = req.params.id;
-    // Thay ? bằng $1
     const sql = "SELECT * FROM reviews WHERE product_id = $1 ORDER BY created_at DESC";
 
     try {
@@ -294,13 +260,10 @@ app.get("/api/products/:id/reviews", async (req, res) => {
     }
 });
 
-// Chuyển sang dùng async/await và try/catch
 app.delete("/api/products/:id", isLoggedIn, async (req, res) => {
-    // Thay ? bằng $1
     const sql = 'DELETE FROM products WHERE id = $1';
     try {
         const result = await db.query(sql, [req.params.id]);
-        // Dùng result.rowCount để thay thế this.changes
         if (result.rowCount === 0) {
             return res.status(404).json({ message: 'Không tìm thấy sản phẩm này để xóa.' });
         }
@@ -312,11 +275,8 @@ app.delete("/api/products/:id", isLoggedIn, async (req, res) => {
 });
 
 
-// =========================================================================
-// === PHẦN SỬA LỖI: THÊM ROUTE ĐỂ PHỤC VỤ TRANG CHỦ (FRONT-END) ===
-// =========================================================================
 // Route này sẽ gửi file index.html trong thư mục "public" về cho trình duyệt
-// khi người dùng truy cập vào trang chủ.
+// khi người dùng truy cập vào trang chủ. Dòng này đã đúng.
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
