@@ -13,23 +13,21 @@
 
         h1 {
             color: #333;
-            /* === THAY ĐỔI 1: Tăng kích thước chữ chào mừng === */
-            font-size: 2.8rem; /* Trước đây không có, dùng size mặc định. Giờ lớn hơn nhiều. */
-            margin-bottom: 8px; /* Giảm khoảng cách với dòng mô tả */
+            font-size: 2.8rem;
+            margin-bottom: 8px;
         }
 
-        /* === THÊM MỚI: Định dạng cho dòng mô tả === */
         p {
-            font-size: 1.2rem; /* Làm chữ to hơn */
-            color: #666;      /* Làm màu chữ dịu hơn */
-            margin-bottom: 40px; /* Tăng khoảng cách tới nút bấm */
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 40px;
         }
 
         .nav-links a { 
             display: inline-block; 
             margin: 10px; 
-            font-size: 18px; /* Kích thước này đã khá ổn cho nút bấm */
-            padding: 12px 25px; /* Tăng nhẹ padding ngang cho nút to hơn */
+            font-size: 18px;
+            padding: 12px 25px;
             background-color: #007bff; 
             color: white; 
             text-decoration: none; 
@@ -41,16 +39,15 @@
             background-color: #0056b3;
         }
         
-        /* === THÊM MỚI: CSS CHO HÌNH ẢNH DASHBOARD === */
         .dashboard-image-container {
-            margin-top: 50px; /* Tạo khoảng cách với nút ở trên */
+            margin-top: 50px;
         }
         .dashboard-image-container img {
-            max-width: 100%; /* Đảm bảo hình không bị tràn ra ngoài màn hình */
-            height: auto; /* Giữ đúng tỷ lệ của hình */
-            max-height: 400px; /* Giới hạn chiều cao tối đa của hình */
-            border-radius: 8px; /* Bo góc cho đẹp */
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); /* Thêm bóng đổ nhẹ */
+            max-width: 100%;
+            height: auto;
+            max-height: 400px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
 
     </style>
@@ -67,24 +64,31 @@
         <img src="https://i.postimg.cc/0Qk1yK9q/unnamed.png" alt="KT Furniture Dashboard Image">
     </div>
 
-
     <script>
         // Khi trang tải, gọi API để lấy thông tin người dùng
         fetch('/api/me')
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    // Nếu response không thành công (ví dụ: 401 Unauthorized), chuyển hướng ngay
+                    throw new Error('Not authenticated');
+                }
+                return response.json();
+            })
             .then(data => {
                 // Nếu API trả về tên người dùng, hiển thị lời chào
                 if (data && data.name) {
                     document.getElementById('welcome-message').textContent = 'Chào mừng, ' + data.name + '!';
                 } else {
-                    // Nếu không, chuyển về trang đăng nhập
-                    window.location.href = '/login.html';
+                    // Nếu data không có thông tin user, cũng là lỗi
+                    throw new Error('User data not found');
                 }
             })
             .catch(error => {
-                // Nếu có lỗi, cũng chuyển về trang đăng nhập
+                // Nếu có bất kỳ lỗi nào, chuyển về trang đăng nhập
                 console.error('Lỗi xác thực:', error);
-                window.location.href = '/login.html';
+                // === SỬA LỖI TẠI ĐÂY ===
+                // Chuyển hướng về trang chủ ("/") thay vì file "login.html" không còn tồn tại
+                window.location.href = '/'; 
             });
     </script>
 </body>
