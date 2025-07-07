@@ -1,33 +1,17 @@
-// === FILE: database.js (PHIÊN BẢN CUỐI CÙNG) ===
+// === FILE: database.js (PHIÊN BẢN CHO SIDECAR PROXY) ===
 
-require('dotenv').config();
+require('dotenv').config(); // Vẫn giữ để chạy local
 const { Pool } = require('pg');
 
-let dbConfig;
-
-// Nếu đang chạy trên môi trường Cloud Run
-if (process.env.K_SERVICE) {
-    console.log("Đang chạy trên môi trường Cloud Run. Dùng kết nối qua Socket.");
-    dbConfig = {
-        host: `/cloudsql/${process.env.DB_CONNECTION_NAME}`,
-        database: process.env.DB_NAME,
-        user: process.env.DB_USER,
-        password: process.env.DB_PASSWORD,
-        ssl: { rejectUnauthorized: false }
-    };
-} else {
-    // Nếu đang chạy ở máy tính local
-    console.log("Đang chạy trên môi trường local. Dùng kết nối qua TCP.");
-    dbConfig = {
-        host: process.env.DB_HOST,
-        port: process.env.DB_PORT,
-        database: process.env.DB_NAME,
-        user: process.env.DB_USER,
-        password: process.env.DB_PASSWORD,
-        // === SỬA LỖI Ở ĐÂY: Thêm dòng này để tắt SSL khi chạy local ===
-        ssl: false
-    };
-}
+// Luôn kết nối tới localhost vì proxy sẽ luôn chạy bên cạnh
+const dbConfig = {
+    host: process.env.DB_HOST || '127.0.0.1',
+    port: process.env.DB_PORT || 5432,
+    database: process.env.DB_NAME,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    ssl: false // Luôn tắt SSL khi kết nối tới proxy
+};
 
 const pool = new Pool(dbConfig);
 
