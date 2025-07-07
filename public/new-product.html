@@ -1,12 +1,12 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Thêm Sản Phẩm Mới</title>
-    <style>
+&lt;!DOCTYPE html&gt;
+&lt;html lang=&quot;vi&quot;&gt;
+&lt;head&gt;
+    &lt;meta charset=&quot;UTF-8&quot;&gt;
+    &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;&gt;
+    &lt;title&gt;Thêm Sản Phẩm Mới&lt;/title&gt;
+    &lt;style&gt;
         body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            font-family: -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Roboto, Helvetica, Arial, sans-serif; 
             max-width: 800px; 
             margin: 40px auto; 
             padding: 20px; 
@@ -69,91 +69,45 @@
             text-align: center;
             margin-top: 20px;
         }
-    </style>
-</head>
-<body>
-    <h1>Thêm Sản Phẩm Mới / Add New Product</h1>
+    &lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;h1&gt;Thêm Sản Phẩm Mới / Add New Product&lt;/h1&gt;
+    <div class="form-group">
+    <label for="parent_id">Mã Sản Phẩm Gốc / Parent Product ID (Để trống nếu đây là sản phẩm mới)</label>
+    <input type="text" id="parent_id" name="parent_id" placeholder="Ví dụ: KT25LVSSF0001">
+</div>
 
-    <form id="product-form" enctype="multipart/form-data">
-        <div class="form-group">
-            <label>Mã Sản Phẩm / Product ID (Bắt buộc 11 ký tự sau "KT")</label>
-            <div class="id-prefix">
-                <span>KT</span>
-                <input type="text" id="product-id-suffix" required maxlength="11" pattern=".{11,11}" title="Vui lòng nhập đúng 11 ký tự.">
-                <input type="hidden" name="id" id="full-product-id">
-            </div>
-        </div>
-        
-        <div class="form-group">
-            <label>Mã Sản Phẩm Gốc / Parent Product ID (Để trống nếu đây là sản phẩm mới)</label>
-            <input type="text" name="parent_id" placeholder="Ví dụ: KT25LVSSF0001">
-        </div>
-        
-        <div class="form-group"><label>Tên Sản Phẩm (VI)</label><input type="text" name="name_vi" required></div>
-        <div class="form-group"><label>Product Name (EN)</label><input type="text" name="name_en" required></div>
-        <div class="form-group"><label>Bộ Sưu Tập (VI)</label><input type="text" name="collection_vi"></div>
-        <div class="form-group"><label>Collection (EN)</label><input type="text" name="collection_en"></div>
-        <div class="form-group"><label>Màu sắc (VI)</label><input type="text" name="color_vi"></div>
-        <div class="form-group"><label>Color (EN)</label><input type="text" name="color_en"></div>
-        <div class="form-group"><label>Vải (VI)</label><input type="text" name="fabric_vi"></div>
-        <div class="form-group"><label>Fabric (EN)</label><input type="text" name="fabric_en"></div>
-        <div class="form-group"><label>Dây (VI)</label><input type="text" name="wicker_vi"></div>
-        <div class="form-group"><label>Wicker (EN)</label><input type="text" name="wicker_en"></div>
-        <div class="form-group">
-            <label>Nơi sản xuất / Production Place</label>
-            <select name="production_place">
-                <option value="KT">KT</option>
-                <option value="Minh Tien">Minh Tiến</option>
-                <option value="Other">Khác</option>
-            </select>
-        </div>
-        <div class="form-group"><label>Công ty / Company</label><input type="text" name="company"></div>
-        <div class="form-group"><label>Khách hàng / Customer</label><input type="text" name="customer"></div>
-        <div class="form-group"><label>Thông số / Specification</label><input type="text" name="specification"></div>
-        <div class="form-group"><label>Chất liệu (VI)</label><input type="text" name="material_vi"></div>
-        <div class.form-group"><label>Material (EN)</label><input type="text" name="material_en"></div>
-        <div class="form-group"><label>Biên dạng nhôm / Aluminum Profile</label><input type="text" name="aluminum_profile"></div>
-        <div class="form-group"><label>Chi tiết khác / Other Details</label><textarea name="other_details" rows="4"></textarea></div>
+<div class="form-group"><label for="name_vi">Tên Sản Phẩm (VI)</label><input type="text" id="name_vi" name="name_vi" required></div>
+<div class="form-group"><label for="name_en">Product Name (EN)</label><input type="text" id="name_en" name="name_en" required></div>
+<div class="form-group"><label for="collection_vi">Bộ Sưu Tập (VI)</label><input type="text" id="collection_vi" name="collection_vi"></div>
+<div class="form-group"><label for="collection_en">Collection (EN)</label><input type="text" id="collection_en" name="collection_en"></div>
+<div class="form-group"><label for="color_vi">Màu sắc (VI)</label><input type="text" id="color_vi" name="color_vi"></div>
+<div class="form-group"><label for="color_en">Color (EN)</label><input type="text" id="color_en" name="color_en"></div>
+<div class="form-group"><label for="fabric_vi">Vải (VI)</label><input type="text" id="fabric_vi" name="fabric_vi"></div>
+<div class="form-group"><label for="fabric_en">Fabric (EN)</label><input type="text" id="fabric_en" name="fabric_en"></div>
+<div class="form-group"><label for="wicker_vi">Dây (VI)</label><input type="text" id="wicker_vi" name="wicker_vi"></div>
+<div class="form-group"><label for="wicker_en">Wicker (EN)</label><input type="text" id="wicker_en" name="wicker_en"></div>
+<div class="form-group">
+    <label for="production_place">Nơi sản xuất / Production Place</label>
+    <select id="production_place" name="production_place">
+        <option value="KT">KT</option>
+        <option value="Minh Tien">Minh Tiến</option>
+        <option value="Other">Khác</option>
+    </select>
+</div>
+<div class="form-group"><label for="company">Công ty / Company</label><input type="text" id="company" name="company"></div>
+<div class="form-group"><label for="customer">Khách hàng / Customer</label><input type="text" id="customer" name="customer"></div>
+<div class="form-group"><label for="specification">Thông số / Specification</label><input type="text" id="specification" name="specification"></div>
+<div class="form-group"><label for="material_vi">Chất liệu (VI)</label><input type="text" id="material_vi" name="material_vi"></div>
+<div class="form-group"><label for="material_en">Material (EN)</label><input type="text" id="material_en" name="material_en"></div>
+<div class="form-group"><label for="aluminum_profile">Biên dạng nhôm / Aluminum Profile</label><input type="text" id="aluminum_profile" name="aluminum_profile"></div>
+<div class="form-group"><label for="other_details">Chi tiết khác / Other Details</label><textarea id="other_details" name="other_details" rows="4"></textarea></div>
 
-        <div class="form-group"><label>Bản vẽ / Drawing (PDF)</label><input type="file" name="drawingFile" accept=".pdf"></div>
-        <div class="form-group"><label>Vật tư / Materials (Word, Excel, PDF)</label><input type="file" name="materialsFile" accept=".doc,.docx,.xls,.xlsx,.pdf"></div>
-        <div class="form-group"><label>Hình ảnh sản phẩm / Product Image</label><input type="file" name="productImage" accept="image/*"></div>
+<div class="form-group"><label for="drawingFile">Bản vẽ / Drawing (PDF)</label><input type="file" id="drawingFile" name="drawingFile" accept=".pdf"></div>
+<div class="form-group"><label for="materialsFile">Vật tư / Materials (Word, Excel, PDF)</label><input type="file" id="materialsFile" name="materialsFile" accept=".doc,.docx,.xls,.xlsx,.pdf"></div>
+<div class="form-group"><label for="productImage">Hình ảnh sản phẩm / Product Image</label><input type="file" id="productImage" name="productImage" accept="image/*"></div>
 
-        <button type="submit">Lưu và Xem lại</button>
-    </form>
-
-    <div class="nav-link"><a href="/product-list.html">Quay về danh sách sản phẩm</a></div>
-
-    <script>
-        // Giữ nguyên toàn bộ phần script của bạn
-        const form = document.getElementById('product-form');
-        const idSuffixInput = document.getElementById('product-id-suffix');
-        const fullIdInput = document.getElementById('full-product-id');
-
-        form.addEventListener('submit', function(event) {
-            event.preventDefault();
-            fullIdInput.value = 'KT' + idSuffixInput.value;
-            const formData = new FormData(this);
-            fetch('/api/products', {
-                method: 'POST',
-                body: formData,
-            })
-            .then(response => {
-                if (!response.ok) {
-                    return response.json().then(err => { throw new Error(err.error || 'Lỗi không xác định từ server') });
-                }
-                return response.json();
-            })
-            .then(result => {
-                if (result.error) {
-                    throw new Error(result.error);
-                }
-                window.location.href = `/success.html?id=${result.id}`;
-            })
-            .catch(error => {
-                alert('Có lỗi xảy ra: ' + error.message);
-            });
-        });
-    </script>
-</body>
-</html>
+<button type="submit">Lưu và Xem lại</button>
+&lt;/body&gt;
+&lt;/html&gt;
