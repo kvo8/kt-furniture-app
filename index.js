@@ -1,5 +1,5 @@
 // ==========================================================
-// === FILE: index.js (Phiên bản Gỡ Lỗi Đặc Biệt) ===
+// === FILE: index.js (Phiên bản Hoàn Chỉnh) ===
 // ==========================================================
 
 // --- PHẦN 1: IMPORT CÁC THƯ VIỆN CẦN THIẾT ---
@@ -11,6 +11,9 @@ const multer = require('multer');
 const path = require('path');
 const db = require('./database.js');
 const fs = require('fs');
+
+// THÊM MỚI: Import thư viện để lưu session vào database
+const pgSession = require('connect-pg-simple')(session);
 
 // --- PHẦN 2: KHỞI TẠO VÀ CẤU HÌNH EXPRESS APP ---
 const app = express();
@@ -24,15 +27,23 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 
+// THÊM MỚI: Tạo một "kho" lưu session trong database PostgreSQL
+const sessionStore = new pgSession({
+    pool: db.pool, // Sử dụng connection pool từ file database.js của bạn
+    tableName: 'user_sessions' // Tên của bảng sẽ được dùng để lưu session
+});
+
 // --- 2.2. Cấu hình Session ---
+// Cập nhật để sử dụng kho lưu session mới, ổn định hơn
 app.use(session({
-    secret: process.env.SESSION_SECRET || 'mot-chuoi-bi-mat-rat-an-toan-va-duy-nhat-final-version',
+    store: sessionStore, // Chỉ định nơi lưu session mới
+    secret: process.env.SESSION_SECRET,
     resave: false,
-    saveUninitialized: true,
+    saveUninitialized: false, // Đây là lựa chọn tốt nhất cho production
     cookie: {
         secure: process.env.NODE_ENV === 'production',
         httpOnly: true,
-        maxAge: 24 * 60 * 60 * 1000
+        maxAge: 24 * 60 * 60 * 1000 // Session tồn tại trong 1 ngày
     }
 }));
 
@@ -77,6 +88,7 @@ app.post("/api/users/register", async (req, res) => {
         const sql = 'INSERT INTO users (ho_ten, ma_nhan_vien, password) VALUES ($1, $2, $3) RETURNING id';
         const params = [ho_ten, ma_nhan_vien, hash];
         const result = await db.query(sql, params);
+        // Gán thông tin user vào session
         req.session.user = { id: result.rows[0].id, name: ho_ten, employeeId: ma_nhan_vien };
         res.status(201).json({ "message": "Đăng ký thành công và đã tự động đăng nhập." });
     } catch (err) {
@@ -84,9 +96,7 @@ app.post("/api/users/register", async (req, res) => {
         if (err.code === '23505') {
             return res.status(400).json({ "error": "Mã nhân viên này đã tồn tại." });
         }
-        // === THAY ĐỔI QUAN TRỌNG 1: HIỂN THỊ LỖI THẬT ===
-        // Thay vì trả về "Lỗi hệ thống...", chúng ta trả về lỗi chi tiết từ database
-        res.status(500).json({ "error": err.message });
+        res.status(500).json({ "error": "Lỗi hệ thống khi đăng ký." });
     }
 });
 
@@ -102,6 +112,7 @@ app.post("/api/users/login", async (req, res) => {
         }
         const isMatch = await bcrypt.compare(password, user.password);
         if (isMatch) {
+            // Gán thông tin user vào session
             req.session.user = { id: user.id, name: user.ho_ten, employeeId: user.ma_nhan_vien };
             res.json({ "message": "Đăng nhập thành công" });
         } else {
@@ -109,12 +120,16 @@ app.post("/api/users/login", async (req, res) => {
         }
     } catch (err) {
         console.error("Lỗi đăng nhập:", err.message);
-        // === THAY ĐỔI QUAN TRỌNG 2: HIỂN THỊ LỖI THẬT ===
-        res.status(500).json({ "error": err.message });
+        res.status(500).json({ "error": "Lỗi hệ thống khi đăng nhập." });
     }
 });
 
-// ... (Các API products và reviews giữ nguyên) ...
+// Lấy thông tin user hiện tại
+app.get("/api/me", isLoggedIn, (req, res) => {
+    res.json(req.session.user);
+});
+
+// ... (Bạn có thể thêm lại các API cho products và reviews ở đây) ...
 
 // --- PHẦN 4: KHỞI ĐỘNG SERVER ---
 app.listen(port, () => {
