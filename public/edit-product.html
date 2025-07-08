@@ -2,127 +2,240 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chỉnh Sửa Sản Phẩm</title>
+    <!-- Sử dụng file CSS chung của bạn -->
+    <link rel="stylesheet" href="/css/style.css">
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; max-width: 800px; margin: auto; padding: 20px; background-color: #f4f4f9; }
-        h1 { text-align: center; color: #333; }
-        form { display: flex; flex-direction: column; gap: 15px; background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-        input, select, textarea, button { padding: 12px; font-size: 16px; border-radius: 5px; border: 1px solid #ccc; width: 100%; box-sizing: border-box; }
-        button { background-color: #ffc107; color: black; border: none; cursor: pointer; font-weight: bold; margin-top: 10px; }
-        .form-group { display: flex; flex-direction: column; }
-        label { margin-bottom: 5px; font-weight: bold; color: #555; }
-        .id-prefix span { padding: 12px; background-color: #e9ecef; border: 1px solid #ccc; border-right: none; border-radius: 5px 0 0 5px; }
-        input[readonly] { background-color: #e9ecef; }
-        .nav-link { display: block; text-align: center; margin-top: 20px; }
+        /*
+         * CSS Nâng Cao Cho Trải Nghiệm Người Dùng Tốt Hơn
+         * Khi nút submit bị vô hiệu hóa (trong lúc đang gửi form),
+         * nó sẽ đổi màu và con trỏ chuột để người dùng biết không thể click được nữa.
+         */
+        button[type="submit"]:disabled {
+            background-color: #5a6268; /* Một màu xám đậm hơn */
+            border-color: #5a6268;
+            cursor: not-allowed;      /* Biểu tượng con trỏ chuột "cấm" */
+            opacity: 0.65;            /* Làm mờ nút đi một chút */
+        }
+        
+        /* Style cho phần hiển thị file hiện tại */
+        .file-info {
+            margin-top: 8px;
+            font-size: 0.9em;
+            font-style: italic;
+            color: #555;
+        }
+        .file-info img {
+            max-width: 100px;
+            max-height: 100px;
+            border-radius: 5px;
+            vertical-align: middle;
+            margin-left: 10px;
+            border: 1px solid #ddd;
+        }
+        .file-info a {
+            text-decoration: none;
+            color: #007bff;
+            font-weight: bold;
+        }
+        .file-info a:hover {
+            text-decoration: underline;
+        }
+        .file-info span.no-file {
+            color: #888;
+        }
     </style>
 </head>
 <body>
-    <h1>Chỉnh Sửa Sản Phẩm / Edit Product</h1>
-    <form id="edit-form" enctype="multipart/form-data">
-        <div class="form-group">
-            <label>Mã Sản Phẩm / Product ID (Không thể sửa)</label>
-            <input type="text" name="id" readonly>
-        </div>
-        <div class="form-group"><label>Tên Sản Phẩm (VI)</label><input type="text" name="name_vi" required></div>
-        <div class="form-group"><label>Product Name (EN)</label><input type="text" name="name_en" required></div>
-        <div class="form-group"><label>Bộ Sưu Tập (VI)</label><input type="text" name="collection_vi"></div>
-        <div class="form-group"><label>Collection (EN)</label><input type="text" name="collection_en"></div>
-        <div class="form-group"><label>Màu sắc (VI)</label><input type="text" name="color_vi"></div>
-        <div class="form-group"><label>Color (EN)</label><input type="text" name="color_en"></div>
-        <div class="form-group"><label>Vải (VI)</label><input type="text" name="fabric_vi"></div>
-        <div class="form-group"><label>Fabric (EN)</label><input type="text" name="fabric_en"></div>
-        <div class="form-group"><label>Dây (VI)</label><input type="text" name="wicker_vi"></div>
-        <div class="form-group"><label>Wicker (EN)</label><input type="text" name="wicker_en"></div>
-        <div class="form-group">
-            <label>Nơi sản xuất / Production Place</label>
-            <select name="production_place"><option value="KT">KT</option><option value="Minh Tien">Minh Tiến</option><option value="Other">Khác</option></select>
-        </div>
-        <div class="form-group"><label>Công ty / Company</label><input type="text" name="company"></div>
-        <div class="form-group"><label>Khách hàng / Customer</label><input type="text" name="customer"></div>
-        <div class="form-group"><label>Thông số / Specification</label><input type="text" name="specification"></div>
-        <div class="form-group"><label>Chất liệu (VI)</label><input type="text" name="material_vi"></div>
-        <div class="form-group"><label>Material (EN)</label><input type="text" name="material_en"></div>
-        <div class="form-group"><label>Biên dạng nhôm / Aluminum Profile</label><input type="text" name="aluminum_profile"></div>
-        <div class="form-group"><label>Chi tiết khác / Other Details</label><textarea name="other_details" rows="4"></textarea></div>
-        
-        <div class="form-group">
-            <label>Tải lên ảnh mới (Để trống nếu không muốn thay đổi)</label>
-            <input type="file" name="productImage" accept="image/*">
-            <input type="hidden" name="existingImageUrl">
-            <p>Ảnh hiện tại: <a id="current-image-link" href="#" target="_blank"><img id="current-image" src="" width="100"></a></p>
-        </div>
-        <div class="form-group">
-            <label>Tải lên bản vẽ mới (Để trống nếu không muốn thay đổi)</label>
-            <input type="file" name="drawingFile" accept=".pdf">
-            <input type="hidden" name="existingDrawingUrl">
-            <p>Bản vẽ hiện tại: <a id="current-drawing-link" href="#" target="_blank">Xem file</a></p>
-        </div>
-        <div class="form-group">
-            <label>Tải lên vật tư mới (Để trống nếu không muốn thay đổi)</label>
-            <input type="file" name="materialsFile" accept=".doc,.docx,.xls,.xlsx,.pdf">
-            <input type="hidden" name="existingMaterialsUrl">
-            <p>Vật tư hiện tại: <a id="current-materials-link" href="#" target="_blank">Xem file</a></p>
-        </div>
+    <div class="container">
+        <h1>Chỉnh Sửa Sản Phẩm / Edit Product</h1>
+        <p>Thay đổi thông tin sản phẩm và nhấn "Lưu Thay Đổi" để cập nhật.</p>
 
-        <button type="submit">Lưu Thay Đổi / Save Changes</button>
-    </form>
-    <div class="nav-link"><a href="/product-list.html">Quay về danh sách</a></div>
+        <!-- Form này sẽ được điền dữ liệu tự động bằng JavaScript -->
+        <form id="edit-form" enctype="multipart/form-data">
+            
+            <!-- CÁC PHẦN FORM GIỮ NGUYÊN KHÔNG ĐỔI -->
+            <div class="form-section">
+                <h2>Thông Tin Chung</h2>
+                <div class="form-grid">
+                    <div class="form-group full-width">
+                        <label>Mã Sản Phẩm / Product ID (Không thể sửa)</label>
+                        <input type="text" name="id" readonly style="background-color: #e9ecef; color: #495057;">
+                    </div>
+                    <div class="form-group"><label>Tên Sản Phẩm (VI)</label><input type="text" name="name_vi" required></div>
+                    <div class="form-group"><label>Product Name (EN)</label><input type="text" name="name_en" required></div>
+                    <div class="form-group"><label>Bộ Sưu Tập (VI)</label><input type="text" name="collection_vi"></div>
+                    <div class="form-group"><label>Collection (EN)</label><input type="text" name="collection_en"></div>
+                </div>
+            </div>
 
+            <div class="form-section">
+                <h2>Chi Tiết Vật Liệu & Sản Xuất</h2>
+                <div class="form-grid">
+                    <div class="form-group"><label>Màu sắc (VI)</label><input type="text" name="color_vi"></div>
+                    <div class="form-group"><label>Color (EN)</label><input type="text" name="color_en"></div>
+                    <div class="form-group"><label>Vải (VI)</label><input type="text" name="fabric_vi"></div>
+                    <div class="form-group"><label>Fabric (EN)</label><input type="text" name="fabric_en"></div>
+                    <div class="form-group"><label>Dây (VI)</label><input type="text" name="wicker_vi"></div>
+                    <div class="form-group"><label>Wicker (EN)</label><input type="text" name="wicker_en"></div>
+                    <div class="form-group"><label>Chất liệu (VI)</label><input type="text" name="material_vi"></div>
+                    <div class="form-group"><label>Material (EN)</label><input type="text" name="material_en"></div>
+                    <div class="form-group full-width"><label>Biên dạng nhôm</label><input type="text" name="aluminum_profile"></div>
+                    <div class="form-group">
+                        <label>Nơi sản xuất</label>
+                        <select name="production_place"><option value="KT">KT</option><option value="Minh Tien">Minh Tiến</option><option value="Other">Khác</option></select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h2>Thông Tin Thương Mại & Kỹ Thuật</h2>
+                <div class="form-grid">
+                     <div class="form-group"><label>Công ty</label><input type="text" name="company"></div>
+                     <div class="form-group"><label>Khách hàng</label><input type="text" name="customer"></div>
+                     <div class="form-group full-width"><label>Thông số</label><input type="text" name="specification"></div>
+                     <div class="form-group full-width"><label>Chi tiết khác</label><textarea name="other_details" rows="3"></textarea></div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h2>Tệp Đính Kèm (Để trống nếu không muốn thay đổi)</h2>
+                <div class="form-group full-width">
+                    <label>Tải lên ảnh mới</label>
+                    <input type="file" name="productImage" accept="image/*">
+                    <input type="hidden" name="existingImageUrl">
+                    <div class="file-info" id="current-image-info"><span class="no-file">Đang tải...</span></div>
+                </div>
+                <div class="form-group full-width">
+                    <label>Tải lên bản vẽ mới</label>
+                    <input type="file" name="drawingFile" accept=".pdf">
+                    <input type="hidden" name="existingDrawingUrl">
+                    <div class="file-info" id="current-drawing-info"><span class="no-file">Đang tải...</span></div>
+                </div>
+                <div class="form-group full-width">
+                    <label>Tải lên vật tư mới</label>
+                    <input type="file" name="materialsFile" accept=".doc,.docx,.xls,.xlsx,.pdf">
+                    <input type="hidden" name="existingMaterialsUrl">
+                    <div class="file-info" id="current-materials-info"><span class="no-file">Đang tải...</span></div>
+                </div>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" id="submit-button">Lưu Thay Đổi</button>
+            </div>
+        </form>
+        <div class="nav-link"><a href="/product-list.html">Quay về danh sách</a></div>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- === PHẦN JAVASCRIPT XỬ LÝ FORM (ĐÃ TỐI ƯU VÀ CHÚ THÍCH KỸ) === -->
+    <!-- =================================================================== -->
     <script>
+        // Lấy các element quan trọng và lưu vào biến
         const form = document.getElementById('edit-form');
+        const submitButton = document.getElementById('submit-button');
         const urlParams = new URLSearchParams(window.location.search);
         const productId = urlParams.get('id');
 
+        // Hàm trợ giúp để điền dữ liệu sản phẩm vào form
+        function populateForm(product) {
+            // Lặp qua tất cả các key trong đối tượng 'product' nhận về từ server
+            for (const key in product) {
+                // Kiểm tra xem có element nào trong form có 'name' trùng với key không
+                if (form.elements[key]) {
+                    // Gán giá trị cho element đó. Dùng `|| ''` để tránh gán giá trị 'null' hoặc 'undefined'
+                    form.elements[key].value = product[key] || '';
+                }
+            }
+
+            // Xử lý riêng cho các link file để hiển thị đúng
+            const imageUrl = product.imageUrl || product.imageurl; // Tương thích với cả hai kiểu tên cột
+            const imageInfoDiv = document.getElementById('current-image-info');
+            if (imageUrl) {
+                imageInfoDiv.innerHTML = `Ảnh hiện tại: <a href="${imageUrl}" target="_blank"><img src="${imageUrl}" alt="Ảnh sản phẩm"></a>`;
+                form.elements['existingImageUrl'].value = imageUrl;
+            } else {
+                imageInfoDiv.innerHTML = `Ảnh hiện tại: <span class="no-file">Không có</span>`;
+            }
+
+            const drawingUrl = product.drawingUrl || product.drawingurl;
+            const drawingInfoDiv = document.getElementById('current-drawing-info');
+            if (drawingUrl) {
+                drawingInfoDiv.innerHTML = `Bản vẽ hiện tại: <a href="${drawingUrl}" target="_blank">Xem File</a>`;
+                form.elements['existingDrawingUrl'].value = drawingUrl;
+            } else {
+                drawingInfoDiv.innerHTML = `Bản vẽ hiện tại: <span class="no-file">Không có</span>`;
+            }
+
+            const materialsUrl = product.materialsUrl || product.materialsurl;
+            const materialsInfoDiv = document.getElementById('current-materials-info');
+            if (materialsUrl) {
+                materialsInfoDiv.innerHTML = `Vật tư hiện tại: <a href="${materialsUrl}" target="_blank">Xem File</a>`;
+                form.elements['existingMaterialsUrl'].value = materialsUrl;
+            } else {
+                materialsInfoDiv.innerHTML = `Vật tư hiện tại: <span class="no-file">Không có</span>`;
+            }
+        }
+
         // 1. Lấy dữ liệu sản phẩm cũ và điền vào form khi trang tải
-        document.addEventListener('DOMContentLoaded', () => {
+        // Dùng 'async' để có thể dùng 'await' bên trong
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Kiểm tra xem URL có ID sản phẩm không
             if (!productId) {
-                alert('Không tìm thấy ID sản phẩm.');
+                alert('Không tìm thấy ID sản phẩm. Đang quay về danh sách.');
+                window.location.href = '/product-list.html';
                 return;
             }
-            fetch(`/api/products/${productId}`)
-                .then(res => res.json())
-                .then(product => {
-                    if (!product) {
-                        alert('Không tìm thấy sản phẩm.');
-                        return;
-                    }
-                    // Điền dữ liệu vào các ô input
-                    for (const key in product) {
-                        if (form.elements[key]) {
-                            form.elements[key].value = product[key];
-                        }
-                    }
-                    // Xử lý riêng cho các link file
-                    document.getElementById('current-image').src = product.imageUrl || '';
-                    document.getElementById('current-image-link').href = product.imageUrl || '#';
-                    form.elements['existingImageUrl'].value = product.imageUrl || '';
-
-                    document.getElementById('current-drawing-link').href = product.drawingUrl || '#';
-                    form.elements['existingDrawingUrl'].value = product.drawingUrl || '';
-
-                    document.getElementById('current-materials-link').href = product.materialsUrl || '#';
-                    form.elements['existingMaterialsUrl'].value = product.materialsUrl || '';
-                });
+            
+            // Bọc trong try...catch để bắt lỗi mạng hoặc lỗi server
+            try {
+                const response = await fetch(`/api/products/${productId}`);
+                if (!response.ok) {
+                    throw new Error('Không thể tải dữ liệu sản phẩm. Server có thể đang gặp sự cố.');
+                }
+                const product = await response.json();
+                // Gọi hàm để điền dữ liệu vào form
+                populateForm(product);
+            } catch (error) {
+                alert('Lỗi khi tải dữ liệu: ' + error.message);
+            }
         });
 
         // 2. Xử lý việc gửi form đi để cập nhật
-        form.addEventListener('submit', function(event) {
-            event.preventDefault();
+        form.addEventListener('submit', async function(event) {
+            event.preventDefault(); // Ngăn form tải lại trang
+            
+            // Vô hiệu hóa nút để tránh click nhiều lần
+            submitButton.disabled = true;
+            submitButton.textContent = 'Đang lưu...';
+
             const formData = new FormData(this);
 
-            fetch(`/api/products/${productId}`, {
-                method: 'PUT', // Dùng phương thức PUT để cập nhật
-                body: formData,
-            })
-            .then(res => res.json())
-            .then(result => {
-                if (result.error) throw new Error(result.error);
+            try {
+                // Gửi request UPDATE (PUT) lên server
+                const response = await fetch(`/api/products/${productId}`, {
+                    method: 'PUT',
+                    body: formData,
+                });
+
+                // Xử lý lỗi trả về từ server
+                if (!response.ok) {
+                    const errorResult = await response.json();
+                    throw new Error(errorResult.error || 'Lỗi không xác định từ server');
+                }
+
+                // Nếu thành công
+                const result = await response.json();
                 alert(result.message);
                 window.location.href = '/product-list.html'; // Quay về trang danh sách
-            })
-            .catch(error => {
+
+            } catch (error) {
+                // Nếu có lỗi, hiển thị thông báo và kích hoạt lại nút
                 alert('Lỗi khi cập nhật: ' + error.message);
-            });
+                submitButton.disabled = false;
+                submitButton.textContent = 'Lưu Thay Đổi';
+            }
         });
     </script>
 </body>

@@ -5,15 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Thêm Sản Phẩm Mới</title>
     <link rel="stylesheet" href="/css/style.css">
+    <style>
+        /*
+         * CSS Nâng Cao Cho Trải Nghiệm Người Dùng Tốt Hơn
+         * Khi nút submit bị vô hiệu hóa (trong lúc đang gửi form),
+         * nó sẽ đổi màu và con trỏ chuột để người dùng biết không thể click được nữa.
+         */
+        button[type="submit"]:disabled {
+            background-color: #5a6268; /* Một màu xám đậm hơn */
+            border-color: #5a6268;
+            cursor: not-allowed;      /* Biểu tượng con trỏ chuột "cấm" */
+            opacity: 0.65;            /* Làm mờ nút đi một chút */
+        }
+    </style>
 </head>
 <body>
     <div class="container">
         <header>
             <h1>Thêm Sản Phẩm Mới / Add New Product</h1>
+            <p>Điền đầy đủ các thông tin dưới đây và nhấn "Lưu" để tạo sản phẩm mới.</p>
         </header>
 
         <form id="product-form" enctype="multipart/form-data">
             
+            <!-- =================================================================== -->
+            <!-- === CÁC TRƯỜNG THÔNG TIN SẢN PHẨM (PHẦN NÀY ĐÃ CHUẨN) === -->
+            <!-- =================================================================== -->
+
             <div class="form-section">
                 <h2>Thông Tin Chung</h2>
                 <div class="form-grid">
@@ -76,7 +94,7 @@
             </div>
             
             <div class="form-actions">
-                <button type="submit">Lưu và Xem lại</button>
+                <button type="submit" id="submit-button">Lưu và Xem lại</button>
             </div>
         </form>
         
@@ -85,57 +103,90 @@
         </div>
     </div>
 
+    <!-- =================================================================== -->
+    <!-- === PHẦN JAVASCRIPT XỬ LÝ FORM (ĐÃ TỐI ƯU VÀ CHÚ THÍCH KỸ) === -->
+    <!-- =================================================================== -->
     <script>
+        // Lấy các element quan trọng của form và lưu vào biến để dễ dàng truy cập.
+        // Đây là một good practice trong lập trình JavaScript.
         const form = document.getElementById('product-form');
         const idSuffixInput = document.getElementById('product-id-suffix');
         const fullIdInput = document.getElementById('full-product-id');
+        const submitButton = document.getElementById('submit-button');
 
-        form.addEventListener('submit', function(event) {
+        // Gán một hàm xử lý sự kiện 'submit' cho form.
+        // Dùng 'async' để có thể sử dụng 'await' bên trong, giúp code gọn gàng hơn.
+        form.addEventListener('submit', async function(event) {
+            // Ngăn hành vi mặc định của form là tải lại trang khi nhấn submit.
+            // Chúng ta sẽ xử lý việc gửi dữ liệu bằng JavaScript.
             event.preventDefault();
             
-            // Tự động ghép chuỗi "KT" vào mã sản phẩm
+            // --- BƯỚC 1: VÔ HIỆU HÓA NÚT VÀ HIỂN THỊ TRẠNG THÁI "ĐANG GỬI" ---
+            // Điều này ngăn người dùng click nhiều lần gây ra lỗi và cho họ biết hệ thống đang xử lý.
+            submitButton.disabled = true;
+            submitButton.textContent = 'Đang xử lý, vui lòng chờ...';
+
+            // --- BƯỚC 2: CHUẨN BỊ DỮ LIỆU FORM ---
+            // Tự động ghép chuỗi "KT" vào mã sản phẩm từ ô input.
             fullIdInput.value = 'KT' + idSuffixInput.value;
             
+            // Tạo một đối tượng FormData từ chính form này.
+            // FormData là cách chuẩn để đóng gói dữ liệu form, bao gồm cả file, để gửi đi.
             const formData = new FormData(this);
 
-            // Gửi dữ liệu đến API endpoint
-            fetch('/api/products', {
-                method: 'POST',
-                body: formData,
-            })
-            .then(response => {
-                // =======================================================================
-                // === BẮT ĐẦU SỬA LỖI QUAN TRỌNG: CẢI THIỆN XỬ LÝ LỖI FRONTEND ====
-                // =======================================================================
-                // Code cũ của bạn chưa có logic xử lý lỗi thông minh này.
-                // Code mới sẽ kiểm tra và hiển thị lỗi chính xác hơn.
+            // --- BƯỚC 3: GỬI DỮ LIỆU VÀ XỬ LÝ KẾT QUẢ ---
+            // Bọc toàn bộ logic gửi request trong một khối try...catch để bắt lỗi một cách an toàn.
+            try {
+                // Gửi dữ liệu đến API endpoint '/api/products' bằng phương thức POST.
+                // 'await' sẽ tạm dừng hàm cho đến khi có phản hồi từ server.
+                const response = await fetch('/api/products', {
+                    method: 'POST',
+                    body: formData, // Nội dung gửi đi chính là gói FormData đã tạo.
+                });
+
+                // Xử lý phản hồi từ server.
+                // 'response.ok' sẽ là 'false' nếu mã trạng thái là lỗi (ví dụ 404, 500, 413).
                 if (!response.ok) {
+                    // Nếu server trả về lỗi, chúng ta cần tìm hiểu đó là lỗi gì.
                     const contentType = response.headers.get("content-type");
                     if (contentType && contentType.indexOf("application/json") !== -1) {
-                        return response.json().then(err => { 
-                            throw new Error(err.error || 'Lỗi không xác định từ server') 
-                        });
+                        // Nếu lỗi được trả về dưới dạng JSON (do chúng ta lập trình trong index.js)
+                        const errorResult = await response.json();
+                        // Ném ra một lỗi mới với thông điệp từ server.
+                        throw new Error(errorResult.error || 'Lỗi không xác định từ server');
                     } else {
-                        return response.text().then(text => { 
-                            const shortText = text.length > 200 ? text.substring(0, 200) + '...' : text;
-                            throw new Error(`Lỗi từ server (mã ${response.status}): ${shortText}`);
-                        });
+                        // Nếu lỗi là HTML (thường là do server bị lỗi 413 hoặc lỗi nghiêm trọng khác)
+                        if (response.status === 413) {
+                            // Đưa ra thông báo lỗi thân thiện và cụ thể cho lỗi 413.
+                            throw new Error(`Lỗi từ server (mã 413): Tệp quá lớn! Vui lòng kiểm tra lại kích thước file.`);
+                        }
+                        // Với các lỗi HTML khác, hiển thị mã lỗi và một phần nội dung.
+                        const errorText = await response.text();
+                        throw new Error(`Lỗi từ server (mã ${response.status}): ${errorText.substring(0, 200)}`);
                     }
                 }
-                return response.json();
-                // =======================================================================
-                // === KẾT THÚC SỬA LỖI QUAN TRỌNG =======================================
-                // =======================================================================
-            })
-            .then(result => {
+
+                // Nếu không có lỗi, xử lý kết quả thành công.
+                const result = await response.json();
                 if (result.error) {
+                    // Xử lý trường hợp server trả về 200 OK nhưng vẫn có message lỗi trong JSON.
                     throw new Error(result.error);
                 }
+                
+                // Nếu mọi thứ thành công, chuyển hướng người dùng đến trang success.html
+                // kèm theo ID của sản phẩm vừa tạo để hiển thị lại thông tin.
                 window.location.href = `/success.html?id=${result.id}`;
-            })
-            .catch(error => {
+
+            } catch (error) {
+                // Khối catch này sẽ bắt tất cả các lỗi được 'throw' ở trên.
+                // Hiển thị một thông báo alert cho người dùng.
                 alert('Có lỗi xảy ra: ' + error.message);
-            });
+                
+                // --- BƯỚC 4: KÍCH HOẠT LẠI NÚT NẾU CÓ LỖI ---
+                // Cho phép người dùng thử lại sau khi đã đọc thông báo lỗi.
+                submitButton.disabled = false;
+                submitButton.textContent = 'Lưu và Xem lại';
+            }
         });
     </script>
 </body>
