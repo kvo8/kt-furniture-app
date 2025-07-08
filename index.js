@@ -1,5 +1,5 @@
 // ==========================================================
-// === FILE: index.js (PHIÊN BẢN HOÀN CHỈNH ĐẦY ĐỦ TÍNH NĂNG) ===
+// === FILE: index.js (PHIÊN BẢN SỬA LỖI UPLOAD HOÀN CHỈNH) ===
 // ==========================================================
 
 // --- PHẦN 1: IMPORT CÁC THƯ VIỆN CẦN THIẾT ---
@@ -9,30 +9,31 @@ const bcrypt = require('bcryptjs');
 const session = require('express-session');
 const multer = require('multer');
 const path = require('path');
-const db = require('./database.js'); // Import module kết nối database
+const db = require('./database.js');
 const fs = require('fs');
 
 // --- PHẦN 2: KHỞI TẠO VÀ CẤU HÌNH EXPRESS APP ---
 const app = express();
-const saltRounds = 10; // Số vòng lặp để hash password, tăng tính bảo mật
-const port = process.env.PORT || 3000; // Lấy port từ môi trường của Cloud Run hoặc dùng 3000 ở local
+const saltRounds = 10;
+const port = process.env.PORT || 3000;
 
 // --- 2.1. Cấu hình Middleware ---
-app.use(cors()); // Cho phép các yêu cầu từ tên miền khác
-app.use(express.json()); // Giúp server đọc được dữ liệu JSON từ request body
-app.use(express.urlencoded({ extended: true })); // Giúp server đọc được dữ liệu từ form
-app.use(express.static('public')); // Phục vụ các file tĩnh (html, css, js) từ thư mục 'public'
-app.use('/uploads', express.static(path.join(__dirname, 'public/uploads'))); // Tạo một đường dẫn ảo cho các file đã upload
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static('public'));
+app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 
 // --- 2.2. Cấu hình Session ---
+// Đảm bảo bạn đã thiết lập biến môi trường SESSION_SECRET khi deploy
 app.use(session({
-    secret: process.env.SESSION_SECRET, // Chuỗi bí mật để mã hóa session, đọc từ biến môi trường
-    resave: false, // Không lưu lại session nếu không có gì thay đổi
-    saveUninitialized: true, // Lưu session mới ngay cả khi chưa có dữ liệu
+    secret: process.env.SESSION_SECRET || 'a-very-strong-secret-key-for-development', // Thêm key dự phòng cho môi trường dev
+    resave: false,
+    saveUninitialized: true,
     cookie: {
-        secure: process.env.NODE_ENV === 'production', // Chỉ gửi cookie qua HTTPS khi deploy
-        httpOnly: true, // Ngăn JavaScript ở client truy cập vào cookie
-        maxAge: 24 * 60 * 60 * 1000 // Thời gian sống của cookie là 1 ngày
+        secure: process.env.NODE_ENV === 'production',
+        httpOnly: true,
+        maxAge: 24 * 60 * 60 * 1000 // 1 day
     }
 }));
 
@@ -45,7 +46,6 @@ const storage = multer.diskStorage({
     destination: (req, file, cb) => { cb(null, uploadDir) },
     filename: (req, file, cb) => { cb(null, Date.now() + path.extname(file.originalname)) }
 });
-// Cấu hình để nhận nhiều loại file từ các field khác nhau trong cùng một form
 const upload = multer({ storage: storage }).fields([
     { name: 'productImage', maxCount: 1 },
     { name: 'drawingFile', maxCount: 1 },
@@ -54,25 +54,58 @@ const upload = multer({ storage: storage }).fields([
 
 // --- 2.4. Middleware Kiểm Tra Đăng Nhập ---
 const isLoggedIn = (req, res, next) => {
-    // Nếu trong session có thông tin user, cho phép đi tiếp
     if (req.session && req.session.user) {
         next();
     } else {
-        // Nếu không, trả về lỗi 401 Unauthorized
+        // Luôn trả về JSON để frontend xử lý
         res.status(401).json({ error: "Unauthorized. Vui lòng đăng nhập lại." });
     }
 };
+
+
+// =======================================================================
+// === BẮT ĐẦU PHẦN SỬA LỖI QUAN TRỌNG ====================================
+// =======================================================================
+
+/**
+ * Middleware này đóng vai trò là một "bộ xử lý lỗi" cho Multer.
+ * Nó sẽ gọi middleware `upload` gốc và bắt bất kỳ lỗi nào phát sinh từ đó.
+ * Thay vì để server bị crash và trả về trang lỗi HTML, nó sẽ chủ động
+ * gửi một phản hồi lỗi dạng JSON mà frontend có thể đọc và hiển thị cho người dùng.
+ */
+const handleUploadMiddleware = (req, res, next) => {
+    // Gọi middleware 'upload' của Multer
+    upload(req, res, function (err) {
+        // TRƯỜNG HỢP 1: Bắt lỗi từ chính Multer (ví dụ: file quá lớn, sai loại field...)
+        if (err instanceof multer.MulterError) {
+            console.error("Lỗi từ Multer khi upload:", err.message);
+            // Trả về lỗi 400 (Bad Request) với thông báo rõ ràng dạng JSON
+            return res.status(400).json({ error: `Lỗi khi upload file: ${err.message}.` });
+        } 
+        // TRƯỜNG HỢP 2: Bắt các lỗi không xác định khác trong quá trình upload
+        else if (err) {
+            console.error("Lỗi upload không xác định:", err.message);
+            // Trả về lỗi 500 (Internal Server Error) dạng JSON
+            return res.status(500).json({ error: `Đã xảy ra lỗi không mong muốn khi upload: ${err.message}` });
+        }
+        
+        // TRƯỜNG HỢP 3: Nếu không có lỗi nào, cho phép đi tiếp tới API handler chính
+        next();
+    });
+};
+// =======================================================================
+// === KẾT THÚC PHẦN SỬA LỖI QUAN TRỌNG ===================================
+// =======================================================================
+
 
 // --- PHẦN 3: CÁC API ENDPOINTS ---
 
 // == A. CÁC API VỀ USER VÀ TRANG CHỦ ==
 
-// Phục vụ trang chủ
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// API Đăng ký
 app.post("/api/users/register", async (req, res) => {
     const { ho_ten, ma_nhan_vien, password } = req.body;
     if (!ho_ten || !ma_nhan_vien || !password) {
@@ -87,14 +120,13 @@ app.post("/api/users/register", async (req, res) => {
         res.status(201).json({ "message": "Đăng ký thành công và đã tự động đăng nhập." });
     } catch (err) {
         console.error("Lỗi đăng ký:", err.message);
-        if (err.code === '23505') { // Lỗi của PostgreSQL khi vi phạm ràng buộc UNIQUE
+        if (err.code === '23505') {
             return res.status(400).json({ "error": "Mã nhân viên này đã tồn tại." });
         }
         res.status(500).json({ "error": err.message });
     }
 });
 
-// API Đăng nhập
 app.post("/api/users/login", async (req, res) => {
     const { ma_nhan_vien, password } = req.body;
     const sql = "SELECT * FROM users WHERE ma_nhan_vien = $1";
@@ -117,13 +149,11 @@ app.post("/api/users/login", async (req, res) => {
     }
 });
 
-// API lấy thông tin user đang đăng nhập
 app.get("/api/me", isLoggedIn, (req, res) => {
     res.json(req.session.user);
 });
 
-
-// == B. CÁC API VỀ SẢN PHẨM (ĐÃ THÊM LẠI ĐẦY ĐỦ) ==
+// == B. CÁC API VỀ SẢN PHẨM ==
 
 // API lấy danh sách tất cả sản phẩm
 app.get("/api/products", isLoggedIn, async (req, res) => {
@@ -138,8 +168,17 @@ app.get("/api/products", isLoggedIn, async (req, res) => {
 });
 
 // API lấy thông tin 1 sản phẩm
-app.get("/api/products/:id", async (req, res) => { // Bỏ isLoggedIn để khách hàng có thể xem
-    const sql = "SELECT * FROM products WHERE id = $1";
+app.get("/api/products/:id", async (req, res) => {
+    // Sửa lỗi từ lần trước: Dùng ALIAS để đảm bảo tên cột luôn là camelCase
+    const sql = `
+        SELECT
+            id, name_vi, name_en, collection_vi, collection_en, color_vi, color_en,
+            fabric_vi, fabric_en, wicker_vi, wicker_en, production_place,
+            company, customer, specification, material_vi, material_en, aluminum_profile,
+            other_details, created_by_name, created_by_id, parent_id, created_at,
+            "imageUrl", "drawingUrl", "materialsUrl"
+        FROM products WHERE id = $1
+    `;
     try {
         const { rows } = await db.query(sql, [req.params.id]);
         if (rows.length === 0) {
@@ -153,9 +192,12 @@ app.get("/api/products/:id", async (req, res) => { // Bỏ isLoggedIn để khá
 });
 
 // API thêm sản phẩm mới
-app.post("/api/products", isLoggedIn, upload, async (req, res) => {
+// SỬA LỖI: Thay thế middleware 'upload' bằng 'handleUploadMiddleware' đã tạo ở trên
+app.post("/api/products", isLoggedIn, handleUploadMiddleware, async (req, res) => {
     const data = req.body;
     const user = req.session.user;
+    
+    // Giờ đây, chúng ta có thể yên tâm rằng nếu code chạy đến đây, file đã được upload thành công
     const imageUrl = req.files && req.files['productImage'] ? '/uploads/' + req.files['productImage'][0].filename : null;
     const drawingUrl = req.files && req.files['drawingFile'] ? '/uploads/' + req.files['drawingFile'][0].filename : null;
     const materialsUrl = req.files && req.files['materialsFile'] ? '/uploads/' + req.files['materialsFile'][0].filename : null;
@@ -165,7 +207,7 @@ app.post("/api/products", isLoggedIn, upload, async (req, res) => {
             id, name_vi, name_en, collection_vi, collection_en, color_vi, color_en, 
             fabric_vi, fabric_en, wicker_vi, wicker_en, production_place,
             company, customer, specification, material_vi, material_en, aluminum_profile, 
-            imageUrl, drawingUrl, materialsUrl, other_details,
+            "imageUrl", "drawingUrl", "materialsUrl", other_details,
             created_by_name, created_by_id, parent_id
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25)
     `;
@@ -182,8 +224,12 @@ app.post("/api/products", isLoggedIn, upload, async (req, res) => {
         await db.query(sql, params);
         res.status(201).json({ "message": "Lưu sản phẩm thành công!", "id": data.id });
     } catch (err) {
-        console.error("Lỗi khi thêm sản phẩm:", err.message);
-        res.status(400).json({ "error": err.message });
+        console.error("Lỗi khi thêm sản phẩm vào DB:", err.message);
+        // Thêm kiểm tra lỗi trùng ID để thông báo rõ hơn
+        if (err.code === '23505' && err.constraint === 'products_pkey') {
+             return res.status(400).json({ "error": `Lỗi: Mã sản phẩm '${data.id}' đã tồn tại trong hệ thống.` });
+        }
+        res.status(400).json({ "error": `Lỗi khi lưu vào cơ sở dữ liệu: ${err.message}` });
     }
 });
 
@@ -230,7 +276,6 @@ app.get("/api/products/:id/reviews", async (req, res) => {
         return res.status(500).json({ error: "Lỗi server khi lấy đánh giá." });
     }
 });
-
 
 // --- PHẦN 4: KHỞI ĐỘNG SERVER ---
 app.listen(port, () => {
