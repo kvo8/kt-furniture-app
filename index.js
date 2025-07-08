@@ -1,111 +1,141 @@
-// ==========================================================
-// === FILE: index.js (PHIÊN BẢN SỬA LỖI UPLOAD HOÀN CHỈNH) ===
-// ==========================================================
+// =================================================================
+// === FILE: index.js (PHIÊN BẢN CUỐI CÙNG - SỬA LỖI TRIỆT ĐỂ) ===
+// =================================================================
+// Tác giả: Gemini (được sửa đổi và bổ sung chi tiết)
+// Mục đích: Backend cho hệ thống quản lý sản phẩm, đã sửa lỗi upload file.
+// Ngày cập nhật: 08/07/2025
+// =================================================================
 
 // --- PHẦN 1: IMPORT CÁC THƯ VIỆN CẦN THIẾT ---
-const express = require('express');
-const cors = require('cors');
-const bcrypt = require('bcryptjs');
-const session = require('express-session');
-const multer = require('multer');
-const path = require('path');
-const db = require('./database.js');
-const fs = require('fs');
+// Các thư viện này là nền tảng để xây dựng server
+console.log("Initializing required libraries...");
+const express = require('express');        // Framework chính để xây dựng web server
+const cors = require('cors');              // Middleware cho phép Cross-Origin Resource Sharing
+const bcrypt = require('bcryptjs');        // Thư viện để mã hóa mật khẩu
+const session = require('express-session');// Middleware để quản lý phiên làm việc của người dùng
+const multer = require('multer');          // Middleware chuyên xử lý upload file
+const path = require('path');              // Module của Node.js để làm việc với đường dẫn file
+const db = require('./database.js');       // File kết nối cơ sở dữ liệu PostgreSQL của bạn
+const fs = require('fs');                  // Module của Node.js để làm việc với hệ thống file
+console.log("Libraries initialized successfully.");
 
 // --- PHẦN 2: KHỞI TẠO VÀ CẤU HÌNH EXPRESS APP ---
-const app = express();
-const saltRounds = 10;
-const port = process.env.PORT || 3000;
+console.log("Configuring Express application...");
+const app = express();                     // Khởi tạo một ứng dụng Express
+const saltRounds = 10;                     // Yếu tố chi phí cho việc mã hóa mật khẩu, tăng tính bảo mật
+const port = process.env.PORT || 3000;     // Sử dụng cổng do môi trường (Cloud Run) cung cấp, hoặc cổng 3000 ở local
 
-// --- 2.1. Cấu hình Middleware ---
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// --- 2.1. Cấu hình Middleware Cơ Bản ---
+// Middleware là các hàm chạy tuần tự cho mỗi request đến server.
+app.use(cors());                           // Cho phép các request từ tên miền khác (ví dụ: từ frontend)
+
+// ==========================================================================================
+// === BẮT ĐẦU PHẦN SỬA LỖI QUAN TRỌNG NHẤT: TĂNG GIỚI HẠN KÍCH THƯỚC REQUEST (SỬA LỖI 413) ===
+// ==========================================================================================
+// Mặc định, Express chỉ cho phép request rất nhỏ (khoảng 100kb).
+// Khi upload file, request sẽ lớn hơn nhiều và gây ra lỗi "413 Content Too Large".
+// Chúng ta cần tăng giới hạn này lên một con số hợp lý, ví dụ 50 megabytes.
+console.log("Applying request body size limit to 50mb to allow file uploads...");
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true, parameterLimit: 50000 }));
+// ==========================================================================================
+// === KẾT THÚC PHẦN SỬA LỖI QUAN TRỌNG NHẤT ==============================================
+// ==========================================================================================
+
+// Phục vụ các file tĩnh (HTML, CSS, JS phía client) từ thư mục 'public'
 app.use(express.static('public'));
+
+// Tạo một đường dẫn ảo '/uploads' để truy cập các file đã được upload trong thư mục 'public/uploads'
 app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
+console.log("Middleware configured successfully.");
+
 
 // --- 2.2. Cấu hình Session ---
-// Đảm bảo bạn đã thiết lập biến môi trường SESSION_SECRET khi deploy
+// Session dùng để lưu trạng thái đăng nhập của người dùng.
+console.log("Configuring user session management...");
 app.use(session({
-    secret: process.env.SESSION_SECRET || 'a-very-strong-secret-key-for-development', // Thêm key dự phòng cho môi trường dev
-    resave: false,
-    saveUninitialized: true,
+    secret: process.env.SESSION_SECRET || 'a-very-strong-secret-key-for-development-should-be-changed-in-production',
+    resave: false,             // Không lưu lại session nếu không có gì thay đổi
+    saveUninitialized: true,   // Lưu session mới ngay cả khi chưa có dữ liệu
     cookie: {
-        secure: process.env.NODE_ENV === 'production',
-        httpOnly: true,
-        maxAge: 24 * 60 * 60 * 1000 // 1 day
+        secure: process.env.NODE_ENV === 'production', // Chỉ gửi cookie qua HTTPS khi deploy
+        httpOnly: true,                                // Ngăn JavaScript ở client truy cập vào cookie, tăng bảo mật
+        maxAge: 24 * 60 * 60 * 1000                    // Thời gian sống của cookie: 1 ngày
     }
 }));
+console.log("Session management configured successfully.");
+
 
 // --- 2.3. Cấu hình Multer để Upload File ---
+// Multer sẽ xử lý dữ liệu form multipart/form-data, tách riêng file và các trường dữ liệu khác.
+console.log("Configuring Multer for file uploads...");
 const uploadDir = path.join(__dirname, 'public/uploads');
+// Kiểm tra và tạo thư mục 'uploads' nếu nó chưa tồn tại
 if (!fs.existsSync(uploadDir)) {
+    console.log(`Upload directory not found. Creating '${uploadDir}'...`);
     fs.mkdirSync(uploadDir, { recursive: true });
 }
+// Định nghĩa nơi lưu trữ và cách đặt tên file
 const storage = multer.diskStorage({
     destination: (req, file, cb) => { cb(null, uploadDir) },
-    filename: (req, file, cb) => { cb(null, Date.now() + path.extname(file.originalname)) }
+    filename: (req, file, cb) => {
+        // Đặt tên file là thời gian hiện tại (timestamp) + đuôi file gốc để đảm bảo tên là duy nhất
+        const uniqueFilename = Date.now() + path.extname(file.originalname);
+        cb(null, uniqueFilename);
+    }
 });
-const upload = multer({ storage: storage }).fields([
+// Tạo middleware upload của Multer, cho phép nhận file từ các field được chỉ định
+const upload = multer({
+    storage: storage,
+    // Thêm giới hạn file size ở đây nếu cần, ví dụ: limits: { fileSize: 10 * 1024 * 1024 } // 10 MB
+}).fields([
     { name: 'productImage', maxCount: 1 },
     { name: 'drawingFile', maxCount: 1 },
     { name: 'materialsFile', maxCount: 1 }
 ]);
+console.log("Multer configured successfully.");
 
-// --- 2.4. Middleware Kiểm Tra Đăng Nhập ---
+// --- 2.4. Middleware Tùy Chỉnh ---
+
+// Middleware Kiểm Tra Đăng Nhập
 const isLoggedIn = (req, res, next) => {
+    // Nếu trong session có thông tin user, nghĩa là đã đăng nhập -> cho phép đi tiếp
     if (req.session && req.session.user) {
         next();
     } else {
-        // Luôn trả về JSON để frontend xử lý
+        // Nếu chưa đăng nhập, trả về lỗi 401 (Unauthorized)
         res.status(401).json({ error: "Unauthorized. Vui lòng đăng nhập lại." });
     }
 };
 
-
-// =======================================================================
-// === BẮT ĐẦU PHẦN SỬA LỖI QUAN TRỌNG ====================================
-// =======================================================================
-
-/**
- * Middleware này đóng vai trò là một "bộ xử lý lỗi" cho Multer.
- * Nó sẽ gọi middleware `upload` gốc và bắt bất kỳ lỗi nào phát sinh từ đó.
- * Thay vì để server bị crash và trả về trang lỗi HTML, nó sẽ chủ động
- * gửi một phản hồi lỗi dạng JSON mà frontend có thể đọc và hiển thị cho người dùng.
- */
+// Middleware Xử Lý Lỗi Upload Của Multer
 const handleUploadMiddleware = (req, res, next) => {
-    // Gọi middleware 'upload' của Multer
     upload(req, res, function (err) {
-        // TRƯỜNG HỢP 1: Bắt lỗi từ chính Multer (ví dụ: file quá lớn, sai loại field...)
         if (err instanceof multer.MulterError) {
-            console.error("Lỗi từ Multer khi upload:", err.message);
-            // Trả về lỗi 400 (Bad Request) với thông báo rõ ràng dạng JSON
+            console.error("A Multer error occurred during upload:", err.message);
             return res.status(400).json({ error: `Lỗi khi upload file: ${err.message}.` });
-        } 
-        // TRƯỜNG HỢP 2: Bắt các lỗi không xác định khác trong quá trình upload
-        else if (err) {
-            console.error("Lỗi upload không xác định:", err.message);
-            // Trả về lỗi 500 (Internal Server Error) dạng JSON
+        } else if (err) {
+            console.error("An unknown error occurred during upload:", err.message);
             return res.status(500).json({ error: `Đã xảy ra lỗi không mong muốn khi upload: ${err.message}` });
         }
-        
-        // TRƯỜNG HỢP 3: Nếu không có lỗi nào, cho phép đi tiếp tới API handler chính
+        // Nếu không có lỗi, chuyển sang middleware tiếp theo trong chuỗi
         next();
     });
 };
-// =======================================================================
-// === KẾT THÚC PHẦN SỬA LỖI QUAN TRỌNG ===================================
-// =======================================================================
 
 
 // --- PHẦN 3: CÁC API ENDPOINTS ---
+// Đây là nơi định nghĩa các đường dẫn API mà frontend sẽ gọi đến.
+console.log("Defining API endpoints...");
 
 // == A. CÁC API VỀ USER VÀ TRANG CHỦ ==
 
+// Endpoint gốc, phục vụ trang đăng nhập/đăng ký
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+// Endpoint đăng ký người dùng mới
 app.post("/api/users/register", async (req, res) => {
     const { ho_ten, ma_nhan_vien, password } = req.body;
     if (!ho_ten || !ma_nhan_vien || !password) {
@@ -113,20 +143,22 @@ app.post("/api/users/register", async (req, res) => {
     }
     try {
         const hash = await bcrypt.hash(password, saltRounds);
-        const sql = 'INSERT INTO users (ho_ten, ma_nhan_vien, password) VALUES ($1, $2, $3) RETURNING id';
+        const sql = 'INSERT INTO users (ho_ten, ma_nhan_vien, password) VALUES ($1, $2, $3) RETURNING id, ho_ten, ma_nhan_vien';
         const params = [ho_ten, ma_nhan_vien, hash];
         const result = await db.query(sql, params);
-        req.session.user = { id: result.rows[0].id, name: ho_ten, employeeId: ma_nhan_vien };
+        const newUser = result.rows[0];
+        req.session.user = { id: newUser.id, name: newUser.ho_ten, employeeId: newUser.ma_nhan_vien };
         res.status(201).json({ "message": "Đăng ký thành công và đã tự động đăng nhập." });
     } catch (err) {
-        console.error("Lỗi đăng ký:", err.message);
-        if (err.code === '23505') {
+        console.error("Registration error:", err.message);
+        if (err.code === '23505') { // Lỗi của PostgreSQL khi vi phạm ràng buộc UNIQUE
             return res.status(400).json({ "error": "Mã nhân viên này đã tồn tại." });
         }
-        res.status(500).json({ "error": err.message });
+        res.status(500).json({ "error": `Server error during registration: ${err.message}` });
     }
 });
 
+// Endpoint đăng nhập
 app.post("/api/users/login", async (req, res) => {
     const { ma_nhan_vien, password } = req.body;
     const sql = "SELECT * FROM users WHERE ma_nhan_vien = $1";
@@ -144,32 +176,32 @@ app.post("/api/users/login", async (req, res) => {
             res.status(401).json({ "error": "Mã nhân viên hoặc mật khẩu không đúng." });
         }
     } catch (err) {
-        console.error("Lỗi đăng nhập:", err.message);
-        res.status(500).json({ "error": err.message });
+        console.error("Login error:", err.message);
+        res.status(500).json({ "error": `Server error during login: ${err.message}` });
     }
 });
 
+// Endpoint lấy thông tin user đang đăng nhập
 app.get("/api/me", isLoggedIn, (req, res) => {
     res.json(req.session.user);
 });
 
 // == B. CÁC API VỀ SẢN PHẨM ==
 
-// API lấy danh sách tất cả sản phẩm
+// Endpoint lấy danh sách tất cả sản phẩm
 app.get("/api/products", isLoggedIn, async (req, res) => {
     const sql = "SELECT * FROM products ORDER BY created_at DESC";
     try {
         const { rows } = await db.query(sql);
         res.json({ products: rows });
     } catch (err) {
-        console.error("Lỗi lấy danh sách sản phẩm:", err.message);
+        console.error("Error fetching product list:", err.message);
         res.status(500).json({ "error": err.message });
     }
 });
 
-// API lấy thông tin 1 sản phẩm
+// Endpoint lấy thông tin chi tiết 1 sản phẩm
 app.get("/api/products/:id", async (req, res) => {
-    // Sửa lỗi từ lần trước: Dùng ALIAS để đảm bảo tên cột luôn là camelCase
     const sql = `
         SELECT
             id, name_vi, name_en, collection_vi, collection_en, color_vi, color_en,
@@ -186,18 +218,16 @@ app.get("/api/products/:id", async (req, res) => {
         }
         res.json(rows[0]);
     } catch (err) {
-        console.error("Lỗi lấy sản phẩm theo ID:", err.message);
+        console.error("Error fetching product by ID:", err.message);
         res.status(500).json({ "error": err.message });
     }
 });
 
-// API thêm sản phẩm mới
-// SỬA LỖI: Thay thế middleware 'upload' bằng 'handleUploadMiddleware' đã tạo ở trên
+// Endpoint thêm sản phẩm mới
 app.post("/api/products", isLoggedIn, handleUploadMiddleware, async (req, res) => {
     const data = req.body;
     const user = req.session.user;
     
-    // Giờ đây, chúng ta có thể yên tâm rằng nếu code chạy đến đây, file đã được upload thành công
     const imageUrl = req.files && req.files['productImage'] ? '/uploads/' + req.files['productImage'][0].filename : null;
     const drawingUrl = req.files && req.files['drawingFile'] ? '/uploads/' + req.files['drawingFile'][0].filename : null;
     const materialsUrl = req.files && req.files['materialsFile'] ? '/uploads/' + req.files['materialsFile'][0].filename : null;
@@ -224,8 +254,7 @@ app.post("/api/products", isLoggedIn, handleUploadMiddleware, async (req, res) =
         await db.query(sql, params);
         res.status(201).json({ "message": "Lưu sản phẩm thành công!", "id": data.id });
     } catch (err) {
-        console.error("Lỗi khi thêm sản phẩm vào DB:", err.message);
-        // Thêm kiểm tra lỗi trùng ID để thông báo rõ hơn
+        console.error("Error inserting product into DB:", err.message);
         if (err.code === '23505' && err.constraint === 'products_pkey') {
              return res.status(400).json({ "error": `Lỗi: Mã sản phẩm '${data.id}' đã tồn tại trong hệ thống.` });
         }
@@ -233,7 +262,7 @@ app.post("/api/products", isLoggedIn, handleUploadMiddleware, async (req, res) =
     }
 });
 
-// API xóa sản phẩm
+// Endpoint xóa sản phẩm
 app.delete("/api/products/:id", isLoggedIn, async (req, res) => {
     const sql = 'DELETE FROM products WHERE id = $1';
     try {
@@ -243,13 +272,14 @@ app.delete("/api/products/:id", isLoggedIn, async (req, res) => {
         }
         res.status(200).json({ message: 'Sản phẩm đã được xóa thành công.' });
     } catch (err) {
-        console.error("Lỗi khi xóa sản phẩm:", err.message);
+        console.error("Error deleting product:", err.message);
         return res.status(500).json({ message: "Lỗi server khi xóa sản phẩm.", error: err.message });
     }
 });
 
-
 // == C. CÁC API VỀ REVIEWS ==
+
+// Endpoint thêm đánh giá mới
 app.post("/api/reviews", async (req, res) => {
     const { productId, rating, comment, author_name } = req.body;
     if (!productId || !rating || !author_name) {
@@ -261,23 +291,31 @@ app.post("/api/reviews", async (req, res) => {
         const result = await db.query(sql, params);
         res.status(201).json({ message: "Gửi đánh giá thành công!", reviewId: result.rows[0].id });
     } catch (err) {
-        console.error("Lỗi khi lưu đánh giá:", err.message);
+        console.error("Error saving review:", err.message);
         return res.status(500).json({ error: "Lỗi server khi lưu đánh giá." });
     }
 });
 
+// Endpoint lấy danh sách đánh giá của một sản phẩm
 app.get("/api/products/:id/reviews", async (req, res) => {
     const sql = "SELECT * FROM reviews WHERE product_id = $1 ORDER BY created_at DESC";
     try {
         const { rows } = await db.query(sql, [req.params.id]);
         res.json({ reviews: rows });
     } catch (err) {
-        console.error("Lỗi khi lấy danh sách đánh giá:", err.message);
+        console.error("Error fetching reviews:", err.message);
         return res.status(500).json({ error: "Lỗi server khi lấy đánh giá." });
     }
 });
 
+console.log("API Endpoints defined successfully.");
+
 // --- PHẦN 4: KHỞI ĐỘNG SERVER ---
+// Lắng nghe các request đến trên cổng đã định nghĩa
 app.listen(port, () => {
-    console.log(`Server đang lắng nghe trên cổng ${port}`);
+    console.log(`===================================================`);
+    console.log(`🚀 SERVER IS RUNNING AND LISTENING ON PORT ${port}`);
+    console.log(`===================================================`);
 });
+
+// --- KẾT THÚC FILE ---

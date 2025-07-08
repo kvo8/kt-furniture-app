@@ -57,13 +57,13 @@
             </div>
 
             <div class="form-section">
-                 <h2>Thông Tin Thương Mại & Kỹ Thuật</h2>
-                 <div class="form-grid">
+                <h2>Thông Tin Thương Mại & Kỹ Thuật</h2>
+                <div class="form-grid">
                      <div class="form-group"><label for="company">Công ty</label><input type="text" id="company" name="company"></div>
                      <div class="form-group"><label for="customer">Khách hàng</label><input type="text" id="customer" name="customer"></div>
                      <div class="form-group full-width"><label for="specification">Thông số</label><input type="text" id="specification" name="specification"></div>
                      <div class="form-group full-width"><label for="other_details">Chi tiết khác</label><textarea id="other_details" name="other_details" rows="3"></textarea></div>
-                 </div>
+                </div>
             </div>
             
             <div class="form-section">
@@ -104,23 +104,36 @@
                 body: formData,
             })
             .then(response => {
-                // Kiểm tra nếu server trả về lỗi
+                // =======================================================================
+                // === BẮT ĐẦU SỬA LỖI QUAN TRỌNG: CẢI THIỆN XỬ LÝ LỖI FRONTEND ====
+                // =======================================================================
+                // Code cũ của bạn chưa có logic xử lý lỗi thông minh này.
+                // Code mới sẽ kiểm tra và hiển thị lỗi chính xác hơn.
                 if (!response.ok) {
-                    return response.json().then(err => { 
-                        throw new Error(err.error || 'Lỗi không xác định từ server') 
-                    });
+                    const contentType = response.headers.get("content-type");
+                    if (contentType && contentType.indexOf("application/json") !== -1) {
+                        return response.json().then(err => { 
+                            throw new Error(err.error || 'Lỗi không xác định từ server') 
+                        });
+                    } else {
+                        return response.text().then(text => { 
+                            const shortText = text.length > 200 ? text.substring(0, 200) + '...' : text;
+                            throw new Error(`Lỗi từ server (mã ${response.status}): ${shortText}`);
+                        });
+                    }
                 }
                 return response.json();
+                // =======================================================================
+                // === KẾT THÚC SỬA LỖI QUAN TRỌNG =======================================
+                // =======================================================================
             })
             .then(result => {
                 if (result.error) {
                     throw new Error(result.error);
                 }
-                // Nếu thành công, chuyển đến trang success
                 window.location.href = `/success.html?id=${result.id}`;
             })
             .catch(error => {
-                // Hiển thị bất kỳ lỗi nào bắt được
                 alert('Có lỗi xảy ra: ' + error.message);
             });
         });
