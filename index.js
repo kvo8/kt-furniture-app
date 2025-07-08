@@ -1,5 +1,5 @@
 // ==========================================================
-// === FILE: index.js (PHIÊN BẢN HOÀN CHỈNH KẾT HỢP) ===
+// === FILE: index.js (PHIÊN BẢN HOÀN CHỈNH ĐẦY ĐỦ TÍNH NĂNG) ===
 // ==========================================================
 
 // --- PHẦN 1: IMPORT CÁC THƯ VIỆN CẦN THIẾT ---
@@ -45,7 +45,6 @@ const storage = multer.diskStorage({
     destination: (req, file, cb) => { cb(null, uploadDir) },
     filename: (req, file, cb) => { cb(null, Date.now() + path.extname(file.originalname)) }
 });
-// Sửa lại để upload nhiều loại file cùng lúc
 const upload = multer({ storage: storage }).fields([
     { name: 'productImage', maxCount: 1 },
     { name: 'drawingFile', maxCount: 1 },
@@ -86,7 +85,7 @@ app.post("/api/users/register", async (req, res) => {
         if (err.code === '23505') {
             return res.status(400).json({ "error": "Mã nhân viên này đã tồn tại." });
         }
-        res.status(500).json({ "error": "Lỗi hệ thống khi đăng ký: " + err.message });
+        res.status(500).json({ "error": err.message });
     }
 });
 
@@ -108,7 +107,7 @@ app.post("/api/users/login", async (req, res) => {
         }
     } catch (err) {
         console.error("Lỗi đăng nhập:", err.message);
-        res.status(500).json({ "error": "Lỗi hệ thống khi đăng nhập: " + err.message });
+        res.status(500).json({ "error": err.message });
     }
 });
 
@@ -116,7 +115,7 @@ app.get("/api/me", isLoggedIn, (req, res) => {
     res.json(req.session.user);
 });
 
-// == B. CÁC API VỀ SẢN PHẨM (ĐÃ THÊM LẠI ĐẦY ĐỦ) ==
+// == B. CÁC API VỀ SẢN PHẨM ==
 
 // API lấy danh sách tất cả sản phẩm
 app.get("/api/products", isLoggedIn, async (req, res) => {
@@ -131,7 +130,7 @@ app.get("/api/products", isLoggedIn, async (req, res) => {
 });
 
 // API lấy thông tin 1 sản phẩm
-app.get("/api/products/:id", isLoggedIn, async (req, res) => {
+app.get("/api/products/:id", async (req, res) => {
     const sql = "SELECT * FROM products WHERE id = $1";
     try {
         const { rows } = await db.query(sql, [req.params.id]);
@@ -195,7 +194,34 @@ app.delete("/api/products/:id", isLoggedIn, async (req, res) => {
     }
 });
 
-// ... (Bạn có thể thêm API cho reviews ở đây nếu cần) ...
+
+// == C. CÁC API VỀ REVIEWS ==
+app.post("/api/reviews", async (req, res) => {
+    const { productId, rating, comment, author_name } = req.body;
+    if (!productId || !rating || !author_name) {
+        return res.status(400).json({ error: "Vui lòng cung cấp đầy đủ thông tin bắt buộc." });
+    }
+    const sql = `INSERT INTO reviews (product_id, rating, comment, author_name) VALUES ($1, $2, $3, $4) RETURNING id`;
+    const params = [productId, rating, comment || '', author_name];
+    try {
+        const result = await db.query(sql, params);
+        res.status(201).json({ message: "Gửi đánh giá thành công!", reviewId: result.rows[0].id });
+    } catch (err) {
+        console.error("Lỗi khi lưu đánh giá:", err.message);
+        return res.status(500).json({ error: "Lỗi server khi lưu đánh giá." });
+    }
+});
+
+app.get("/api/products/:id/reviews", async (req, res) => {
+    const sql = "SELECT * FROM reviews WHERE product_id = $1 ORDER BY created_at DESC";
+    try {
+        const { rows } = await db.query(sql, [req.params.id]);
+        res.json({ reviews: rows });
+    } catch (err) {
+        console.error("Lỗi khi lấy danh sách đánh giá:", err.message);
+        return res.status(500).json({ error: "Lỗi server khi lấy đánh giá." });
+    }
+});
 
 // --- PHẦN 4: KHỞI ĐỘNG SERVER ---
 app.listen(port, () => {

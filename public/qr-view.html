@@ -29,7 +29,7 @@
             border: 1px solid #ccc;
             padding: 10px;
             margin-top: 15px;
-            display: inline-block; /* Giúp border bao quanh mã QR */
+            display: inline-block;
         }
         h1 {
             color: #333;
@@ -55,16 +55,14 @@
 
     <div class="qr-container">
         <h1 id="product-title">Mã QR cho sản phẩm</h1>
-        <div id="qrcode-image">
-            </div>
+        <div id="qrcode-image"></div>
         <p><i>(Nhấp chuột phải vào ảnh QR để lưu về máy hoặc in ra)</i></p>
         <a href="/product-list.html">Quay lại danh sách sản phẩm</a>
     </div>
 
     <script>
-        // Đoạn code này sẽ tự động chạy khi trang được tải xong
         document.addEventListener('DOMContentLoaded', () => {
-            // 1. Lấy ID sản phẩm từ địa chỉ URL (ví dụ: qr-view.html?id=KT123)
+            // 1. Lấy ID sản phẩm từ địa chỉ URL 
             const urlParams = new URLSearchParams(window.location.search);
             const productId = urlParams.get('id');
 
@@ -76,24 +74,21 @@
 
             document.getElementById('product-title').textContent = `Mã QR cho sản phẩm: ${productId}`;
             
-            // ======================================================================
-            // === ▼▼▼ THAY ĐỔI QUAN TRỌNG: SỬ DỤNG ĐỊA CHỈ CÔNG KHAI TỪ NGROK ▼▼▼ ===
-            // ======================================================================
-            // Dán địa chỉ ngrok của bạn vào đây.
-            const publicBaseUrl = 'https://985e-2001-ee0-51e1-2690-2c02-3f06-41dd-d400.ngrok-free.app'; 
+            // === SỬA LỖI QUAN TRỌNG: Tự động lấy đúng URL của trang web ===
+            // Lệnh này sẽ lấy địa chỉ gốc của trang web hiện tại, ví dụ: https://kt-cms-final-....run.app
+            const publicBaseUrl = window.location.origin; 
 
             // 3. Tạo đường link công khai đầy đủ
             const publicUrl = `${publicBaseUrl}/product-view.html?id=${productId}`;
-            // ======================================================================
             
             // 4. Sử dụng thư viện để tạo mã QR
             try {
-                const qr = qrcode(0, 'H'); // 'H' là mức độ sửa lỗi cao nhất, giúp mã dễ quét hơn
+                const qr = qrcode(0, 'H'); 
                 qr.addData(publicUrl);
                 qr.make();
                 
                 // 5. Hiển thị ảnh mã QR ra màn hình
-                document.getElementById('qrcode-image').innerHTML = qr.createImgTag(8, 10); // size=8, margin=10
+                document.getElementById('qrcode-image').innerHTML = qr.createImgTag(8, 10);
             } catch (e) {
                 console.error("Lỗi khi tạo mã QR:", e);
                 document.getElementById('qrcode-image').textContent = "Không thể tạo mã QR.";
