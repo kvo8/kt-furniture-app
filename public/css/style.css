@@ -1,15 +1,19 @@
-/* General Body Styles */
+/* ========================================================== */
+/* === FILE: style.css (Dùng chung cho toàn bộ ứng dụng) === */
+/* ========================================================== */
+
+/* --- General Body & Container Styles --- */
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     background-color: #f4f4f9;
     margin: 0;
     padding: 20px;
     color: #333;
+    line-height: 1.6;
 }
 
-/* Main container for the content */
 .container {
-    max-width: 960px;
+    max-width: 1024px;
     margin: 20px auto;
     background-color: #ffffff;
     padding: 30px 40px;
@@ -17,7 +21,7 @@ body {
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
-/* Header Styles */
+/* --- Header Styles --- */
 header {
     text-align: center;
     margin-bottom: 30px;
@@ -26,86 +30,74 @@ header {
 }
 
 header h1 {
-    font-size: 2rem;
+    font-size: 2.2rem;
     color: #333;
     margin: 0;
 }
 
-/* Form Styles */
+/* --- Form Styles --- */
 form {
     display: flex;
     flex-direction: column;
-    gap: 25px;
+    gap: 30px;
 }
 
-/* Section styles within the form */
 .form-section {
-    border: 1px solid #e0e0e0;
-    padding: 20px;
+    padding: 25px;
     border-radius: 8px;
+    border: 1px solid #e9e9e9;
     background-color: #fafafa;
 }
 
 .form-section h2 {
     margin-top: 0;
-    font-size: 1.2rem;
+    font-size: 1.3rem;
     color: #0056b3;
-    border-bottom: 2px solid #007bff;
     padding-bottom: 10px;
-    margin-bottom: 20px;
+    margin-bottom: 25px;
+    border-bottom: 2px solid #007bff;
 }
 
-/* Grid layout for form fields */
 .form-grid {
     display: grid;
-    /* Dùng 2 cột, cột label rộng 180px, cột input chiếm phần còn lại */
-    grid-template-columns: 180px 1fr;
-    gap: 20px;
-    align-items: center;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px 30px;
+    align-items: center; /* Căn chỉnh các item theo chiều dọc */
 }
 
 .form-group {
-    /* Đảm bảo form-group chiếm hết không gian của grid cell */
-    display: contents; 
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
-.form-group label {
-    text-align: left;
+label {
     font-weight: bold;
     color: #555;
-    padding-right: 20px;
+    font-size: 0.95rem; /* Tăng nhẹ size chữ */
 }
 
-/* Span a field across both columns */
 .full-width {
-    grid-column: 1 / -1;
-}
-
-.full-width label {
-    margin-bottom: 8px;
-}
-
-/* Cho các element trong full-width hiển thị dạng cột */
-.full-width .id-prefix, .full-width input, .full-width textarea, .full-width select {
-     display: block;
-     width: 100%;
+    grid-column: 1 / -1; /* Chiếm toàn bộ chiều rộng grid */
 }
 
 input[type="text"],
+input[type="password"],
 input[type="file"],
 select,
 textarea {
     padding: 12px;
-    font-size: 16px;
+    font-size: 1rem;
     border-radius: 5px;
     border: 1px solid #ccc;
     width: 100%;
     box-sizing: border-box;
-    transition: border-color 0.2s;
+    transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 input:focus, select:focus, textarea:focus {
     border-color: #007bff;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.25);
     outline: none;
 }
 
@@ -114,7 +106,6 @@ textarea {
     min-height: 80px;
 }
 
-/* Special styling for the Product ID field */
 .id-prefix {
     display: flex;
     align-items: center;
@@ -122,28 +113,31 @@ textarea {
 
 .id-prefix span {
     padding: 12px;
-    font-size: 16px;
+    font-size: 1rem;
     background-color: #e9ecef;
     border: 1px solid #ccc;
     border-right: none;
     border-radius: 5px 0 0 5px;
+    height: 100%;
 }
 
 .id-prefix input {
     border-radius: 0 5px 5px 0;
 }
 
-/* Button Styles */
+/* --- Button Styles --- */
 .form-actions {
     display: flex;
     justify-content: flex-end;
     gap: 15px;
     margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #e0e0e0;
 }
 
 button {
-    padding: 12px 25px;
-    font-size: 16px;
+    padding: 12px 30px;
+    font-size: 1rem;
     border-radius: 5px;
     border: none;
     cursor: pointer;
@@ -160,7 +154,7 @@ button[type="submit"]:hover {
     background-color: #218838;
 }
 
-/* Back button link */
+/* --- Navigation Link Styles --- */
 .nav-link {
     display: block;
     text-align: center;
