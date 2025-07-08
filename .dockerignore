@@ -1,8 +1,7 @@
-# Bỏ qua thư mục node_modules ở máy local
-node_modules
-
-# Các file khác không cần thiết cho production
-npm-debug.log
-.env
-.DS_Store
 .git
+.gitignore
+.dockerignore
+node_modules/
+npm-debug.log
+*.log
+.DS_Store

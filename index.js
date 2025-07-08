@@ -1,9 +1,6 @@
 // =================================================================
-// === FILE: index.js (PHIÊN BẢN CUỐI CÙNG - SỬA LỖI TRIỆT ĐỂ) ===
-// =================================================================
-// Tác giả: Gemini (được sửa đổi và bổ sung chi tiết)
-// Mục đích: Backend cho hệ thống quản lý sản phẩm, đã sửa lỗi upload file.
-// Ngày cập nhật: 08/07/2025
+// === FILE: index.js (PHIÊN BẢN HOÀN THIỆN NHẤT - 08/07/2025)     ===
+// === Tích hợp mọi sửa lỗi và bổ sung chú thích chi tiết         ===
 // =================================================================
 
 // --- PHẦN 1: IMPORT CÁC THƯ VIỆN CẦN THIẾT ---
@@ -97,7 +94,7 @@ console.log("Multer configured successfully.");
 
 // --- 2.4. Middleware Tùy Chỉnh ---
 
-// Middleware Kiểm Tra Đăng Nhập
+// Middleware Kiểm Tra Đăng Nhập: Bảo vệ các API yêu cầu xác thực.
 const isLoggedIn = (req, res, next) => {
     // Nếu trong session có thông tin user, nghĩa là đã đăng nhập -> cho phép đi tiếp
     if (req.session && req.session.user) {
@@ -108,7 +105,7 @@ const isLoggedIn = (req, res, next) => {
     }
 };
 
-// Middleware Xử Lý Lỗi Upload Của Multer
+// Middleware Xử Lý Lỗi Upload Của Multer: Ngăn server bị crash khi upload file lỗi.
 const handleUploadMiddleware = (req, res, next) => {
     upload(req, res, function (err) {
         if (err instanceof multer.MulterError) {
@@ -142,15 +139,18 @@ app.post("/api/users/register", async (req, res) => {
         return res.status(400).json({ "error": "Vui lòng điền đầy đủ thông tin." });
     }
     try {
+        // Mã hóa mật khẩu bằng bcrypt để tăng cường bảo mật trước khi lưu vào DB
         const hash = await bcrypt.hash(password, saltRounds);
         const sql = 'INSERT INTO users (ho_ten, ma_nhan_vien, password) VALUES ($1, $2, $3) RETURNING id, ho_ten, ma_nhan_vien';
         const params = [ho_ten, ma_nhan_vien, hash];
         const result = await db.query(sql, params);
         const newUser = result.rows[0];
+        // Tự động đăng nhập cho người dùng mới bằng cách lưu thông tin vào session
         req.session.user = { id: newUser.id, name: newUser.ho_ten, employeeId: newUser.ma_nhan_vien };
         res.status(201).json({ "message": "Đăng ký thành công và đã tự động đăng nhập." });
     } catch (err) {
         console.error("Registration error:", err.message);
+        // Bắt lỗi cụ thể khi mã nhân viên đã tồn tại
         if (err.code === '23505') { // Lỗi của PostgreSQL khi vi phạm ràng buộc UNIQUE
             return res.status(400).json({ "error": "Mã nhân viên này đã tồn tại." });
         }
@@ -165,11 +165,14 @@ app.post("/api/users/login", async (req, res) => {
     try {
         const { rows } = await db.query(sql, [ma_nhan_vien]);
         const user = rows[0];
+        // Kiểm tra xem user có tồn tại không
         if (!user) {
             return res.status(401).json({ "error": "Mã nhân viên hoặc mật khẩu không đúng." });
         }
+        // So sánh mật khẩu người dùng nhập với hash đã lưu trong DB
         const isMatch = await bcrypt.compare(password, user.password);
         if (isMatch) {
+            // Nếu khớp, lưu thông tin vào session để xác thực các request sau
             req.session.user = { id: user.id, name: user.ho_ten, employeeId: user.ma_nhan_vien };
             res.json({ "message": "Đăng nhập thành công" });
         } else {
@@ -181,7 +184,7 @@ app.post("/api/users/login", async (req, res) => {
     }
 });
 
-// Endpoint lấy thông tin user đang đăng nhập
+// Endpoint lấy thông tin user đang đăng nhập (dùng cho việc kiểm tra trạng thái ở frontend)
 app.get("/api/me", isLoggedIn, (req, res) => {
     res.json(req.session.user);
 });
@@ -202,6 +205,7 @@ app.get("/api/products", isLoggedIn, async (req, res) => {
 
 // Endpoint lấy thông tin chi tiết 1 sản phẩm
 app.get("/api/products/:id", async (req, res) => {
+    // Dùng ALIAS và dấu ngoặc kép để đảm bảo tên cột luôn đúng, bất kể database case-sensitive hay không
     const sql = `
         SELECT
             id, name_vi, name_en, collection_vi, collection_en, color_vi, color_en,
@@ -228,10 +232,12 @@ app.post("/api/products", isLoggedIn, handleUploadMiddleware, async (req, res) =
     const data = req.body;
     const user = req.session.user;
     
-    const imageUrl = req.files && req.files['productImage'] ? '/uploads/' + req.files['productImage'][0].filename : null;
-    const drawingUrl = req.files && req.files['drawingFile'] ? '/uploads/' + req.files['drawingFile'][0].filename : null;
-    const materialsUrl = req.files && req.files['materialsFile'] ? '/uploads/' + req.files['materialsFile'][0].filename : null;
+    // Sử dụng optional chaining (?.) để kiểm tra sự tồn tại của file một cách an toàn
+    const imageUrl = req.files?.productImage?.[0] ? '/uploads/' + req.files.productImage[0].filename : null;
+    const drawingUrl = req.files?.drawingFile?.[0] ? '/uploads/' + req.files.drawingFile[0].filename : null;
+    const materialsUrl = req.files?.materialsFile?.[0] ? '/uploads/' + req.files.materialsFile[0].filename : null;
 
+    // Câu lệnh SQL này phải khớp với tên cột trong DB (đã được sửa bằng ALTER TABLE)
     const sql = `
         INSERT INTO products (
             id, name_vi, name_en, collection_vi, collection_en, color_vi, color_en, 
@@ -254,11 +260,12 @@ app.post("/api/products", isLoggedIn, handleUploadMiddleware, async (req, res) =
         await db.query(sql, params);
         res.status(201).json({ "message": "Lưu sản phẩm thành công!", "id": data.id });
     } catch (err) {
-        console.error("Error inserting product into DB:", err.message);
+        console.error("Error inserting product into DB:", err.stack); // Dùng err.stack để có log chi tiết hơn
         if (err.code === '23505' && err.constraint === 'products_pkey') {
              return res.status(400).json({ "error": `Lỗi: Mã sản phẩm '${data.id}' đã tồn tại trong hệ thống.` });
         }
-        res.status(400).json({ "error": `Lỗi khi lưu vào cơ sở dữ liệu: ${err.message}` });
+        // Trả về lỗi chi tiết từ DB để dễ dàng gỡ lỗi hơn
+        res.status(500).json({ "error": `Lỗi khi lưu vào cơ sở dữ liệu: ${err.message}` });
     }
 });
 
@@ -310,11 +317,31 @@ app.get("/api/products/:id/reviews", async (req, res) => {
 
 console.log("API Endpoints defined successfully.");
 
+// =======================================================================
+// === BẮT ĐẦU PHẦN THÊM MỚI ĐỂ CHẨN ĐOÁN LỖI ============================
+// =======================================================================
+// Đây là endpoint đặc biệt giúp bạn kiểm tra xem phiên bản code mới nhất đã được deploy thành công hay chưa.
+const APP_VERSION = "5.0_FINAL_CHECK";
+
+app.get("/api/version", (req, res) => {
+    console.log(`Version check requested. Current version: ${APP_VERSION}`);
+    res.status(200).json({
+        status: "success",
+        message: "KT-CMS-FINAL Service is running.",
+        version: APP_VERSION,
+        note: "If you see this version, the latest index.js is deployed correctly.",
+        server_time: new Date().toISOString()
+    });
+});
+// =======================================================================
+// === KẾT THÚC PHẦN THÊM MỚI ĐỂ CHẨN ĐOÁN LỖI ============================
+// =======================================================================
+
 // --- PHẦN 4: KHỞI ĐỘNG SERVER ---
 // Lắng nghe các request đến trên cổng đã định nghĩa
 app.listen(port, () => {
     console.log(`===================================================`);
-    console.log(`🚀 SERVER IS RUNNING AND LISTENING ON PORT ${port}`);
+    console.log(`🚀 SERVER IS RUNNING (VERSION ${APP_VERSION}) ON PORT ${port}`);
     console.log(`===================================================`);
 });
 
