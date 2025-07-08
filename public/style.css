@@ -58,14 +58,27 @@ form {
 /* Grid layout for form fields */
 .form-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Responsive Grid */
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
     gap: 20px;
+    align-items: center;
 }
 
 .form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+    display: grid;
+    grid-template-columns: 140px 1fr; /* Fixed width for label, flexible for input */
+    gap: 15px;
+    align-items: center;
+}
+
+.form-group label {
+    text-align: left;
+    font-weight: bold;
+    color: #555;
+    grid-column: 1;
+}
+
+.form-group > *:nth-child(2) {
+    grid-column: 2;
 }
 
 /* Span a field across both columns */
@@ -73,9 +86,12 @@ form {
     grid-column: 1 / -1;
 }
 
-label {
-    font-weight: bold;
-    color: #555;
+.full-width .form-group {
+    grid-template-columns: 1fr;
+}
+
+.full-width .form-group > * {
+    grid-column: 1;
 }
 
 input[type="text"],
@@ -123,7 +139,7 @@ textarea {
 /* Button Styles */
 .form-actions {
     display: flex;
-    justify-content: flex-end; /* Align buttons to the right */
+    justify-content: flex-end;
     gap: 15px;
     margin-top: 20px;
 }
@@ -139,15 +155,28 @@ button {
 }
 
 button[type="submit"] {
-    background-color: #007bff;
+    background-color: #28a745; /* Green for save */
     color: white;
 }
 
 button[type="submit"]:hover {
-    background-color: #0056b3;
+    background-color: #218838;
 }
 
-/* Back button */
+button[type="button"] {
+    background-color: #6c757d;
+    color: white;
+}
+
+button[type="button"]:hover {
+    background-color: #5a6268;
+}
+
+button:active {
+    transform: translateY(1px);
+}
+
+/* Back button link */
 .nav-link {
     display: block;
     text-align: center;
