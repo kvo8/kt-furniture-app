@@ -58,27 +58,22 @@ form {
 /* Grid layout for form fields */
 .form-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    /* Dùng 2 cột, cột label rộng 180px, cột input chiếm phần còn lại */
+    grid-template-columns: 180px 1fr;
     gap: 20px;
     align-items: center;
 }
 
 .form-group {
-    display: grid;
-    grid-template-columns: 140px 1fr; /* Fixed width for label, flexible for input */
-    gap: 15px;
-    align-items: center;
+    /* Đảm bảo form-group chiếm hết không gian của grid cell */
+    display: contents; 
 }
 
 .form-group label {
     text-align: left;
     font-weight: bold;
     color: #555;
-    grid-column: 1;
-}
-
-.form-group > *:nth-child(2) {
-    grid-column: 2;
+    padding-right: 20px;
 }
 
 /* Span a field across both columns */
@@ -86,12 +81,14 @@ form {
     grid-column: 1 / -1;
 }
 
-.full-width .form-group {
-    grid-template-columns: 1fr;
+.full-width label {
+    margin-bottom: 8px;
 }
 
-.full-width .form-group > * {
-    grid-column: 1;
+/* Cho các element trong full-width hiển thị dạng cột */
+.full-width .id-prefix, .full-width input, .full-width textarea, .full-width select {
+     display: block;
+     width: 100%;
 }
 
 input[type="text"],
@@ -155,25 +152,12 @@ button {
 }
 
 button[type="submit"] {
-    background-color: #28a745; /* Green for save */
+    background-color: #28a745;
     color: white;
 }
 
 button[type="submit"]:hover {
     background-color: #218838;
-}
-
-button[type="button"] {
-    background-color: #6c757d;
-    color: white;
-}
-
-button[type="button"]:hover {
-    background-color: #5a6268;
-}
-
-button:active {
-    transform: translateY(1px);
 }
 
 /* Back button link */

@@ -18,29 +18,18 @@
                 <h2>Thông Tin Chung</h2>
                 <div class="form-grid">
                     <div class="form-group full-width">
-                        <label for="product-id-suffix">Mã Sản Phẩm / Product ID (Bắt buộc 11 ký tự sau "KT")</label>
+                        <label for="product-id-suffix">Mã Sản Phẩm / Product ID (11 ký tự sau "KT")</label>
                         <div class="id-prefix">
                             <span>KT</span>
                             <input type="text" id="product-id-suffix" required maxlength="11" pattern=".{11,11}" title="Vui lòng nhập đúng 11 ký tự.">
                             <input type="hidden" name="id" id="full-product-id">
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label for="name_vi">Tên Sản Phẩm (VI)</label>
-                        <input type="text" id="name_vi" name="name_vi" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="name_en">Product Name (EN)</label>
-                        <input type="text" id="name_en" name="name_en" required>
-                    </div>
-                     <div class="form-group">
-                        <label for="parent_id">Mã Sản Phẩm Gốc / Parent Product ID (Nếu có)</label>
-                        <input type="text" id="parent_id" name="parent_id" placeholder="Ví dụ: KT25LVSSF0001">
-                    </div>
-                    <div class="form-group">
-                        <label for="collection_vi">Bộ Sưu Tập (VI)</label>
-                        <input type="text" id="collection_vi" name="collection_vi">
-                    </div>
+                    <div class="form-group"><label for="name_vi">Tên Sản Phẩm (VI)</label><input type="text" id="name_vi" name="name_vi" required></div>
+                    <div class="form-group"><label for="name_en">Product Name (EN)</label><input type="text" id="name_en" name="name_en" required></div>
+                    <div class="form-group"><label for="parent_id">Mã Sản Phẩm Gốc (Nếu có)</label><input type="text" id="parent_id" name="parent_id" placeholder="Ví dụ: KT25LVSSF0001"></div>
+                    <div class="form-group"><label for="collection_vi">Bộ Sưu Tập (VI)</label><input type="text" id="collection_vi" name="collection_vi"></div>
+                    <div class="form-group"><label for="collection_en">Collection (EN)</label><input type="text" id="collection_en" name="collection_en"></div>
                 </div>
             </div>
 
@@ -53,11 +42,11 @@
                     <div class="form-group"><label for="fabric_en">Fabric (EN)</label><input type="text" id="fabric_en" name="fabric_en"></div>
                     <div class="form-group"><label for="wicker_vi">Dây (VI)</label><input type="text" id="wicker_vi" name="wicker_vi"></div>
                     <div class="form-group"><label for="wicker_en">Wicker (EN)</label><input type="text" id="wicker_en" name="wicker_en"></div>
-                     <div class="form-group"><label for="material_vi">Chất liệu (VI)</label><input type="text" id="material_vi" name="material_vi"></div>
+                    <div class="form-group"><label for="material_vi">Chất liệu (VI)</label><input type="text" id="material_vi" name="material_vi"></div>
                     <div class="form-group"><label for="material_en">Material (EN)</label><input type="text" id="material_en" name="material_en"></div>
-                    <div class="form-group full-width"><label for="aluminum_profile">Biên dạng nhôm / Aluminum Profile</label><input type="text" id="aluminum_profile" name="aluminum_profile"></div>
+                    <div class="form-group full-width"><label for="aluminum_profile">Biên dạng nhôm</label><input type="text" id="aluminum_profile" name="aluminum_profile"></div>
                     <div class="form-group">
-                        <label for="production_place">Nơi sản xuất / Production Place</label>
+                        <label for="production_place">Nơi sản xuất</label>
                         <select id="production_place" name="production_place">
                             <option value="KT">KT</option>
                             <option value="Minh Tien">Minh Tiến</option>
@@ -70,19 +59,19 @@
             <div class="form-section">
                  <h2>Thông Tin Thương Mại & Kỹ Thuật</h2>
                  <div class="form-grid">
-                     <div class="form-group"><label for="company">Công ty / Company</label><input type="text" id="company" name="company"></div>
-                     <div class="form-group"><label for="customer">Khách hàng / Customer</label><input type="text" id="customer" name="customer"></div>
-                     <div class="form-group full-width"><label for="specification">Thông số / Specification</label><input type="text" id="specification" name="specification"></div>
-                     <div class="form-group full-width"><label for="other_details">Chi tiết khác / Other Details</label><textarea id="other_details" name="other_details" rows="3"></textarea></div>
+                     <div class="form-group"><label for="company">Công ty</label><input type="text" id="company" name="company"></div>
+                     <div class="form-group"><label for="customer">Khách hàng</label><input type="text" id="customer" name="customer"></div>
+                     <div class="form-group full-width"><label for="specification">Thông số</label><input type="text" id="specification" name="specification"></div>
+                     <div class="form-group full-width"><label for="other_details">Chi tiết khác</label><textarea id="other_details" name="other_details" rows="3"></textarea></div>
                  </div>
             </div>
             
             <div class="form-section">
                 <h2>Tệp Đính Kèm</h2>
                 <div class="form-grid">
-                    <div class="form-group"><label for="productImage">Hình ảnh sản phẩm / Product Image</label><input type="file" id="productImage" name="productImage" accept="image/*"></div>
-                    <div class="form-group"><label for="drawingFile">Bản vẽ / Drawing (PDF)</label><input type="file" id="drawingFile" name="drawingFile" accept=".pdf"></div>
-                    <div class="form-group"><label for="materialsFile">Vật tư / Materials (Word, Excel, PDF)</label><input type="file" id="materialsFile" name="materialsFile" accept=".doc,.docx,.xls,.xlsx,.pdf"></div>
+                    <div class="form-group full-width"><label for="productImage">Hình ảnh sản phẩm</label><input type="file" id="productImage" name="productImage" accept="image/*"></div>
+                    <div class="form-group full-width"><label for="drawingFile">Bản vẽ (PDF)</label><input type="file" id="drawingFile" name="drawingFile" accept=".pdf"></div>
+                    <div class="form-group full-width"><label for="materialsFile">Vật tư (Word, Excel, PDF)</label><input type="file" id="materialsFile" name="materialsFile" accept=".doc,.docx,.xls,.xlsx,.pdf"></div>
                 </div>
             </div>
             
@@ -104,15 +93,18 @@
         form.addEventListener('submit', function(event) {
             event.preventDefault();
             
+            // Tự động ghép chuỗi "KT" vào mã sản phẩm
             fullIdInput.value = 'KT' + idSuffixInput.value;
             
             const formData = new FormData(this);
 
+            // Gửi dữ liệu đến API endpoint
             fetch('/api/products', {
                 method: 'POST',
                 body: formData,
             })
             .then(response => {
+                // Kiểm tra nếu server trả về lỗi
                 if (!response.ok) {
                     return response.json().then(err => { 
                         throw new Error(err.error || 'Lỗi không xác định từ server') 
@@ -124,9 +116,11 @@
                 if (result.error) {
                     throw new Error(result.error);
                 }
+                // Nếu thành công, chuyển đến trang success
                 window.location.href = `/success.html?id=${result.id}`;
             })
             .catch(error => {
+                // Hiển thị bất kỳ lỗi nào bắt được
                 alert('Có lỗi xảy ra: ' + error.message);
             });
         });
