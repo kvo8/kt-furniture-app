@@ -1,5 +1,5 @@
 # ===================================================================
-# === FILE: Dockerfile (ĐÃ SỬA LỖI VÀ TỐI ƯU CHO CLOUD RUN) ===
+# === FILE: Dockerfile (PHIÊN BẢN CUỐI CÙNG - ĐÃ "PHÁ CACHE")     ===
 # ===================================================================
 
 # --- GIAI ĐOẠN 1: BUILD DEPENDENCIES ---
@@ -8,6 +8,12 @@
 FROM node:18 AS builder
 
 WORKDIR /app
+
+# =================================================================
+# === "PHÁ CACHE": THÊM DÒNG NÀY ĐỂ BUỘC BUILD LẠI TỪ ĐẦU ===
+# === Giá trị này là một chuỗi ngẫu nhiên, bạn có thể thay đổi nó mỗi khi muốn "phá cache" ===
+ARG CACHE_BUSTER=FORCE_REBUILD_202507081505
+# =================================================================
 
 # Chỉ sao chép file package.json và package-lock.json
 COPY package*.json ./
@@ -26,7 +32,7 @@ WORKDIR /app
 # Sao chép thư mục node_modules đã được build sạch sẽ từ giai đoạn 'builder'
 COPY --from=builder /app/node_modules ./node_modules/
 
-# Sao chép toàn bộ mã nguồn của bạn
+# Sao chép toàn bộ mã nguồn của bạn (bao gồm cả file index.js mới nhất)
 COPY . .
 
 # Mở cổng 8080. Google Cloud Run yêu cầu ứng dụng phải lắng nghe trên cổng

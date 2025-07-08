@@ -1,7 +1,27 @@
+# ===================================================================
+# === FILE: .dockerignore (PHIÊN BẢN HOÀN CHỈNH - ĐÃ XÁC NHẬN)    ===
+# === Mục đích: Ra lệnh cho Docker bỏ qua các file không cần thiết ===
+# === khi xây dựng container, giúp image nhẹ hơn và bảo mật hơn. ===
+# ===================================================================
+
+# Bỏ qua các thư mục và file liên quan đến Git.
+# Lịch sử commit không cần thiết trong container production.
 .git
 .gitignore
+
+# Bỏ qua chính file .dockerignore này.
 .dockerignore
+
+# Bỏ qua thư mục node_modules.
+# Đây là dòng quan trọng nhất. Thư mục này chứa hàng ngàn file thư viện
+# và rất nặng. Server sẽ tự chạy "npm install" trong Dockerfile để
+# cài đặt lại một cách "sạch sẽ", do đó chúng ta không cần sao chép nó.
 node_modules/
+
+# Bỏ qua các file log được tạo ra bởi npm.
 npm-debug.log
 *.log
+
+# Bỏ qua các file hệ thống ẩn của macOS và Windows.
 .DS_Store
+Thumbs.db
