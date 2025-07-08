@@ -5,54 +5,113 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Thông Tin Chi Tiết Sản Phẩm</title>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/qrcode-generator/qrcode.js"></script>
-    <link rel="stylesheet" href="/css/style.css">
     <style>
-        /* CSS bổ sung chỉ dành riêng cho trang này */
-        .details-grid p { 
-            border-bottom: 1px solid #f0f0f0;
-            padding-bottom: 12px;
-            padding-top: 12px;
-            margin: 0;
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            max-width: 900px; 
+            margin: auto; 
+            padding: 20px; 
+            background-color: #f4f4f9; 
+        }
+        .container { 
+            background-color: white; 
+            padding: 20px 30px; 
+            border-radius: 8px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1); 
+            margin-bottom: 25px; 
         }
         .product-image { 
             width: 100%; 
-            max-width: 500px;
-            display: block;
-            margin: 20px auto 30px auto;
+            max-width: 400px; /* Thêm giới hạn để ảnh không quá lớn */
+            display: block;   /* Căn giữa dễ hơn */
+            margin: 0 auto 20px; /* Căn giữa và tạo khoảng cách */
             border-radius: 8px; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
+        h1, h2 { 
+            color: #333; 
+            border-bottom: 2px solid #eee; 
+            padding-bottom: 10px; 
+        }
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .details-grid {
+            display: grid;
+            grid-template-columns: 1fr; /* 1 cột trên màn hình nhỏ */
+            gap: 15px;
+        }
+        @media (min-width: 768px) {
+            .details-grid {
+                grid-template-columns: 1fr 1fr; /* 2 cột trên màn hình lớn hơn */
+                gap: 15px 25px;
+            }
+        }
+        .details-grid p { 
+            font-size: 17px; 
+            line-height: 1.6; 
+            color: #555; 
+            border-bottom: 1px solid #f0f0f0;
+            padding-bottom: 8px;
+            margin: 0;
+            word-break: break-word; /* Chống tràn chữ */
+        }
+        strong { 
+            color: #000; 
+            min-width: 150px; 
+            display: inline-block;
+        }
+        #qrcode-container { 
+            text-align: center; 
+            padding: 20px; 
+        }
+        #qrcode-image { 
+            border: 1px solid #ccc; 
+            padding: 10px; 
+            display: inline-block; 
+        }
+        .review { border-top: 1px solid #eee; padding: 15px 0; }
+        .review-author { font-weight: bold; }
+        .review-rating span { color: #ffc107; font-size: 20px; }
+        .review-form form { display: flex; flex-direction: column; gap: 10px; margin-top: 20px;}
+        .review-form input, .review-form textarea, .review-form select, .review-form button { padding: 12px; font-size: 16px; border: 1px solid #ccc; border-radius: 5px; }
+        .review-form button { background-color: #007bff; color: white; cursor: pointer; font-weight: bold; }
+        .lang-switcher { text-align: right; }
         .lang-switcher button { padding: 8px 12px; border: 1px solid #333; background-color: white; cursor: pointer; border-radius: 5px; margin-left: 5px; }
         .lang-switcher button.active { background-color: #333; color: white; }
-        .header-container { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
-
-        /* CSS cho phần nội bộ, mặc định ẩn đi */
-        #internal-details-section { display: none; border-top: 2px dashed #007bff; margin-top: 20px; padding-top: 20px; }
-        #view-internal-btn { font-size: 16px; padding: 12px 20px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; display: block; margin: 20px auto; }
         
-        /* CSS cho popup đăng nhập */
+        /* CSS CHO PHẦN NỘI BỘ */
+        #internal-details-section { 
+            display: none; /* Quan trọng: Mặc định ẩn đi */
+            border-top: 2px dashed #007bff; 
+            margin-top: 20px; 
+            padding-top: 20px; 
+        }
+        #view-internal-btn { 
+            font-size: 16px; 
+            padding: 12px 20px; 
+            background-color: #007bff; 
+            color: white; 
+            border: none; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            display: block; 
+            margin: 20px auto; 
+        }
+        
+        /* CSS CHO POPUP ĐĂNG NHẬP */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 1000; }
         .modal-content { background: white; padding: 30px; border-radius: 8px; width: 90%; max-width: 400px; text-align: center; }
         .modal-content form { display: flex; flex-direction: column; gap: 15px; }
         .modal-content input, .modal-content button { padding: 12px; font-size: 16px; }
         .modal-content button[type="submit"] { background-color: #28a745; color: white; border: none; }
         .modal-content button[type="button"] { background-color: #6c757d; color: white; border: none; margin-top: 10px; }
-
-        /* CSS cho phần reviews */
-        .review { border-bottom: 1px solid #eee; padding: 15px 0; }
-        .review:last-child { border-bottom: none; }
-        .review-author { font-weight: bold; }
-        .review-rating span { color: #ffc107; font-size: 20px; }
-        .review-form form { display: flex; flex-direction: column; gap: 10px; margin-top: 20px;}
-        .review-form input, .review-form textarea, .review-form select, .review-form button { padding: 12px; font-size: 16px; border: 1px solid #ccc; border-radius: 5px; }
-        .review-form button { background-color: #007bff; color: white; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
-    <div id="product-details-container" class="container">
-        <h1>Đang tải dữ liệu...</h1>
-        <div id="product-details-content"></div>
-    </div>
+    <div id="product-details" class="container"><h1>Đang tải dữ liệu...</h1></div>
 
     <div id="internal-details-container" class="container">
         <div id="view-internal-btn-container">
@@ -64,9 +123,9 @@
         </div>
     </div>
 
-    <div id="qr-code-section" class="container" style="text-align: center;">
+    <div id="qr-code-section" class="container">
         <h2 id="qr-title">Mã QR của sản phẩm</h2>
-        <div id="qrcode-image" style="border: 1px solid #ccc; padding: 10px; display: inline-block;"></div>
+        <div id="qrcode-container"></div>
     </div>
     
     <div id="reviews-section" class="container">
@@ -77,14 +136,7 @@
             <h3 id="form-title">Để lại đánh giá của bạn</h3>
             <form id="review-form">
                 <input type="text" name="author_name" placeholder="Tên của bạn (bắt buộc)" required>
-                <select name="rating" required>
-                    <option value="">-- Chọn số sao --</option>
-                    <option value="5">⭐⭐⭐⭐⭐</option>
-                    <option value="4">⭐⭐⭐⭐</option>
-                    <option value="3">⭐⭐⭐</option>
-                    <option value="2">⭐⭐</option>
-                    <option value="1">⭐</option>
-                </select>
+                <select name="rating" required><option value="">-- Chọn số sao --</option><option value="5">⭐⭐⭐⭐⭐</option><option value="4">⭐⭐⭐⭐</option><option value="3">⭐⭐⭐</option><option value="2">⭐⭐</option><option value="1">⭐</option></select>
                 <textarea name="comment" rows="4" placeholder="Viết bình luận của bạn..."></textarea>
                 <button type="submit" id="submit-review-btn">Gửi Đánh Giá</button>
             </form>
@@ -104,32 +156,45 @@
     </div>
 
     <script>
-        // === KHAI BÁO BIẾN TOÀN CỤC ===
-        let fullProductData = null; // Biến để lưu trữ toàn bộ dữ liệu sản phẩm
-        let currentLang = 'vi';      // Ngôn ngữ mặc định
+        let fullProductData = null;
+        let currentLang = 'vi';
         const urlParams = new URLSearchParams(window.location.search);
-        const productId = urlParams.get('id'); // Lấy ID sản phẩm từ URL
+        const productId = urlParams.get('id');
 
-        // Đối tượng chứa các nhãn dịch
         const labels = {
-            vi: { productCode: 'Mã sản phẩm', company: 'Công ty', collection: 'Bộ sưu tập', color: 'Màu sắc', material: 'Chất liệu', spec: 'Thông số', profile: 'Biên dạng nhôm', customer: 'Khách hàng', creator: 'Người tạo', qrTitle: 'Mã QR của sản phẩm', reviewsTitle: 'Đánh giá của khách hàng', formTitle: 'Để lại đánh giá của bạn', submitReview: 'Gửi Đánh Giá', internalTitle: 'Chi tiết Nội bộ', drawing: 'Bản vẽ', materials: 'Vật tư', fabric: 'Vải', wicker: 'Dây', productionPlace: 'Nơi sản xuất', otherDetails: 'Chi tiết khác' },
-            en: { productCode: 'Product ID', company: 'Company', collection: 'Collection', color: 'Color', material: 'Material', spec: 'Specification', profile: 'Aluminum Profile', customer: 'Customer', creator: 'Created By', qrTitle: 'Product QR Code', reviewsTitle: 'Customer Reviews', formTitle: 'Leave Your Review', submitReview: 'Submit Review', internalTitle: 'Internal Details', drawing: 'Drawing', materials: 'Materials', fabric: 'Fabric', wicker: 'Wicker', productionPlace: 'Production Place', otherDetails: 'Other Details' }
+            vi: {
+                productCode: 'Mã sản phẩm', company: 'Công ty', collection: 'Bộ sưu tập', color: 'Màu sắc',
+                material: 'Chất liệu', spec: 'Thông số', profile: 'Biên dạng nhôm', customer: 'Khách hàng',
+                creator: 'Người tạo', qrTitle: 'Mã QR của sản phẩm', reviewsTitle: 'Đánh giá của khách hàng',
+                formTitle: 'Để lại đánh giá của bạn', submitReview: 'Gửi Đánh Giá', 
+                internalTitle: 'Chi tiết Nội bộ', drawing: 'Bản vẽ', materials: 'Vật tư',
+                fabric: 'Vải', wicker: 'Dây', productionPlace: 'Nơi sản xuất', otherDetails: 'Chi tiết khác'
+            },
+            en: {
+                productCode: 'Product ID', company: 'Company', collection: 'Collection', color: 'Color',
+                material: 'Material', spec: 'Specification', profile: 'Aluminum Profile', customer: 'Customer',
+                creator: 'Created By', qrTitle: 'Product QR Code', reviewsTitle: 'Customer Reviews',
+                formTitle: 'Leave Your Review', submitReview: 'Submit Review',
+                internalTitle: 'Internal Details', drawing: 'Drawing', materials: 'Materials',
+                fabric: 'Fabric', wicker: 'Wicker', productionPlace: 'Production Place', otherDetails: 'Other Details'
+            }
         };
 
-        // === CÁC HÀM RENDER GIAO DIỆN ===
-
-        // Hàm render chính, hiển thị thông tin công khai
-        function renderPublicPage() {
+        function renderPage() {
             if (!fullProductData) return;
             const l = labels[currentLang];
             
             document.title = fullProductData[`name_${currentLang}`] || fullProductData.name_vi;
 
-            const imageHtml = fullProductData.imageurl 
-                ? `<img class="product-image" src="${fullProductData.imageurl}" alt="${fullProductData.name_vi}">` 
-                : '';
+            const detailsDiv = document.getElementById('product-details');
+            
+            // **BẮT ĐẦU SỬA LỖI:**
+            // Thêm một biến để chứa đường dẫn ảnh sau khi đã kiểm tra.
+            // Biến này sẽ thử lấy 'imageUrl' (camelCase), nếu không có sẽ thử 'imageurl' (lowercase).
+            // Nếu cả hai đều không có, nó sẽ là một chuỗi rỗng để tránh lỗi.
+            const finalImageUrl = fullProductData.imageUrl || fullProductData.imageurl || '';
+            // **KẾT THÚC SỬA LỖI**
 
-            const detailsDiv = document.getElementById('product-details-content');
             detailsDiv.innerHTML = `
                 <div class="header-container">
                     <h1>${fullProductData[`name_${currentLang}`] || 'N/A'}</h1>
@@ -138,9 +203,11 @@
                         <button id="btn-en">English</button>
                     </div>
                 </div>
-                ${imageHtml}
+                
+                <img class="product-image" src="${finalImageUrl}" alt="Hình ảnh cho ${fullProductData.name_vi}" onerror="this.style.display='none';">
+
                 <div class="details-grid">
-                    <p><strong>${l.productCode}:</strong> ${fullProductData.id || 'N/A'}</p>
+                    <p><strong>${l.productCode}:</strong> ${fullProductData.id}</p>
                     <p><strong>${l.company}:</strong> ${fullProductData.company || 'N/A'}</p>
                     <p><strong>${l.collection}:</strong> ${fullProductData[`collection_${currentLang}`] || 'N/A'}</p>
                     <p><strong>${l.color}:</strong> ${fullProductData[`color_${currentLang}`] || 'N/A'}</p>
@@ -152,67 +219,78 @@
                     <p><strong>${l.fabric}:</strong> ${fullProductData[`fabric_${currentLang}`] || 'N/A'}</p>
                     <p><strong>${l.wicker}:</strong> ${fullProductData[`wicker_${currentLang}`] || 'N/A'}</p>
                     <p><strong>${l.productionPlace}:</strong> ${fullProductData.production_place || 'N/A'}</p>
-                    <p class="full-width"><strong>${l.otherDetails}:</strong> ${fullProductData.other_details || 'N/A'}</p>
+                    <p><strong>${l.otherDetails}:</strong> ${fullProductData.other_details || 'N/A'}</p>
                 </div>
             `;
             
+            document.getElementById('internal-title').textContent = l.internalTitle;
             document.getElementById('qr-title').textContent = l.qrTitle;
             document.getElementById('reviews-title').textContent = l.reviewsTitle;
             document.getElementById('form-title').textContent = l.formTitle;
             document.getElementById('submit-review-btn').textContent = l.submitReview;
 
-            // Gán lại sự kiện cho nút đổi ngôn ngữ
-            document.getElementById('btn-vi').addEventListener('click', () => { currentLang = 'vi'; renderPublicPage(); renderInternalPage(true); });
-            document.getElementById('btn-en').addEventListener('click', () => { currentLang = 'en'; renderPublicPage(); renderInternalPage(true); });
             document.getElementById('btn-vi').classList.toggle('active', currentLang === 'vi');
             document.getElementById('btn-en').classList.toggle('active', currentLang === 'en');
+
+            document.getElementById('btn-vi').addEventListener('click', () => { currentLang = 'vi'; renderPage(); showInternalInfo(true); });
+            document.getElementById('btn-en').addEventListener('click', () => { currentLang = 'en'; renderPage(); showInternalInfo(true); });
         }
         
-        // Hàm render thông tin nội bộ, chỉ được gọi khi cần
-        function renderInternalPage(onlyIfVisible = false) {
+        // CÓ THAM SỐ `onlyIfLoggedIn` ĐỂ KHÔNG HIỂN THỊ LẠI NÚT ĐĂNG NHẬP KHI ĐỔI NGÔN NGỮ
+        function showInternalInfo(onlyIfLoggedIn = false) {
             if (!fullProductData) return;
-            if (onlyIfVisible && document.getElementById('internal-details-section').style.display !== 'block') return;
+            
+            if(onlyIfLoggedIn) {
+                // Nếu chỉ là đổi ngôn ngữ, chỉ render lại nếu mục nội bộ đã hiển thị
+                if(document.getElementById('internal-details-section').style.display !== 'block') return;
+            }
 
             const internalDiv = document.getElementById('internal-content');
             const l = labels[currentLang];
-            const drawingLink = fullProductData.drawingurl ? `<a href="${fullProductData.drawingurl}" target="_blank">Tải về / Download</a>` : 'N/A';
-            const materialsLink = fullProductData.materialsurl ? `<a href="${fullProductData.materialsurl}" target="_blank">Tải về / Download</a>` : 'N/A';
+
+            // **BẮT ĐẦU SỬA LỖI:**
+            // Tương tự như với imageUrl, áp dụng cơ chế fallback cho drawingUrl và materialsUrl.
+            const finalDrawingUrl = fullProductData.drawingUrl || fullProductData.drawingurl || '#';
+            const finalMaterialsUrl = fullProductData.materialsUrl || fullProductData.materialsurl || '#';
+            // **KẾT THÚC SỬA LỖI**
 
             internalDiv.innerHTML = `
-                <p><strong>${l.drawing}:</strong> ${drawingLink}</p>
-                <p><strong>${l.materials}:</strong> ${materialsLink}</p>
+                <p><strong>${l.drawing}:</strong> <a href="${finalDrawingUrl}" target="_blank">Tải về / Download</a></p>
+                <p><strong>${l.materials}:</strong> <a href="${finalMaterialsUrl}" target="_blank">Tải về / Download</a></p>
             `;
             
-            document.getElementById('internal-title').textContent = l.internalTitle;
             document.getElementById('internal-details-section').style.display = 'block';
             document.getElementById('view-internal-btn-container').style.display = 'none';
         }
 
-        // Hàm render danh sách reviews
         function renderReviews(reviews) {
             const reviewListDiv = document.getElementById('review-list');
-            reviewListDiv.innerHTML = !reviews || reviews.length === 0 
-                ? '<p>Chưa có đánh giá nào cho sản phẩm này.</p>'
-                : reviews.map(review => `
-                    <div class="review">
-                        <p class="review-author">${review.author_name || 'Khách'}</p>
-                        <p class="review-rating"><span>${'⭐'.repeat(review.rating)}${'☆'.repeat(5 - review.rating)}</span></p>
-                        <p>${review.comment || '<i>(Không có bình luận)</i>'}</p>
-                        <small>${new Date(review.created_at).toLocaleString('vi-VN')}</small>
-                    </div>
-                `).join('');
+            reviewListDiv.innerHTML = '';
+            if (!reviews || reviews.length === 0) {
+                reviewListDiv.innerHTML = '<p>Chưa có đánh giá nào cho sản phẩm này.</p>';
+                return;
+            }
+            reviews.forEach(review => {
+                const reviewDiv = document.createElement('div');
+                reviewDiv.className = 'review';
+                reviewDiv.innerHTML = `
+                    <p class="review-author">${review.author_name || 'Khách'}</p>
+                    <p class="review-rating"><span>${'⭐'.repeat(review.rating)}${'☆'.repeat(5 - review.rating)}</span></p>
+                    <p>${review.comment || '<i>(Không có bình luận)</i>'}</p>
+                    <small>${new Date(review.created_at).toLocaleString('vi-VN')}</small>
+                `;
+                reviewListDiv.appendChild(reviewDiv);
+            });
         }
         
-        // Hàm tạo mã QR
         function generateQRCode(productId) {
-            const publicUrl = `${window.location.origin}/product-view.html?id=${productId}`;
+            const publicUrl = window.location.href; // Dùng URL hiện tại để tạo QR code
             const qr = qrcode(0, 'H');
             qr.addData(publicUrl);
             qr.make();
-            document.getElementById('qrcode-image').innerHTML = qr.createImgTag(8, 10);
+            document.getElementById('qrcode-container').innerHTML = qr.createImgTag(8, 10);
         }
         
-        // Hàm tải dữ liệu reviews
         async function fetchReviews() {
              try {
                 const response = await fetch(`/api/products/${productId}/reviews`);
@@ -224,10 +302,9 @@
              }
         }
 
-        // Hàm tải dữ liệu chính của trang
         async function loadPageData() {
             if (!productId) {
-                document.getElementById('product-details-container').innerHTML = '<h1>Lỗi: Không có ID sản phẩm.</h1>';
+                document.getElementById('product-details').innerHTML = '<h1>Lỗi: Không có ID sản phẩm.</h1>';
                 return;
             }
             
@@ -238,33 +315,34 @@
                 const product = await response.json();
                 if (product.error) throw new Error(product.error);
                 
-                fullProductData = product; // Lưu dữ liệu sản phẩm vào biến toàn cục
-                renderPublicPage();        // Render phần công khai
-                fetchReviews();            // Tải các đánh giá
+                fullProductData = product;
+                renderPage(); 
+                fetchReviews();
 
             } catch (error) {
-                document.getElementById('product-details-container').innerHTML = `<h1>Lỗi: ${error.message}</h1>`;
+                document.getElementById('product-details').innerHTML = `<h1>Lỗi tải dữ liệu sản phẩm: ${error.message}</h1>`;
             }
         }
 
         // === LOGIC CHÍNH KHI TẢI TRANG ===
         document.addEventListener('DOMContentLoaded', () => {
-            // Tải dữ liệu chính của trang
             loadPageData();
 
-            // Kiểm tra trạng thái đăng nhập để quyết định có hiển thị phần nội bộ không
+            // Kiểm tra trạng thái đăng nhập
             fetch('/api/me')
               .then(res => res.ok ? res.json() : null)
               .then(user => {
                   if (user && user.id) {
-                      renderInternalPage(); // Nếu đã đăng nhập, hiển thị thông tin nội bộ
+                      showInternalInfo(); // Nếu đã đăng nhập, hiển thị thông tin nội bộ
                   }
               });
 
-            // Gán sự kiện cho các nút
+            // Gán sự kiện cho nút "Sign In to Unlock"
             document.getElementById('view-internal-btn').addEventListener('click', () => {
                 document.getElementById('login-modal').style.display = 'flex';
             });
+
+            // Gán sự kiện cho nút đóng popup
             document.getElementById('close-modal-btn').addEventListener('click', () => {
                 document.getElementById('login-modal').style.display = 'none';
             });
@@ -273,6 +351,7 @@
             document.getElementById('internal-login-form').addEventListener('submit', async function(event) {
                 event.preventDefault();
                 const data = Object.fromEntries(new FormData(this).entries());
+                
                 try {
                     const response = await fetch('/api/users/login', {
                         method: 'POST',
@@ -284,7 +363,7 @@
 
                     alert('Đăng nhập thành công!');
                     document.getElementById('login-modal').style.display = 'none';
-                    renderInternalPage(); // Hiển thị phần nội dung nội bộ
+                    showInternalInfo(); // Hiển thị phần nội dung nội bộ
                     this.reset();
                 } catch (error) {
                     alert('Đăng nhập thất bại: ' + error.message);
@@ -300,6 +379,7 @@
                     return;
                 }
                 const dataToSend = { ...data, productId: productId };
+                
                 try {
                     const response = await fetch('/api/reviews', {
                         method: 'POST',
