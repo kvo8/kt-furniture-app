@@ -15,16 +15,33 @@
         .file-info a { text-decoration: none; font-weight: bold; }
         .file-info { margin-top: 8px; font-style: italic; color: #555; }
         .upload-status { margin-top: 15px; padding: 10px; background-color: #e9f7fe; border-left: 4px solid #007bff; font-style: italic; color: #333; display: none; }
+        /* Thêm style cho trạng thái loading */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5em;
+            color: #333;
+            z-index: 1000;
+        }
     </style>
 </head>
 <body>
+    <div id="loading" class="loading-overlay">
+        <p>Đang tải dữ liệu sản phẩm...</p>
+    </div>
+
     <div class="container">
         <h1>Chỉnh Sửa Sản Phẩm / Edit Product</h1>
         <p>Thay đổi thông tin và nhấn "Lưu Thay Đổi" để cập nhật.</p>
 
-        <form id="edit-form">
-            <!-- Các trường input sẽ được điền dữ liệu tự động bằng JavaScript -->
-            <div class="form-section">
+        <form id="edit-form" style="display: none;"> <div class="form-section">
                 <h2>Thông Tin Chung</h2>
                 <div class="form-grid">
                     <div class="form-group full-width">
@@ -69,38 +86,92 @@
             </div>
 
             <div class="form-section">
-    <h2>Tệp Đính Kèm</h2>
-    <p style="font-style: italic; margin-bottom: 15px;">
-        Sử dụng <a href="/upload.html" target="_blank">Công cụ Upload</a> để tải file lên và dán danh sách link vào các ô dưới đây.
-    </p>
-    <div class="form-group full-width">
-        <label for="imageUrls">Danh sách URL Hình ảnh sản phẩm (mỗi link một dòng)</label>
-        <textarea id="imageUrls" name="imageUrls" rows="5" placeholder="Dán danh sách link ảnh từ trang Upload vào đây..."></textarea>
-    </div>
-    <div class="form-group full-width">
-        <label for="drawingUrls">Danh sách URL Bản vẽ (PDF)</label>
-        <textarea id="drawingUrls" name="drawingUrls" rows="5" placeholder="Dán danh sách link bản vẽ từ trang Upload vào đây..."></textarea>
-    </div>
-    <div class="form-group full-width">
-        <label for="materialsUrls">Danh sách URL Vật tư</label>
-        <textarea id="materialsUrls" name="materialsUrls" rows="5" placeholder="Dán danh sách link vật tư từ trang Upload vào đây..."></textarea>
-    </div>
-</div>
+                <h2>Tệp Đính Kèm</h2>
+                <p style="font-style: italic; margin-bottom: 15px;">
+                    Chỉnh sửa danh sách link dưới đây. Dùng <a href="/upload.html" target="_blank">Công cụ Upload</a> để lấy link mới.
+                </p>
+                <div class="form-group full-width">
+                    <label for="imageUrls">Danh sách URL Hình ảnh sản phẩm (mỗi link một dòng)</label>
+                    <textarea id="imageUrls" name="imageUrls" rows="5" placeholder="Dán danh sách link ảnh từ trang Upload vào đây..."></textarea>
+                </div>
+                <div class="form-group full-width">
+                    <label for="drawingUrls">Danh sách URL Bản vẽ (PDF)</label>
+                    <textarea id="drawingUrls" name="drawingUrls" rows="5" placeholder="Dán danh sách link bản vẽ từ trang Upload vào đây..."></textarea>
+                </div>
+                <div class="form-group full-width">
+                    <label for="materialsUrls">Danh sách URL Vật tư</label>
+                    <textarea id="materialsUrls" name="materialsUrls" rows="5" placeholder="Dán danh sách link vật tư từ trang Upload vào đây..."></textarea>
+                </div>
+            </div>
             
             <div class="form-actions">
                 <button type="submit" id="submit-button">Lưu Thay Đổi</button>
-                <div class="upload-status" id="upload-status"></div>
             </div>
         </form>
         <div class="nav-link"><a href="/product-list.html">Quay về danh sách</a></div>
     </div>
 
     <script>
-    // Áp dụng cho cả 'product-form' và 'edit-form'
-    const form = document.querySelector('form'); 
+    /**
+     * GHI CHÚ: File này có 2 nhiệm vụ chính:
+     * 1. Tải dữ liệu của sản phẩm hiện tại và điền vào form.
+     * 2. Xử lý việc gửi dữ liệu đã chỉnh sửa lên server.
+     */
+    const form = document.getElementById('edit-form');
+    const submitButton = document.getElementById('submit-button');
+    const loadingOverlay = document.getElementById('loading');
+    
+    // --- NHIỆM VỤ 1: TẢI VÀ ĐIỀN DỮ LIỆU VÀO FORM ---
+    document.addEventListener('DOMContentLoaded', async () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const productId = urlParams.get('id');
+
+        if (!productId) {
+            loadingOverlay.innerHTML = '<p style="color: red;">Lỗi: Không tìm thấy ID sản phẩm trong URL.</p>';
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/products/${productId}`);
+            if (!response.ok) {
+                if (response.status === 404) throw new Error('Sản phẩm không tồn tại.');
+                throw new Error(`Lỗi server: ${response.status}`);
+            }
+            const product = await response.json();
+
+            // Lặp qua tất cả các key trong object product nhận về
+            for (const key in product) {
+                // Kiểm tra xem có trường input/textarea/select nào trong form khớp với key không
+                if (form.elements[key]) {
+                    const field = form.elements[key];
+                    const value = product[key];
+
+                    // Xử lý đặc biệt cho các trường chứa URL (là một mảng)
+                    if (['imageUrls', 'drawingUrls', 'materialsUrls'].includes(key) && Array.isArray(value)) {
+                        // Chuyển mảng thành chuỗi, mỗi phần tử một dòng
+                        const urlString = value.map(item => (typeof item === 'object' ? item.url : item)).join('\n');
+                        field.value = urlString;
+                    } else {
+                        // Gán giá trị cho các trường thông thường
+                        field.value = value || '';
+                    }
+                }
+            }
+            
+            // Sau khi điền xong, ẩn loading và hiện form
+            loadingOverlay.style.display = 'none';
+            form.style.display = 'block';
+
+        } catch (error) {
+            console.error('Lỗi khi tải dữ liệu sản phẩm:', error);
+            loadingOverlay.innerHTML = `<p style="color: red;">Lỗi: ${error.message}</p>`;
+        }
+    });
+
+
+    // --- NHIỆM VỤ 2: XỬ LÝ VIỆC SUBMIT FORM ---
     form.addEventListener('submit', async function(event) {
         event.preventDefault();
-        const submitButton = form.querySelector('button[type="submit"]');
         submitButton.disabled = true;
         submitButton.textContent = 'Đang lưu...';
 
@@ -108,45 +179,55 @@
             const formData = new FormData(this);
             const data = Object.fromEntries(formData.entries());
 
-            // Xử lý ID cho form tạo mới
-            if (form.id === 'product-form') {
-                const idSuffixInput = document.getElementById('product-id-suffix');
-                data.id = 'KT' + idSuffixInput.value;
+            /**
+             * GHI CHÚ QUAN TRỌNG: Sửa lại logic để gửi đúng định dạng dữ liệu.
+             * Giống như trang new-product, chúng ta cần chuyển đổi các chuỗi URL trong textarea
+             * thành mảng object {name, url} cho bản vẽ và vật tư.
+             */
+            function getFileNameFromUrl(url) {
+                try {
+                    const path = new URL(url).pathname;
+                    return decodeURIComponent(path.substring(path.lastIndexOf('/') + 1));
+                } catch (e) {
+                    return url.split('/').pop() || 'File';
+                }
             }
 
-            // Chuyển đổi chuỗi từ textarea thành mảng
-            data.imageUrls = (data.imageUrls || '').split('\n').filter(link => link.trim() !== '');
-            data.drawingUrls = (data.drawingUrls || '').split('\n').filter(link => link.trim() !== '');
-            data.materialsUrls = (data.materialsUrls || '').split('\n').filter(link => link.trim() !== '');
+            data.imageUrls = (data.imageUrls || '').split('\n').map(link => link.trim()).filter(Boolean);
+            data.drawingUrls = (data.drawingUrls || '').split('\n').map(link => link.trim()).filter(Boolean).map(link => ({ name: getFileNameFromUrl(link), url: link }));
+            data.materialsUrls = (data.materialsUrls || '').split('\n').map(link => link.trim()).filter(Boolean).map(link => ({ name: getFileNameFromUrl(link), url: link }));
 
-            // Xác định phương thức và URL
-            const isEditing = form.id === 'edit-form';
-            const url = isEditing ? `/api/products/${data.id}` : '/api/products';
-            const method = isEditing ? 'PUT' : 'POST';
+            // Luôn là 'PUT' cho trang edit
+            const url = `/api/products/${data.id}`;
+            const method = 'PUT';
 
             const response = await fetch(url, {
                 method: method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data),
             });
+            
+            // Xử lý lỗi từ server tốt hơn
+            if (!response.ok) {
+                let errorMessage = `Lỗi ${response.status}`;
+                try {
+                    const errorResult = await response.json();
+                    errorMessage = errorResult.error || JSON.stringify(errorResult);
+                } catch (e) { /* Bỏ qua nếu response không phải JSON */ }
+                throw new Error(errorMessage);
+            }
 
             const result = await response.json();
-            if (!response.ok) throw new Error(result.error);
-            
-            alert(result.message || 'Thao tác thành công!');
-            window.location.href = isEditing ? '/product-list.html' : `/success.html?id=${result.id}`;
+            alert(result.message || 'Cập nhật thành công!');
+            window.location.href = '/product-list.html'; // Quay về danh sách sau khi sửa
 
         } catch (error) {
+            console.error('Lỗi khi cập nhật:', error);
             alert('Có lỗi xảy ra: ' + error.message);
             submitButton.disabled = false;
-            submitButton.textContent = isEditing ? 'Lưu Thay Đổi' : 'Lưu và Xem lại';
+            submitButton.textContent = 'Lưu Thay Đổi';
         }
     });
-
-    // Logic riêng để tải dữ liệu cho trang edit
-    if (form.id === 'edit-form') {
-        // ... (phần document.addEventListener('DOMContentLoaded', ...) để tải dữ liệu cũ vào form)
-    }
-</script>
+    </script>
 </body>
 </html>

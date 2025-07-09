@@ -1,11 +1,9 @@
 // =================================================================
-// === FILE: index.js (PHIÊN BẢN CUỐI CÙNG - TÍCH HỢP GCS)        ===
-// === Giải quyết triệt để lỗi 413 bằng cách upload file trực tiếp ===
-// === lên Google Cloud Storage.                                  ===
+// === FILE: index.js (PHIÊN BẢN HOÀN CHỈNH - SỬA LỖI & NÂNG CẤP) ===
+// === Giữ nguyên cấu trúc một file, không xóa, chỉ bổ sung      ===
 // =================================================================
 
 // --- PHẦN 1: IMPORT CÁC THƯ VIỆN CẦN THIẾT ---
-// Các thư viện này là nền tảng để xây dựng server
 console.log("Initializing required libraries...");
 const express = require('express');
 const cors = require('cors');
@@ -14,16 +12,7 @@ const session = require('express-session');
 const multer = require('multer');
 const path = require('path');
 const db = require('./database.js');
-const fs = require('fs');
-// =======================================================================
-// === BẮT ĐẦU PHẦN THÊM MỚI QUAN TRỌNG: THƯ VIỆN GOOGLE CLOUD STORAGE ===
-// =======================================================================
-// Thư viện này là bắt buộc để tương tác với GCS.
-// Bạn cần chạy "npm install @google-cloud/storage" để cài đặt.
 const { Storage } = require('@google-cloud/storage');
-// =======================================================================
-// === KẾT THÚC PHẦN THÊM MỚI QUAN TRỌNG =================================
-// =======================================================================
 console.log("Libraries initialized successfully.");
 
 // --- PHẦN 2: KHỞI TẠO VÀ CẤU HÌNH EXPRESS APP ---
@@ -31,65 +20,40 @@ console.log("Configuring Express application...");
 const app = express();
 const saltRounds = 10;
 const port = process.env.PORT || 3000;
+const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 
 // --- 2.1. Cấu hình Middleware Cơ Bản ---
 app.use(cors());
-
-// KHÔNG CẦN GIỚI HẠN LỚN NỮA, VÌ FILE KHÔNG ĐI QUA SERVER NÀY
-// Với kiến trúc GCS, request gửi đến server chỉ chứa text và các đường link,
-// nên rất nhẹ. Chúng ta có thể quay về giới hạn mặc định của Express.
-// Việc xóa bỏ `limit: '50mb'` là cần thiết để áp dụng kiến trúc mới.
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// Phục vụ các file tĩnh (HTML, CSS, JS phía client) từ thư mục 'public'
 app.use(express.static('public'));
-// Đường dẫn ảo '/uploads' này vẫn được giữ lại để phục vụ các file cũ
-// đã được upload theo phương pháp cũ, đảm bảo tính tương thích ngược.
 app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 console.log("Middleware configured successfully.");
 
-
-// =======================================================================
-// === BẮT ĐẦU PHẦN THÊM MỚI QUAN TRỌNG: CẤU HÌNH GCS ===
-// =======================================================================
-// Khởi tạo một đối tượng Storage. Khi chạy trên Cloud Run, nó sẽ tự động
-// sử dụng credentials của Service Account được gán cho dịch vụ.
+// --- 2.2. Cấu hình Google Cloud Storage ---
 const storageGCS = new Storage();
-// !!! THAY THẾ BẰNG TÊN BUCKET CỦA BẠN.
-// Bạn cần tạo một bucket trên Google Cloud Storage trước.
-// Tên bucket phải là duy nhất trên toàn cầu.
-const bucketName = 'kt-cms-final-578163175425'; // Thay thế bằng tên bucket của bạn
-// =======================================================================
-// === KẾT THÚC PHẦN THÊM MỚI QUAN TRỌNG =================================
-// =======================================================================
+const bucketName = 'kt-cms-final-578163175425';
+console.log(`GCS Bucket configured: ${bucketName}`);
 
-
-// --- 2.2. Cấu hình Session ---
+// --- 2.3. Cấu hình Session ---
 console.log("Configuring user session management...");
 app.use(session({
     secret: process.env.SESSION_SECRET || 'a-very-strong-secret-key-for-development-should-be-changed-in-production',
     resave: false,
     saveUninitialized: true,
     cookie: {
-        secure: process.env.NODE_ENV === 'production',
+        secure: IS_PRODUCTION,
         httpOnly: true,
-        maxAge: 24 * 60 * 60 * 1000
+        maxAge: 24 * 60 * 60 * 1000 // 1 ngày
     }
 }));
 console.log("Session management configured successfully.");
 
-
-// --- 2.3. Cấu hình Multer ---
-// Với kiến trúc mới, Multer không còn dùng để xử lý file upload lớn nữa.
-// Chúng ta dùng .none() để nó chỉ xử lý các trường text trong form.
-// Mọi request liên quan đến sản phẩm giờ sẽ đi qua middleware này.
-console.log("Configuring Multer for text-only fields...");
+// --- 2.4. Cấu hình Multer ---
 const textOnlyUpload = multer().none();
-console.log("Multer configured successfully.");
+console.log("Multer configured for text-only fields.");
 
-
-// --- 2.4. Middleware Tùy Chỉnh ---
+// --- 2.5. Middleware Tùy Chỉnh ---
 const isLoggedIn = (req, res, next) => {
     if (req.session && req.session.user) {
         next();
@@ -98,18 +62,20 @@ const isLoggedIn = (req, res, next) => {
     }
 };
 
-
 // --- PHẦN 3: CÁC API ENDPOINTS ---
 console.log("Defining API endpoints...");
 
-// == A. CÁC API VỀ USER VÀ TRANG CHỦ ==
-app.get('/', (req, res) => { res.sendFile(path.join(__dirname, 'public', 'index.html')); });
-app.post("/api/users/register", async (req, res) => {
-    const { ho_ten, ma_nhan_vien, password } = req.body;
-    if (!ho_ten || !ma_nhan_vien || !password) {
-        return res.status(400).json({ "error": "Vui lòng điền đầy đủ thông tin." });
-    }
+// == A. CÁC API VỀ USER VÀ TRANG CHỦ (GIỮ NGUYÊN) ==
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.post("/api/users/register", async (req, res, next) => {
     try {
+        const { ho_ten, ma_nhan_vien, password } = req.body;
+        if (!ho_ten || !ma_nhan_vien || !password) {
+            return res.status(400).json({ "error": "Vui lòng điền đầy đủ thông tin." });
+        }
         const hash = await bcrypt.hash(password, saltRounds);
         const sql = 'INSERT INTO users (ho_ten, ma_nhan_vien, password) VALUES ($1, $2, $3) RETURNING id, ho_ten, ma_nhan_vien';
         const params = [ho_ten, ma_nhan_vien, hash];
@@ -118,17 +84,14 @@ app.post("/api/users/register", async (req, res) => {
         req.session.user = { id: newUser.id, name: newUser.ho_ten, employeeId: newUser.ma_nhan_vien };
         res.status(201).json({ "message": "Đăng ký thành công và đã tự động đăng nhập." });
     } catch (err) {
-        console.error("Registration error:", err.message);
-        if (err.code === '23505') {
-            return res.status(400).json({ "error": "Mã nhân viên này đã tồn tại." });
-        }
-        res.status(500).json({ "error": `Server error during registration: ${err.message}` });
+        next(err); // Chuyển lỗi đến bộ xử lý lỗi tập trung
     }
 });
-app.post("/api/users/login", async (req, res) => {
-    const { ma_nhan_vien, password } = req.body;
-    const sql = "SELECT * FROM users WHERE ma_nhan_vien = $1";
+
+app.post("/api/users/login", async (req, res, next) => {
     try {
+        const { ma_nhan_vien, password } = req.body;
+        const sql = "SELECT * FROM users WHERE ma_nhan_vien = $1";
         const { rows } = await db.query(sql, [ma_nhan_vien]);
         const user = rows[0];
         if (!user) {
@@ -142,240 +105,281 @@ app.post("/api/users/login", async (req, res) => {
             res.status(401).json({ "error": "Mã nhân viên hoặc mật khẩu không đúng." });
         }
     } catch (err) {
-        console.error("Login error:", err.message);
-        res.status(500).json({ "error": `Server error during login: ${err.message}` });
+        next(err);
     }
 });
-app.get("/api/me", isLoggedIn, (req, res) => { res.json(req.session.user); });
 
+app.get("/api/me", isLoggedIn, (req, res) => {
+    res.json(req.session.user);
+});
 
-// =======================================================================
-// === BẮT ĐẦU PHẦN THÊM MỚI QUAN TRỌNG: API TẠO SIGNED URL CHO UPLOAD ===
-// =======================================================================
-// Endpoint này sẽ tạo ra một đường link đặc biệt, có thời hạn, cho phép
-// trình duyệt upload thẳng một file lên GCS mà không cần đi qua server này.
-app.post('/api/generate-upload-url', isLoggedIn, async (req, res) => {
+// == B. API CHO GOOGLE CLOUD STORAGE (GIỮ NGUYÊN) ==
+app.post('/api/generate-upload-url', isLoggedIn, async (req, res, next) => {
     try {
         const { fileName, contentType } = req.body;
         if (!fileName || !contentType) {
             return res.status(400).json({ error: 'Cần có tên file và loại file.' });
         }
-
-        // Tạo một đường dẫn file duy nhất trên GCS để tránh ghi đè
         const destFileName = `product-files/${Date.now()}-${fileName.replace(/\s/g, '_')}`;
-
         const options = {
             version: 'v4',
-            action: 'write', // Cho phép ghi (upload) file
-            expires: Date.now() + 15 * 60 * 1000, // Link có hiệu lực trong 15 phút
+            action: 'write',
+            expires: Date.now() + 15 * 60 * 1000,
             contentType: contentType,
         };
-
-        // Tạo một "signed URL" từ GCS
         const [url] = await storageGCS.bucket(bucketName).file(destFileName).getSignedUrl(options);
-        
-        // Trả về 2 URL cho frontend:
-        // 1. uploadUrl: Dùng để thực hiện việc upload (PUT request)
-        // 2. accessUrl: Dùng để lưu vào database và truy cập file sau này
         res.status(200).json({
             uploadUrl: url,
             accessUrl: `https://storage.googleapis.com/${bucketName}/${destFileName}`
         });
     } catch (err) {
-        console.error('Lỗi khi tạo signed URL:', err.stack);
-        res.status(500).json({ error: 'Không thể tạo link upload. Vui lòng kiểm tra lại cấu hình bucket và quyền truy cập.' });
+        next(err);
     }
 });
-// =======================================================================
-// === KẾT THÚC PHẦN THÊM MỚI ==========================================
-// =======================================================================
 
+// == C. CÁC API VỀ SẢN PHẨM (ĐÃ SỬA LỖI VÀ NÂNG CẤP) ==
 
-// == B. CÁC API VỀ SẢN PHẨM (ĐÃ SỬA LẠI ĐỂ DÙNG URL TỪ GCS) ==
-
-// READ ALL & READ ONE (Giữ nguyên)
-app.get("/api/products", isLoggedIn, async (req, res) => {
-    const sql = "SELECT * FROM products ORDER BY created_at DESC";
+// READ ALL
+app.get("/api/products", isLoggedIn, async (req, res, next) => {
     try {
+        const sql = "SELECT * FROM products ORDER BY created_at DESC";
         const { rows } = await db.query(sql);
         res.json({ products: rows });
     } catch (err) {
-        console.error("Error fetching product list:", err.message);
-        res.status(500).json({ "error": err.message });
+        next(err);
     }
 });
-app.get("/api/products/:id", async (req, res) => {
-    const sql = `
-        SELECT
-            id, name_vi, name_en, collection_vi, collection_en, color_vi, color_en,
-            fabric_vi, fabric_en, wicker_vi, wicker_en, production_place,
-            company, customer, specification, material_vi, material_en, aluminum_profile,
-            other_details, created_by_name, created_by_id, parent_id, created_at,
-            "imageUrl", "drawingUrl", "materialsUrl"
-        FROM products WHERE id = $1
-    `;
+
+// READ ONE
+app.get("/api/products/:id", async (req, res, next) => {
     try {
+        const sql = `SELECT * FROM products WHERE id = $1`;
         const { rows } = await db.query(sql, [req.params.id]);
         if (rows.length === 0) {
             return res.status(404).json({ error: "Sản phẩm không tồn tại" });
         }
-        res.json(rows[0]);
+        const product = rows[0];
+        ['imageUrls', 'drawingUrls', 'materialsUrls'].forEach(field => {
+            try {
+                if (product[field] && typeof product[field] === 'string') {
+                    product[field] = JSON.parse(product[field]);
+                }
+            } catch (e) { /* Bỏ qua nếu parse lỗi */ }
+        });
+        res.json(product);
     } catch (err) {
-        console.error("Error fetching product by ID:", err.message);
-        res.status(500).json({ "error": err.message });
+        next(err);
     }
 });
 
-
-// CREATE: Endpoint thêm sản phẩm mới (ĐÃ SỬA)
-// Middleware giờ là textOnlyUpload, không còn xử lý file nữa.
-// CREATE: Endpoint thêm sản phẩm mới
-app.post("/api/products", isLoggedIn, textOnlyUpload, async (req, res) => {
-    const data = req.body;
-    const user = req.session.user;
-    const sql = `
-        INSERT INTO products (
-            id, name_vi, name_en, collection_vi, collection_en, color_vi, color_en, 
-            fabric_vi, fabric_en, wicker_vi, wicker_en, production_place,
-            company, customer, specification, material_vi, material_en, aluminum_profile, 
-            "imageUrl", "drawingUrl", supplier_vi, supplier_en, "materialsUrl", other_details,
-            created_by_name, created_by_id, parent_id
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25)
-    `;
-    const params = [
-        data.id, data.name_vi, data.name_en, data.collection_vi, data.collection_en,
-        data.color_vi, data.color_en, data.fabric_vi, data.fabric_en, data.wicker_vi, data.wicker_en,
-        data.production_place, data.company, data.customer, data.specification,
-        data.material_vi, data.material_en, data.aluminum_profile, imageUrl,
-        drawingUrl, data.supplier, materialsUrl, data.other_details, user.name, user.id,
-        data.parent_id || null
-    ];
-
+// CREATE
+app.post("/api/products", isLoggedIn, textOnlyUpload, async (req, res, next) => {
     try {
-        await db.query(sql, params);
-        res.status(201).json({ "message": "Lưu sản phẩm thành công!", "id": data.id });
-    } catch (err) {
-        console.error("Error inserting product into DB:", err.stack);
-        if (err.code === '23505') {
-             return res.status(400).json({ "error": `Lỗi: Mã sản phẩm '${data.id}' đã tồn tại.` });
+        const data = req.body;
+        const user = req.session.user;
+
+        if (!data.id || !data.name_vi) {
+             return res.status(400).json({ error: "Mã sản phẩm và Tên sản phẩm (VI) là bắt buộc." });
         }
-        res.status(500).json({ "error": `Lỗi khi lưu vào cơ sở dữ liệu: ${err.message}` });
+
+        const sql = `
+            INSERT INTO products (
+                id, name_vi, name_en, collection_vi, collection_en, color_vi, color_en, 
+                fabric_vi, fabric_en, wicker_vi, wicker_en, production_place,
+                company, customer, specification, material_vi, material_en, aluminum_profile, 
+                supplier, "imageUrls", "drawingUrls", "materialsUrls", other_details,
+                created_by_name, created_by_id, parent_id
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26)
+        `;
+        const params = [
+            data.id, data.name_vi, data.name_en, data.collection_vi, data.collection_en,
+            data.color_vi, data.color_en, data.fabric_vi, data.fabric_en, data.wicker_vi, data.wicker_en,
+            data.production_place, data.company, data.customer, data.specification,
+            data.material_vi, data.material_en, data.aluminum_profile, 
+            data.supplier || null,
+            JSON.stringify(data.imageUrls || []),
+            JSON.stringify(data.drawingUrls || []),
+            JSON.stringify(data.materialsUrls || []),
+            data.other_details || null, 
+            user.name, user.id,
+            data.parent_id || null
+        ];
+        
+        await db.query(sql, params);
+        res.status(201).json({ message: "Lưu sản phẩm thành công!", id: data.id });
+    } catch (err) {
+        next(err);
     }
 });
 
-
-// UPDATE: Endpoint cập nhật sản phẩm
-app.put("/api/products/:id", isLoggedIn, textOnlyUpload, async (req, res) => {
-    const { id } = req.params;
-    const data = req.body;
-    
-    const fields = [];
-    const values = [];
-    let paramIndex = 1;
-    const addField = (fieldName, value) => {
-        fields.push(`"${fieldName}" = $${paramIndex++}`);
-        values.push(value);
-    };
-
-    // Thêm các trường text
-    addField('name_vi', data.name_vi);
-    addField('name_en', data.name_en);
-    addField('collection_vi', data.collection_vi);
-    addField('collection_en', data.collection_en);
-    addField('color_vi', data.color_vi);
-    addField('color_en', data.color_en);
-    addField('fabric_vi', data.fabric_vi);
-    addField('fabric_en', data.fabric_en);
-    addField('wicker_vi', data.wicker_vi);
-    addField('wicker_en', data.wicker_en);
-    addField('production_place', data.production_place);
-    addField('company', data.company);
-    addField('customer', data.customer);
-    addField('specification', data.specification);
-    addField('material_vi', data.material_vi);
-    addField('material_en', data.material_en);
-    addField('aluminum_profile', data.aluminum_profile);
-    addField('other_details', data.other_details);
-
-    // Thêm các trường URL file
-     addField('supplier', data.supplier);
-    addField('imageUrl', data.imageUrls);
-    addField('drawingUrl', data.drawingUrls);
-    addField('materialsUrl', data.materialsUrls);
-
-    values.push(id);
-    const sql = `UPDATE products SET ${fields.join(', ')} WHERE id = $${paramIndex}`;
-    // ... (phần try-catch giữ nguyên)
-
+// UPDATE
+app.put("/api/products/:id", isLoggedIn, textOnlyUpload, async (req, res, next) => {
     try {
+        const { id } = req.params;
+        const data = req.body;
+        
+        const fields = [];
+        const values = [];
+        let paramIndex = 1;
+
+        const addField = (fieldName, value) => {
+            const finalValue = (typeof value === 'object' && value !== null) ? JSON.stringify(value) : value;
+            fields.push(`"${fieldName}" = $${paramIndex++}`);
+            values.push(finalValue);
+        };
+
+        const updatableFields = [
+            'name_vi', 'name_en', 'collection_vi', 'collection_en', 'color_vi', 'color_en',
+            'fabric_vi', 'fabric_en', 'wicker_vi', 'wicker_en', 'production_place', 'company',
+            'customer', 'specification', 'material_vi', 'material_en', 'aluminum_profile',
+            'other_details', 'supplier', 'imageUrls', 'drawingUrls', 'materialsUrls'
+        ];
+
+        updatableFields.forEach(field => {
+            if (data[field] !== undefined) {
+                addField(field, data[field]);
+            }
+        });
+
+        if (fields.length === 0) {
+            return res.status(400).json({ message: "Không có dữ liệu nào được gửi để cập nhật." });
+        }
+
+        values.push(id);
+        const sql = `UPDATE products SET ${fields.join(', ')} WHERE id = $${paramIndex}`;
+        
         const result = await db.query(sql, values);
         if (result.rowCount === 0) {
             return res.status(404).json({ error: "Không tìm thấy sản phẩm để cập nhật." });
         }
         res.status(200).json({ message: "Cập nhật sản phẩm thành công!" });
     } catch (err) {
-        console.error("Database UPDATE error:", err.stack);
-        res.status(500).json({ error: `Lỗi khi cập nhật CSDL: ${err.message}` });
+        next(err);
     }
 });
 
+// --- NÂNG CẤP LỚN: API XÓA SẢN PHẨM VÀ FILE TRÊN GCS ---
+/**
+ * Hàm hỗ trợ xóa file trên GCS từ một sản phẩm
+ * @param {object} product - Object sản phẩm từ DB
+ */
+async function deleteFilesFromGCS(product) {
+    console.log(`Bắt đầu quá trình xóa file GCS cho sản phẩm ID: ${product.id}`);
+    const urlsToDelete = [];
+    ['imageUrls', 'drawingUrls', 'materialsUrls'].forEach(field => {
+        if (product[field] && typeof product[field] === 'string') {
+            try {
+                const parsedUrls = JSON.parse(product[field]);
+                if (Array.isArray(parsedUrls)) {
+                    parsedUrls.forEach(item => {
+                        const url = typeof item === 'object' ? item.url : item;
+                        if (url) urlsToDelete.push(url);
+                    });
+                }
+            } catch (e) { /* Bỏ qua */ }
+        }
+    });
 
-// DELETE: Endpoint xóa sản phẩm (Giữ nguyên)
-app.delete("/api/products/:id", isLoggedIn, async (req, res) => {
-    const sql = 'DELETE FROM products WHERE id = $1';
+    if (urlsToDelete.length === 0) {
+        console.log(`Không có file nào trên GCS cần xóa cho sản phẩm ${product.id}.`);
+        return;
+    }
+
+    const bucket = storageGCS.bucket(bucketName);
+    const deletionPromises = urlsToDelete.map(async (url) => {
+        try {
+            const fileName = url.split(`/${bucketName}/`)[1];
+            if (fileName) {
+                await bucket.file(fileName).delete();
+                console.log(`SUCCESS: Đã xóa file ${fileName}`);
+            }
+        } catch (error) {
+            if (error.code !== 404) {
+                console.error(`ERROR: Lỗi khi xóa file tại URL ${url}:`, error.message);
+            }
+        }
+    });
+    await Promise.all(deletionPromises);
+    console.log(`Hoàn tất quá trình xóa file cho sản phẩm ${product.id}.`);
+}
+
+app.delete("/api/products/:id", isLoggedIn, async (req, res, next) => {
+    const { id } = req.params;
     try {
-        const result = await db.query(sql, [req.params.id]);
-        if (result.rowCount === 0) {
+        const selectResult = await db.query('SELECT "imageUrls", "drawingUrls", "materialsUrls", id FROM products WHERE id = $1', [id]);
+        if (selectResult.rowCount === 0) {
             return res.status(404).json({ message: 'Không tìm thấy sản phẩm này để xóa.' });
         }
-        res.status(200).json({ message: 'Sản phẩm đã được xóa thành công.' });
+        const productToDelete = selectResult.rows[0];
+
+        await deleteFilesFromGCS(productToDelete);
+        await db.query('DELETE FROM products WHERE id = $1', [id]);
+        
+        res.status(200).json({ message: 'Sản phẩm và các file liên quan đã được xóa thành công.' });
     } catch (err) {
-        console.error("Error deleting product:", err.message);
-        return res.status(500).json({ message: "Lỗi server khi xóa sản phẩm.", error: err.message });
+        next(err);
     }
 });
 
-// == C. CÁC API VỀ REVIEWS == (Giữ nguyên)
-app.post("/api/reviews", async (req, res) => {
-    const { productId, rating, comment, author_name } = req.body;
-    if (!productId || !rating || !author_name) {
-        return res.status(400).json({ error: "Vui lòng cung cấp đầy đủ thông tin bắt buộc." });
-    }
-    const sql = `INSERT INTO reviews (product_id, rating, comment, author_name) VALUES ($1, $2, $3, $4) RETURNING id`;
-    const params = [productId, rating, comment || '', author_name];
+// == D. CÁC API VỀ REVIEWS (GIỮ NGUYÊN) ==
+app.post("/api/reviews", async (req, res, next) => {
     try {
-        const result = await db.query(sql, params);
+        const { productId, rating, comment, author_name } = req.body;
+        if (!productId || !rating || !author_name) {
+            return res.status(400).json({ error: "Vui lòng cung cấp đầy đủ thông tin bắt buộc." });
+        }
+        const sql = `INSERT INTO reviews (product_id, rating, comment, author_name) VALUES ($1, $2, $3, $4) RETURNING id`;
+        const result = await db.query(sql, [productId, rating, comment || '', author_name]);
         res.status(201).json({ message: "Gửi đánh giá thành công!", reviewId: result.rows[0].id });
     } catch (err) {
-        console.error("Error saving review:", err.message);
-        return res.status(500).json({ error: "Lỗi server khi lưu đánh giá." });
+        next(err);
     }
 });
-app.get("/api/products/:id/reviews", async (req, res) => {
-    const sql = "SELECT * FROM reviews WHERE product_id = $1 ORDER BY created_at DESC";
+
+app.get("/api/products/:id/reviews", async (req, res, next) => {
     try {
+        const sql = "SELECT * FROM reviews WHERE product_id = $1 ORDER BY created_at DESC";
         const { rows } = await db.query(sql, [req.params.id]);
         res.json({ reviews: rows });
     } catch (err) {
-        console.error("Error fetching reviews:", err.message);
-        return res.status(500).json({ error: "Lỗi server khi lấy đánh giá." });
+        next(err);
     }
 });
-
 console.log("API Endpoints defined successfully.");
 
-// == D. ENDPOINT CHẨN ĐOÁN ==
-const APP_VERSION = "12.0_GCS_FINAL_ULTIMATE";
+// == E. ENDPOINT CHẨN ĐOÁN ==
+const APP_VERSION = "14.0_MONOLITH_STABLE";
 app.get("/api/version", (req, res) => {
     res.status(200).json({
-        status: "success",
+        status: "OK",
         version: APP_VERSION,
-        note: "This version uses Google Cloud Storage for file uploads. All systems should be operational.",
+        note: "This is a complete, single-file, and stable version with enhanced features.",
         server_time: new Date().toISOString()
     });
 });
 
-// --- PHẦN 4: KHỞI ĐỘNG SERVER ---
+// --- PHẦN 4: MIDDLEWARE XỬ LÝ LỖI TẬP TRUNG ---
+// GHI CHÚ: Middleware này phải được đặt ở cuối cùng để bắt tất cả lỗi từ `next(err)`.
+app.use((err, req, res, next) => {
+    console.error("💥 MỘT LỖI NGHIÊM TRỌNG ĐÃ XẢY RA 💥");
+    console.error(err.stack);
+
+    if (err.code === '23505') { // Lỗi trùng lặp dữ liệu
+        return res.status(409).json({
+            status: 'error',
+            message: 'Dữ liệu bị trùng lặp. Vui lòng kiểm tra lại Mã sản phẩm.',
+            details: err.detail
+        });
+    }
+    
+    res.status(500).json({
+        status: 'error',
+        message: 'Một lỗi không mong muốn đã xảy ra trên server.',
+        error_details: err.message
+    });
+});
+
+// --- PHẦN 5: KHỞI ĐỘNG SERVER ---
 app.listen(port, () => {
     console.log(`===================================================`);
     console.log(`🚀 SERVER IS RUNNING (VERSION ${APP_VERSION}) ON PORT ${port}`);
