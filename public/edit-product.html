@@ -86,7 +86,6 @@
         <textarea id="materialsUrls" name="materialsUrls" rows="5" placeholder="Dán danh sách link vật tư từ trang Upload vào đây..."></textarea>
     </div>
 </div>
-
             
             <div class="form-actions">
                 <button type="submit" id="submit-button">Lưu Thay Đổi</button>
@@ -97,64 +96,57 @@
     </div>
 
     <script>
-    // Lấy form và nút submit bằng ID của chúng
-    const form = document.getElementById('product-form');
-    const submitButton = document.getElementById('submit-button');
-
-    // Gán một hàm xử lý cho sự kiện 'submit' của form
+    // Áp dụng cho cả 'product-form' và 'edit-form'
+    const form = document.querySelector('form'); 
     form.addEventListener('submit', async function(event) {
-        // Ngăn chặn hành vi mặc định của form là tải lại trang
         event.preventDefault();
-
-        // Vô hiệu hóa nút submit để ngăn người dùng click nhiều lần
+        const submitButton = form.querySelector('button[type="submit"]');
         submitButton.disabled = true;
         submitButton.textContent = 'Đang lưu...';
 
         try {
-            // Lấy toàn bộ dữ liệu từ các trường input và textarea của form
             const formData = new FormData(this);
             const data = Object.fromEntries(formData.entries());
 
-            // Xử lý riêng cho ID sản phẩm
-            const idSuffixInput = document.getElementById('product-id-suffix');
-            data.id = 'KT' + idSuffixInput.value;
-
-            // Chuyển đổi chuỗi URL từ các textarea thành một mảng các URL
-            // .split('\n') -> Tách chuỗi thành mảng dựa trên ký tự xuống dòng.
-            // .filter(link => link.trim() !== '') -> Loại bỏ các dòng trống nếu người dùng vô tình enter thừa.
-            data.imageUrls = data.imageUrls.split('\n').filter(link => link.trim() !== '');
-            data.drawingUrls = data.drawingUrls.split('\n').filter(link => link.trim() !== '');
-            data.materialsUrls = data.materialsUrls.split('\n').filter(link => link.trim() !== '');
-
-            // Gửi dữ liệu đã xử lý lên server
-            const response = await fetch('/api/products', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json', // Báo cho server biết chúng ta đang gửi JSON
-                },
-                body: JSON.stringify(data), // Chuyển đối tượng data thành chuỗi JSON
-            });
-
-            // Xử lý phản hồi từ server
-            const result = await response.json();
-            if (!response.ok) {
-                // Nếu server trả về lỗi, ném ra để khối catch ở dưới xử lý
-                throw new Error(result.error || 'Lỗi không xác định từ server.');
+            // Xử lý ID cho form tạo mới
+            if (form.id === 'product-form') {
+                const idSuffixInput = document.getElementById('product-id-suffix');
+                data.id = 'KT' + idSuffixInput.value;
             }
 
-            // Nếu thành công
-            alert(result.message || 'Tạo sản phẩm thành công!');
-            // Chuyển hướng đến trang success
-            window.location.href = `/success.html?id=${result.id}`;
+            // Chuyển đổi chuỗi từ textarea thành mảng
+            data.imageUrls = (data.imageUrls || '').split('\n').filter(link => link.trim() !== '');
+            data.drawingUrls = (data.drawingUrls || '').split('\n').filter(link => link.trim() !== '');
+            data.materialsUrls = (data.materialsUrls || '').split('\n').filter(link => link.trim() !== '');
+
+            // Xác định phương thức và URL
+            const isEditing = form.id === 'edit-form';
+            const url = isEditing ? `/api/products/${data.id}` : '/api/products';
+            const method = isEditing ? 'PUT' : 'POST';
+
+            const response = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data),
+            });
+
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error);
+            
+            alert(result.message || 'Thao tác thành công!');
+            window.location.href = isEditing ? '/product-list.html' : `/success.html?id=${result.id}`;
 
         } catch (error) {
-            // Nếu có bất kỳ lỗi nào xảy ra trong quá trình trên, hiển thị thông báo
             alert('Có lỗi xảy ra: ' + error.message);
-            // Kích hoạt lại nút để người dùng có thể thử lại
             submitButton.disabled = false;
-            submitButton.textContent = 'Lưu và Xem lại';
+            submitButton.textContent = isEditing ? 'Lưu Thay Đổi' : 'Lưu và Xem lại';
         }
     });
+
+    // Logic riêng để tải dữ liệu cho trang edit
+    if (form.id === 'edit-form') {
+        // ... (phần document.addEventListener('DOMContentLoaded', ...) để tải dữ liệu cũ vào form)
+    }
 </script>
 </body>
 </html>

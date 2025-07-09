@@ -71,6 +71,7 @@
                     <div class="form-group"><label for="wicker_en">Wicker (EN)</label><input type="text" id="wicker_en" name="wicker_en"></div>
                     <div class="form-group"><label for="material_vi">Chất liệu (VI)</label><input type="text" id="material_vi" name="material_vi"></div>
                     <div class="form-group"><label for="material_en">Material (EN)</label><input type="text" id="material_en" name="material_en"></div>
+                    <div class="form-group"><label for="supplier">Nhà cung cấp</label><input type="text" id="supplier" name="supplier"></div>
                     <div class="form-group full-width"><label for="aluminum_profile">Biên dạng nhôm</label><input type="text" id="aluminum_profile" name="aluminum_profile"></div>
                     <div class="form-group">
                         <label for="production_place">Nơi sản xuất</label>
@@ -83,17 +84,6 @@
                 </div>
             </div>
 
-            <div class="form-section">
-                <h2>Thông Tin Thương Mại & Kỹ Thuật</h2>
-                <div class="form-grid">
-                     <div class="form-group"><label for="company">Công ty</label><input type="text" id="company" name="company"></div>
-                     <div class="form-group"><label for="supplier">Nhà cung cấp</label><input type="text" id="supplier" name="supplier"></div>
-                     <div class="form-group"><label for="customer">Khách hàng</label><input type="text" id="customer" name="customer"></div>
-                     <div class="form-group full-width"><label for="specification">Thông số</label><input type="text" id="specification" name="specification"></div>
-                     <div class="form-group full-width"><label for="other_details">Chi tiết khác</label><textarea id="other_details" name="other_details" rows="3"></textarea></div>
-                </div>
-            </div>
-            
             <div class="form-section">
     <h2>Tệp Đính Kèm</h2>
     <p style="font-style: italic; margin-bottom: 15px;">
@@ -129,65 +119,60 @@
     <!-- === PHẦN JAVASCRIPT XỬ LÝ UPLOAD LÊN GCS (HOÀN TOÀN MỚI) === -->
     <!-- =================================================================== -->
     <script>
-    // Lấy form và nút submit bằng ID của chúng
-    const form = document.getElementById('product-form');
-    const submitButton = document.getElementById('submit-button');
-
-    // Gán một hàm xử lý cho sự kiện 'submit' của form
+    // Áp dụng cho cả 'product-form' và 'edit-form'
+    const form = document.querySelector('form'); 
     form.addEventListener('submit', async function(event) {
-        // Ngăn chặn hành vi mặc định của form là tải lại trang
         event.preventDefault();
-
-        // Vô hiệu hóa nút submit để ngăn người dùng click nhiều lần
+        const submitButton = form.querySelector('button[type="submit"]');
         submitButton.disabled = true;
         submitButton.textContent = 'Đang lưu...';
 
         try {
-            // Lấy toàn bộ dữ liệu từ các trường input và textarea của form
             const formData = new FormData(this);
             const data = Object.fromEntries(formData.entries());
 
-            // Xử lý riêng cho ID sản phẩm
-            const idSuffixInput = document.getElementById('product-id-suffix');
-            data.id = 'KT' + idSuffixInput.value;
-
-            // Chuyển đổi chuỗi URL từ các textarea thành một mảng các URL
-            // .split('\n') -> Tách chuỗi thành mảng dựa trên ký tự xuống dòng.
-            // .filter(link => link.trim() !== '') -> Loại bỏ các dòng trống nếu người dùng vô tình enter thừa.
-            data.imageUrls = data.imageUrls.split('\n').filter(link => link.trim() !== '');
-            data.drawingUrls = data.drawingUrls.split('\n').filter(link => link.trim() !== '');
-            data.materialsUrls = data.materialsUrls.split('\n').filter(link => link.trim() !== '');
-
-            // Gửi dữ liệu đã xử lý lên server
-            const response = await fetch('/api/products', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json', // Báo cho server biết chúng ta đang gửi JSON
-                },
-                body: JSON.stringify(data), // Chuyển đối tượng data thành chuỗi JSON
-            });
-
-            // Xử lý phản hồi từ server
-            const result = await response.json();
-            if (!response.ok) {
-                // Nếu server trả về lỗi, ném ra để khối catch ở dưới xử lý
-                throw new Error(result.error || 'Lỗi không xác định từ server.');
+            // Xử lý ID cho form tạo mới
+            if (form.id === 'product-form') {
+                const idSuffixInput = document.getElementById('product-id-suffix');
+                data.id = 'KT' + idSuffixInput.value;
             }
 
-            // Nếu thành công
-            alert(result.message || 'Tạo sản phẩm thành công!');
-            // Chuyển hướng đến trang success
-            window.location.href = `/success.html?id=${result.id}`;
+            // Chuyển đổi chuỗi từ textarea thành mảng
+            data.imageUrls = (data.imageUrls || '').split('\n').filter(link => link.trim() !== '');
+            data.drawingUrls = (data.drawingUrls || '').split('\n').filter(link => link.trim() !== '');
+            data.materialsUrls = (data.materialsUrls || '').split('\n').filter(link => link.trim() !== '');
+
+            // Xác định phương thức và URL
+            const isEditing = form.id === 'edit-form';
+            const url = isEditing ? `/api/products/${data.id}` : '/api/products';
+            const method = isEditing ? 'PUT' : 'POST';
+
+            const response = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data),
+            });
+
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error);
+            
+            alert(result.message || 'Thao tác thành công!');
+            window.location.href = isEditing ? '/product-list.html' : `/success.html?id=${result.id}`;
 
         } catch (error) {
-            // Nếu có bất kỳ lỗi nào xảy ra trong quá trình trên, hiển thị thông báo
             alert('Có lỗi xảy ra: ' + error.message);
-            // Kích hoạt lại nút để người dùng có thể thử lại
             submitButton.disabled = false;
-            submitButton.textContent = 'Lưu và Xem lại';
+            submitButton.textContent = isEditing ? 'Lưu Thay Đổi' : 'Lưu và Xem lại';
         }
     });
+
+    // Logic riêng để tải dữ liệu cho trang edit
+    if (form.id === 'edit-form') {
+        // ... (phần document.addEventListener('DOMContentLoaded', ...) để tải dữ liệu cũ vào form)
+    }
 </script>
+
+
 
 </body>
 </html>

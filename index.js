@@ -229,19 +229,10 @@ app.get("/api/products/:id", async (req, res) => {
 
 // CREATE: Endpoint thêm sản phẩm mới (ĐÃ SỬA)
 // Middleware giờ là textOnlyUpload, không còn xử lý file nữa.
+// CREATE: Endpoint thêm sản phẩm mới
 app.post("/api/products", isLoggedIn, textOnlyUpload, async (req, res) => {
-    // req.body bây giờ chứa cả dữ liệu text và các URL file từ GCS
     const data = req.body;
     const user = req.session.user;
-    
-    // Các URL này được frontend gửi lên sau khi đã upload thành công lên GCS
-   // Chuyển đổi chuỗi từ textarea (nếu có) thành mảng, hoặc nhận mảng trực tiếp
-const imageUrls = Array.isArray(req.body.imageUrls) ? req.body.imageUrls : (req.body.imageUrls || '').split('\n').filter(link => link.trim() !== '');
-const drawingUrls = Array.isArray(req.body.drawingUrls) ? req.body.drawingUrls : (req.body.drawingUrls || '').split('\n').filter(link => link.trim() !== '');
-const materialsUrls = Array.isArray(req.body.materialsUrls) ? req.body.materialsUrls : (req.body.materialsUrls || '').split('\n').filter(link => link.trim() !== '');
-
-// ... và trong câu lệnh SQL, bạn sẽ dùng các biến mảng này
-// Ví dụ: '..., "imageUrl", ...' và trong params là '..., imageUrls, ...'
     const sql = `
         INSERT INTO products (
             id, name_vi, name_en, collection_vi, collection_en, color_vi, color_en, 
@@ -273,20 +264,14 @@ const materialsUrls = Array.isArray(req.body.materialsUrls) ? req.body.materials
 });
 
 
-// UPDATE: Endpoint cập nhật sản phẩm (ĐÃ SỬA)
+// UPDATE: Endpoint cập nhật sản phẩm
 app.put("/api/products/:id", isLoggedIn, textOnlyUpload, async (req, res) => {
     const { id } = req.params;
     const data = req.body;
-
-    // Các URL này cũng được gửi lên từ frontend
-    const imageUrl = data.imageUrl || data.existingImageUrl;
-    const drawingUrl = data.drawingUrl || data.existingDrawingUrl;
-    const materialsUrl = data.materialsUrl || data.existingMaterialsUrl;
-
+    
     const fields = [];
     const values = [];
     let paramIndex = 1;
-
     const addField = (fieldName, value) => {
         fields.push(`"${fieldName}" = $${paramIndex++}`);
         values.push(value);
@@ -307,19 +292,20 @@ app.put("/api/products/:id", isLoggedIn, textOnlyUpload, async (req, res) => {
     addField('company', data.company);
     addField('customer', data.customer);
     addField('specification', data.specification);
-    addField('supplier', data.supplier);
     addField('material_vi', data.material_vi);
     addField('material_en', data.material_en);
     addField('aluminum_profile', data.aluminum_profile);
     addField('other_details', data.other_details);
 
     // Thêm các trường URL file
-    addField('imageUrl', imageUrl);
-    addField('drawingUrl', drawingUrl);
-    addField('materialsUrl', materialsUrl);
+     addField('supplier', data.supplier);
+    addField('imageUrl', data.imageUrls);
+    addField('drawingUrl', data.drawingUrls);
+    addField('materialsUrl', data.materialsUrls);
 
     values.push(id);
     const sql = `UPDATE products SET ${fields.join(', ')} WHERE id = $${paramIndex}`;
+    // ... (phần try-catch giữ nguyên)
 
     try {
         const result = await db.query(sql, values);

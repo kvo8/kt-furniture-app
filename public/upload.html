@@ -79,7 +79,6 @@
     </div>
 
     <script>
-        // Hàm chung để xử lý logic cho một khu vực upload
         function setupUploadSection(inputId, listId, uploadBtnId, statusBoxId, urlsTextareaId) {
             const fileInput = document.getElementById(inputId);
             const filesList = document.getElementById(listId);
@@ -90,7 +89,7 @@
             fileInput.addEventListener('change', () => {
                 if (fileInput.files.length > 5) {
                     alert('Bạn chỉ có thể chọn tối đa 5 file.');
-                    fileInput.value = ''; // Xóa các file đã chọn
+                    fileInput.value = '';
                     return;
                 }
                 if (fileInput.files.length > 0) {
@@ -128,14 +127,16 @@
             });
         }
 
-        // Hàm upload một file lên GCS (giống hệt logic cũ)
         async function uploadFileToGCS(file) {
             const response = await fetch('/api/generate-upload-url', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ fileName: file.name, contentType: file.type || 'application/octet-stream' }),
             });
-            if (!response.ok) throw new Error('Không thể lấy link upload từ server.');
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.error || 'Không thể lấy link upload từ server.');
+            }
             const { uploadUrl, accessUrl } = await response.json();
             
             const uploadResponse = await fetch(uploadUrl, {
@@ -147,12 +148,10 @@
             return accessUrl;
         }
 
-        // Thiết lập cho từng khu vực
         setupUploadSection('image-input', 'image-files-list', 'upload-images-btn', 'image-status', 'image-urls');
         setupUploadSection('drawing-input', 'drawing-files-list', 'upload-drawings-btn', 'drawing-status', 'drawing-urls');
         setupUploadSection('materials-input', 'materials-files-list', 'upload-materials-btn', 'materials-status', 'materials-urls');
 
-        // Gán sự kiện cho tất cả các nút sao chép
         document.querySelectorAll('.copy-btn').forEach(button => {
             button.addEventListener('click', (e) => {
                 const targetId = e.target.dataset.target;
