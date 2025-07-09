@@ -17,6 +17,16 @@
             cursor: not-allowed;      /* Biểu tượng con trỏ chuột "cấm" */
             opacity: 0.65;            /* Làm mờ nút đi một chút */
         }
+        /* Style cho phần hiển thị trạng thái upload */
+        .upload-status {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #e9f7fe;
+            border-left: 4px solid #007bff;
+            font-style: italic;
+            color: #333;
+            display: none; /* Mặc định sẽ ẩn đi */
+        }
     </style>
 </head>
 <body>
@@ -26,12 +36,9 @@
             <p>Điền đầy đủ các thông tin dưới đây và nhấn "Lưu" để tạo sản phẩm mới.</p>
         </header>
 
-        <form id="product-form" enctype="multipart/form-data">
+        <!-- Phần form HTML của bạn được giữ nguyên, không thay đổi -->
+        <form id="product-form">
             
-            <!-- =================================================================== -->
-            <!-- === CÁC TRƯỜNG THÔNG TIN SẢN PHẨM (PHẦN NÀY ĐÃ CHUẨN) === -->
-            <!-- =================================================================== -->
-
             <div class="form-section">
                 <h2>Thông Tin Chung</h2>
                 <div class="form-grid">
@@ -87,14 +94,17 @@
             <div class="form-section">
                 <h2>Tệp Đính Kèm</h2>
                 <div class="form-grid">
-                    <div class="form-group full-width"><label for="productImage">Hình ảnh sản phẩm</label><input type="file" id="productImage" name="productImage" accept="image/*"></div>
-                    <div class="form-group full-width"><label for="drawingFile">Bản vẽ (PDF)</label><input type="file" id="drawingFile" name="drawingFile" accept=".pdf"></div>
-                    <div class="form-group full-width"><label for="materialsFile">Vật tư (Word, Excel, PDF)</label><input type="file" id="materialsFile" name="materialsFile" accept=".doc,.docx,.xls,.xlsx,.pdf"></div>
+                    <!-- Các thẻ input file này không còn thuộc tính 'name' nữa, vì chúng không được gửi trực tiếp qua form -->
+                    <div class="form-group full-width"><label for="productImage">Hình ảnh sản phẩm</label><input type="file" id="productImage" accept="image/*"></div>
+                    <div class="form-group full-width"><label for="drawingFile">Bản vẽ (PDF)</label><input type="file" id="drawingFile" accept=".pdf"></div>
+                    <div class="form-group full-width"><label for="materialsFile">Vật tư (Word, Excel, PDF)</label><input type="file" id="materialsFile" accept=".doc,.docx,.xls,.xlsx,.pdf"></div>
                 </div>
             </div>
             
             <div class="form-actions">
                 <button type="submit" id="submit-button">Lưu và Xem lại</button>
+                <!-- Thêm một div để hiển thị trạng thái upload cho người dùng -->
+                <div class="upload-status" id="upload-status"></div>
             </div>
         </form>
         
@@ -104,88 +114,119 @@
     </div>
 
     <!-- =================================================================== -->
-    <!-- === PHẦN JAVASCRIPT XỬ LÝ FORM (ĐÃ TỐI ƯU VÀ CHÚ THÍCH KỸ) === -->
+    <!-- === PHẦN JAVASCRIPT XỬ LÝ UPLOAD LÊN GCS (HOÀN TOÀN MỚI) === -->
     <!-- =================================================================== -->
     <script>
         // Lấy các element quan trọng của form và lưu vào biến để dễ dàng truy cập.
-        // Đây là một good practice trong lập trình JavaScript.
         const form = document.getElementById('product-form');
-        const idSuffixInput = document.getElementById('product-id-suffix');
-        const fullIdInput = document.getElementById('full-product-id');
         const submitButton = document.getElementById('submit-button');
+        const statusDiv = document.getElementById('upload-status');
+        
+        // Lấy các thẻ input của file
+        const imageInput = document.getElementById('productImage');
+        const drawingInput = document.getElementById('drawingFile');
+        const materialsInput = document.getElementById('materialsFile');
 
-        // Gán một hàm xử lý sự kiện 'submit' cho form.
-        // Dùng 'async' để có thể sử dụng 'await' bên trong, giúp code gọn gàng hơn.
+        /**
+         * Hàm này là cốt lõi của giải pháp mới.
+         * Nó nhận vào một đối tượng file, sau đó thực hiện 3 bước:
+         * 1. Gọi API của server để lấy một đường link upload đặc biệt (Signed URL).
+         * 2. Dùng đường link đó để upload file thẳng lên Google Cloud Storage.
+         * 3. Trả về đường link công khai của file sau khi đã upload thành công.
+         * @param {File} file - Đối tượng file được chọn từ thẻ <input type="file">.
+         * @returns {Promise<string|null>} - Trả về một chuỗi URL công khai của file, hoặc null nếu không có file.
+         */
+        async function uploadFileToGCS(file) {
+            // Nếu không có file nào được chọn, bỏ qua và trả về null.
+            if (!file) {
+                return null;
+            }
+
+            // --- Bước 1: Gọi backend để lấy Signed URL ---
+            statusDiv.style.display = 'block'; // Hiển thị ô trạng thái
+            statusDiv.textContent = `Đang chuẩn bị để tải lên: ${file.name}...`;
+            
+            const response = await fetch('/api/generate-upload-url', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                // Gửi tên file và loại file để server tạo link phù hợp.
+                body: JSON.stringify({
+                    fileName: file.name,
+                    contentType: file.type || 'application/octet-stream' // Cung cấp loại file mặc định
+                }),
+            });
+
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.error || 'Không thể lấy link upload từ server.');
+            }
+            const { uploadUrl, accessUrl } = await response.json();
+
+            // --- Bước 2: Upload file thẳng lên GCS bằng Signed URL ---
+            statusDiv.textContent = `Đang tải lên: ${file.name}...`;
+            const uploadResponse = await fetch(uploadUrl, {
+                method: 'PUT',
+                headers: { 'Content-Type': file.type || 'application/octet-stream' },
+                body: file, // Nội dung gửi đi chính là file gốc
+            });
+
+            if (!uploadResponse.ok) {
+                throw new Error(`Tải file ${file.name} lên Google Cloud Storage thất bại.`);
+            }
+
+            // --- Bước 3: Trả về URL công khai để lưu vào database ---
+            statusDiv.textContent = `Tải lên ${file.name} thành công!`;
+            return accessUrl;
+        }
+
+        // Gán hàm xử lý sự kiện 'submit' cho form.
         form.addEventListener('submit', async function(event) {
-            // Ngăn hành vi mặc định của form là tải lại trang khi nhấn submit.
-            // Chúng ta sẽ xử lý việc gửi dữ liệu bằng JavaScript.
-            event.preventDefault();
+            event.preventDefault(); // Ngăn form tải lại trang
+            submitButton.disabled = true; // Vô hiệu hóa nút
             
-            // --- BƯỚC 1: VÔ HIỆU HÓA NÚT VÀ HIỂN THỊ TRẠNG THÁI "ĐANG GỬI" ---
-            // Điều này ngăn người dùng click nhiều lần gây ra lỗi và cho họ biết hệ thống đang xử lý.
-            submitButton.disabled = true;
-            submitButton.textContent = 'Đang xử lý, vui lòng chờ...';
-
-            // --- BƯỚC 2: CHUẨN BỊ DỮ LIỆU FORM ---
-            // Tự động ghép chuỗi "KT" vào mã sản phẩm từ ô input.
-            fullIdInput.value = 'KT' + idSuffixInput.value;
-            
-            // Tạo một đối tượng FormData từ chính form này.
-            // FormData là cách chuẩn để đóng gói dữ liệu form, bao gồm cả file, để gửi đi.
-            const formData = new FormData(this);
-
-            // --- BƯỚC 3: GỬI DỮ LIỆU VÀ XỬ LÝ KẾT QUẢ ---
-            // Bọc toàn bộ logic gửi request trong một khối try...catch để bắt lỗi một cách an toàn.
             try {
-                // Gửi dữ liệu đến API endpoint '/api/products' bằng phương thức POST.
-                // 'await' sẽ tạm dừng hàm cho đến khi có phản hồi từ server.
-                const response = await fetch('/api/products', {
+                // --- UPLOAD CÁC FILE LÊN GCS TRƯỚC KHI LƯU THÔNG TIN ---
+                const imageUrl = await uploadFileToGCS(imageInput.files[0]);
+                const drawingUrl = await uploadFileToGCS(drawingInput.files[0]);
+                const materialsUrl = await uploadFileToGCS(materialsInput.files[0]);
+                
+                // --- GỬI FORM CHÍNH VỚI CÁC URL ---
+                statusDiv.textContent = 'Đang lưu thông tin sản phẩm...';
+                
+                const idSuffixInput = document.getElementById('product-id-suffix');
+                const fullIdInput = document.getElementById('full-product-id');
+                fullIdInput.value = 'KT' + idSuffixInput.value;
+
+                // Tạo một FormData mới chỉ chứa dữ liệu text từ form
+                const textFormData = new FormData(form);
+                const data = Object.fromEntries(textFormData.entries());
+                
+                // Thêm các URL đã upload vào đối tượng data để gửi về server
+                data.imageUrl = imageUrl;
+                data.drawingUrl = drawingUrl;
+                data.materialsUrl = materialsUrl;
+
+                // Gửi request cuối cùng về server để lưu thông tin vào database
+                const finalResponse = await fetch('/api/products', {
                     method: 'POST',
-                    body: formData, // Nội dung gửi đi chính là gói FormData đã tạo.
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data), // Chỉ gửi dữ liệu JSON, rất nhẹ
                 });
 
-                // Xử lý phản hồi từ server.
-                // 'response.ok' sẽ là 'false' nếu mã trạng thái là lỗi (ví dụ 404, 500, 413).
-                if (!response.ok) {
-                    // Nếu server trả về lỗi, chúng ta cần tìm hiểu đó là lỗi gì.
-                    const contentType = response.headers.get("content-type");
-                    if (contentType && contentType.indexOf("application/json") !== -1) {
-                        // Nếu lỗi được trả về dưới dạng JSON (do chúng ta lập trình trong index.js)
-                        const errorResult = await response.json();
-                        // Ném ra một lỗi mới với thông điệp từ server.
-                        throw new Error(errorResult.error || 'Lỗi không xác định từ server');
-                    } else {
-                        // Nếu lỗi là HTML (thường là do server bị lỗi 413 hoặc lỗi nghiêm trọng khác)
-                        if (response.status === 413) {
-                            // Đưa ra thông báo lỗi thân thiện và cụ thể cho lỗi 413.
-                            throw new Error(`Lỗi từ server (mã 413): Tệp quá lớn! Vui lòng kiểm tra lại kích thước file.`);
-                        }
-                        // Với các lỗi HTML khác, hiển thị mã lỗi và một phần nội dung.
-                        const errorText = await response.text();
-                        throw new Error(`Lỗi từ server (mã ${response.status}): ${errorText.substring(0, 200)}`);
-                    }
+                if (!finalResponse.ok) {
+                    const errorResult = await finalResponse.json();
+                    throw new Error(errorResult.error || 'Lỗi khi lưu thông tin sản phẩm.');
                 }
 
-                // Nếu không có lỗi, xử lý kết quả thành công.
-                const result = await response.json();
-                if (result.error) {
-                    // Xử lý trường hợp server trả về 200 OK nhưng vẫn có message lỗi trong JSON.
-                    throw new Error(result.error);
-                }
-                
-                // Nếu mọi thứ thành công, chuyển hướng người dùng đến trang success.html
-                // kèm theo ID của sản phẩm vừa tạo để hiển thị lại thông tin.
+                const result = await finalResponse.json();
+                alert('Tạo sản phẩm thành công!');
                 window.location.href = `/success.html?id=${result.id}`;
 
             } catch (error) {
-                // Khối catch này sẽ bắt tất cả các lỗi được 'throw' ở trên.
-                // Hiển thị một thông báo alert cho người dùng.
+                // Nếu có bất kỳ lỗi nào trong toàn bộ quá trình, hiển thị thông báo
                 alert('Có lỗi xảy ra: ' + error.message);
-                
-                // --- BƯỚC 4: KÍCH HOẠT LẠI NÚT NẾU CÓ LỖI ---
-                // Cho phép người dùng thử lại sau khi đã đọc thông báo lỗi.
-                submitButton.disabled = false;
-                submitButton.textContent = 'Lưu và Xem lại';
+                statusDiv.textContent = `Lỗi: ${error.message}`;
+                submitButton.disabled = false; // Kích hoạt lại nút để người dùng thử lại
             }
         });
     </script>

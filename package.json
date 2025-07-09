@@ -10,6 +10,7 @@
   "author": "Vo Nguyen Duy Khoi",
   "license": "ISC",
   "dependencies": {
+    "@google-cloud/storage": "^7.16.0",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^17.0.1",
