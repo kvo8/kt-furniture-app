@@ -104,8 +104,48 @@ console.log("Defining API endpoints...");
 
 // == A. CÁC API VỀ USER VÀ TRANG CHỦ ==
 app.get('/', (req, res) => { res.sendFile(path.join(__dirname, 'public', 'index.html')); });
-app.post("/api/users/register", async (req, res) => { /* ... Code của bạn đã đúng, giữ nguyên ... */ });
-app.post("/api/users/login", async (req, res) => { /* ... Code của bạn đã đúng, giữ nguyên ... */ });
+app.post("/api/users/register", async (req, res) => {
+    const { ho_ten, ma_nhan_vien, password } = req.body;
+    if (!ho_ten || !ma_nhan_vien || !password) {
+        return res.status(400).json({ "error": "Vui lòng điền đầy đủ thông tin." });
+    }
+    try {
+        const hash = await bcrypt.hash(password, saltRounds);
+        const sql = 'INSERT INTO users (ho_ten, ma_nhan_vien, password) VALUES ($1, $2, $3) RETURNING id, ho_ten, ma_nhan_vien';
+        const params = [ho_ten, ma_nhan_vien, hash];
+        const result = await db.query(sql, params);
+        const newUser = result.rows[0];
+        req.session.user = { id: newUser.id, name: newUser.ho_ten, employeeId: newUser.ma_nhan_vien };
+        res.status(201).json({ "message": "Đăng ký thành công và đã tự động đăng nhập." });
+    } catch (err) {
+        console.error("Registration error:", err.message);
+        if (err.code === '23505') {
+            return res.status(400).json({ "error": "Mã nhân viên này đã tồn tại." });
+        }
+        res.status(500).json({ "error": `Server error during registration: ${err.message}` });
+    }
+});
+app.post("/api/users/login", async (req, res) => {
+    const { ma_nhan_vien, password } = req.body;
+    const sql = "SELECT * FROM users WHERE ma_nhan_vien = $1";
+    try {
+        const { rows } = await db.query(sql, [ma_nhan_vien]);
+        const user = rows[0];
+        if (!user) {
+            return res.status(401).json({ "error": "Mã nhân viên hoặc mật khẩu không đúng." });
+        }
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (isMatch) {
+            req.session.user = { id: user.id, name: user.ho_ten, employeeId: user.ma_nhan_vien };
+            res.json({ "message": "Đăng nhập thành công" });
+        } else {
+            res.status(401).json({ "error": "Mã nhân viên hoặc mật khẩu không đúng." });
+        }
+    } catch (err) {
+        console.error("Login error:", err.message);
+        res.status(500).json({ "error": `Server error during login: ${err.message}` });
+    }
+});
 app.get("/api/me", isLoggedIn, (req, res) => { res.json(req.session.user); });
 
 
@@ -154,8 +194,37 @@ app.post('/api/generate-upload-url', isLoggedIn, async (req, res) => {
 // == B. CÁC API VỀ SẢN PHẨM (ĐÃ SỬA LẠI ĐỂ DÙNG URL TỪ GCS) ==
 
 // READ ALL & READ ONE (Giữ nguyên)
-app.get("/api/products", isLoggedIn, async (req, res) => { /* ... Code của bạn đã đúng, giữ nguyên ... */ });
-app.get("/api/products/:id", async (req, res) => { /* ... Code của bạn đã đúng, giữ nguyên ... */ });
+app.get("/api/products", isLoggedIn, async (req, res) => {
+    const sql = "SELECT * FROM products ORDER BY created_at DESC";
+    try {
+        const { rows } = await db.query(sql);
+        res.json({ products: rows });
+    } catch (err) {
+        console.error("Error fetching product list:", err.message);
+        res.status(500).json({ "error": err.message });
+    }
+});
+app.get("/api/products/:id", async (req, res) => {
+    const sql = `
+        SELECT
+            id, name_vi, name_en, collection_vi, collection_en, color_vi, color_en,
+            fabric_vi, fabric_en, wicker_vi, wicker_en, production_place,
+            company, customer, specification, material_vi, material_en, aluminum_profile,
+            other_details, created_by_name, created_by_id, parent_id, created_at,
+            "imageUrl", "drawingUrl", "materialsUrl"
+        FROM products WHERE id = $1
+    `;
+    try {
+        const { rows } = await db.query(sql, [req.params.id]);
+        if (rows.length === 0) {
+            return res.status(404).json({ error: "Sản phẩm không tồn tại" });
+        }
+        res.json(rows[0]);
+    } catch (err) {
+        console.error("Error fetching product by ID:", err.message);
+        res.status(500).json({ "error": err.message });
+    }
+});
 
 
 // CREATE: Endpoint thêm sản phẩm mới (ĐÃ SỬA)
@@ -262,11 +331,46 @@ app.put("/api/products/:id", isLoggedIn, textOnlyUpload, async (req, res) => {
 
 
 // DELETE: Endpoint xóa sản phẩm (Giữ nguyên)
-app.delete("/api/products/:id", isLoggedIn, async (req, res) => { /* ... Code của bạn đã đúng, giữ nguyên ... */ });
+app.delete("/api/products/:id", isLoggedIn, async (req, res) => {
+    const sql = 'DELETE FROM products WHERE id = $1';
+    try {
+        const result = await db.query(sql, [req.params.id]);
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: 'Không tìm thấy sản phẩm này để xóa.' });
+        }
+        res.status(200).json({ message: 'Sản phẩm đã được xóa thành công.' });
+    } catch (err) {
+        console.error("Error deleting product:", err.message);
+        return res.status(500).json({ message: "Lỗi server khi xóa sản phẩm.", error: err.message });
+    }
+});
 
 // == C. CÁC API VỀ REVIEWS == (Giữ nguyên)
-app.post("/api/reviews", async (req, res) => { /* ... Code của bạn đã đúng, giữ nguyên ... */ });
-app.get("/api/products/:id/reviews", async (req, res) => { /* ... Code của bạn đã đúng, giữ nguyên ... */ });
+app.post("/api/reviews", async (req, res) => {
+    const { productId, rating, comment, author_name } = req.body;
+    if (!productId || !rating || !author_name) {
+        return res.status(400).json({ error: "Vui lòng cung cấp đầy đủ thông tin bắt buộc." });
+    }
+    const sql = `INSERT INTO reviews (product_id, rating, comment, author_name) VALUES ($1, $2, $3, $4) RETURNING id`;
+    const params = [productId, rating, comment || '', author_name];
+    try {
+        const result = await db.query(sql, params);
+        res.status(201).json({ message: "Gửi đánh giá thành công!", reviewId: result.rows[0].id });
+    } catch (err) {
+        console.error("Error saving review:", err.message);
+        return res.status(500).json({ error: "Lỗi server khi lưu đánh giá." });
+    }
+});
+app.get("/api/products/:id/reviews", async (req, res) => {
+    const sql = "SELECT * FROM reviews WHERE product_id = $1 ORDER BY created_at DESC";
+    try {
+        const { rows } = await db.query(sql, [req.params.id]);
+        res.json({ reviews: rows });
+    } catch (err) {
+        console.error("Error fetching reviews:", err.message);
+        return res.status(500).json({ error: "Lỗi server khi lấy đánh giá." });
+    }
+});
 
 console.log("API Endpoints defined successfully.");
 
@@ -287,90 +391,3 @@ app.listen(port, () => {
     console.log(`🚀 SERVER IS RUNNING (VERSION ${APP_VERSION}) ON PORT ${port}`);
     console.log(`===================================================`);
 });
-
-// --- FULL CODE CỦA CÁC HÀM KHÔNG ĐỔI (ĐỂ ĐẢM BẢO TÍNH ĐẦY ĐỦ) ---
-// Đây là các hàm đã có trong code của bạn, được giữ lại nguyên vẹn.
-async function registerUser(req, res) {
-    const { ho_ten, ma_nhan_vien, password } = req.body;
-    if (!ho_ten || !ma_nhan_vien || !password) {
-        return res.status(400).json({ "error": "Vui lòng điền đầy đủ thông tin." });
-    }
-    try {
-        const hash = await bcrypt.hash(password, saltRounds);
-        const sql = 'INSERT INTO users (ho_ten, ma_nhan_vien, password) VALUES ($1, $2, $3) RETURNING id, ho_ten, ma_nhan_vien';
-        const params = [ho_ten, ma_nhan_vien, hash];
-        const result = await db.query(sql, params);
-        const newUser = result.rows[0];
-        req.session.user = { id: newUser.id, name: newUser.ho_ten, employeeId: newUser.ma_nhan_vien };
-        res.status(201).json({ "message": "Đăng ký thành công và đã tự động đăng nhập." });
-    } catch (err) {
-        console.error("Registration error:", err.message);
-        if (err.code === '23505') {
-            return res.status(400).json({ "error": "Mã nhân viên này đã tồn tại." });
-        }
-        res.status(500).json({ "error": `Server error during registration: ${err.message}` });
-    }
-}
-
-async function loginUser(req, res) {
-    const { ma_nhan_vien, password } = req.body;
-    const sql = "SELECT * FROM users WHERE ma_nhan_vien = $1";
-    try {
-        const { rows } = await db.query(sql, [ma_nhan_vien]);
-        const user = rows[0];
-        if (!user) {
-            return res.status(401).json({ "error": "Mã nhân viên hoặc mật khẩu không đúng." });
-        }
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (isMatch) {
-            req.session.user = { id: user.id, name: user.ho_ten, employeeId: user.ma_nhan_vien };
-            res.json({ "message": "Đăng nhập thành công" });
-        } else {
-            res.status(401).json({ "error": "Mã nhân viên hoặc mật khẩu không đúng." });
-        }
-    } catch (err) {
-        console.error("Login error:", err.message);
-        res.status(500).json({ "error": `Server error during login: ${err.message}` });
-    }
-}
-
-async function deleteProduct(req, res) {
-    const sql = 'DELETE FROM products WHERE id = $1';
-    try {
-        const result = await db.query(sql, [req.params.id]);
-        if (result.rowCount === 0) {
-            return res.status(404).json({ message: 'Không tìm thấy sản phẩm này để xóa.' });
-        }
-        res.status(200).json({ message: 'Sản phẩm đã được xóa thành công.' });
-    } catch (err) {
-        console.error("Error deleting product:", err.message);
-        return res.status(500).json({ message: "Lỗi server khi xóa sản phẩm.", error: err.message });
-    }
-}
-
-async function postReview(req, res) {
-    const { productId, rating, comment, author_name } = req.body;
-    if (!productId || !rating || !author_name) {
-        return res.status(400).json({ error: "Vui lòng cung cấp đầy đủ thông tin bắt buộc." });
-    }
-    const sql = `INSERT INTO reviews (product_id, rating, comment, author_name) VALUES ($1, $2, $3, $4) RETURNING id`;
-    const params = [productId, rating, comment || '', author_name];
-    try {
-        const result = await db.query(sql, params);
-        res.status(201).json({ message: "Gửi đánh giá thành công!", reviewId: result.rows[0].id });
-    } catch (err) {
-        console.error("Error saving review:", err.message);
-        return res.status(500).json({ error: "Lỗi server khi lưu đánh giá." });
-    }
-}
-
-async function getReviews(req, res) {
-    const sql = "SELECT * FROM reviews WHERE product_id = $1 ORDER BY created_at DESC";
-    try {
-        const { rows } = await db.query(sql, [req.params.id]);
-        res.json({ reviews: rows });
-    } catch (err) {
-        console.error("Error fetching reviews:", err.message);
-        return res.status(500).json({ error: "Lỗi server khi lấy đánh giá." });
-    }
-}
