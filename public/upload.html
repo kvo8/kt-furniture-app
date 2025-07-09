@@ -6,7 +6,7 @@
     <title>Công Cụ Upload File</title>
     <link rel="stylesheet" href="/css/style.css">
     <style>
-        .container { max-width: 800px; }
+        .container { max-width: 800px; position: relative; }
         .upload-section { margin-bottom: 30px; border: 1px solid #ddd; padding: 20px; border-radius: 8px; background-color: #fdfdfd; }
         .upload-section h3 { border-bottom: 2px solid #007bff; padding-bottom: 10px; margin-top: 0; }
         .upload-area { border: 2px dashed #ccc; padding: 20px; text-align: center; border-radius: 8px; margin-bottom: 15px; }
@@ -17,15 +17,42 @@
         .status-box .label { font-weight: bold; }
         .result-textarea { width: 100%; box-sizing: border-box; height: 120px; font-family: monospace; margin-top: 10px; padding: 10px; border-radius: 5px; border: 1px solid #ccc; }
         .copy-btn { margin-top: 5px; padding: 5px 10px; font-size: 12px; cursor: pointer; }
-        /* GHI CHÚ: Bổ sung style cho phần hiển thị trạng thái chi tiết */
         .file-status-list { text-align: left; font-size: 14px; margin-top: 10px; }
         .file-status-list div { padding: 4px 0; }
         .file-status-list .success { color: #28a745; }
         .file-status-list .error { color: #dc3545; }
+
+        /* GHI CHÚ: Bổ sung style cho lớp phủ yêu cầu đăng nhập */
+        #auth-blocker {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.95);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            border-radius: 8px;
+            padding: 20px;
+            border: 2px dashed #dc3545;
+            display: none; /* Mặc định ẩn đi */
+        }
+        #auth-blocker h2 { color: #dc3545; }
+        #auth-blocker a { font-weight: bold; }
     </style>
 </head>
 <body>
     <div class="container">
+        <div id="auth-blocker">
+            <h2>Yêu Cầu Đăng Nhập</h2>
+            <p>Bạn phải đăng nhập để sử dụng chức năng này.</p>
+            <p>Vui lòng <a href="/index.html">đăng nhập</a> và quay lại trang này sau.</p>
+        </div>
+
         <header>
             <h1>Công Cụ Upload File Lên Cloud Storage</h1>
             <p>Sử dụng trang này để tải file lên và sao chép danh sách link để dán vào form sản phẩm.</p>
@@ -82,13 +109,32 @@
     </div>
 
     <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const authBlocker = document.getElementById('auth-blocker');
+
+        // GHI CHÚ: Bước quan trọng nhất - Kiểm tra trạng thái đăng nhập
+        fetch('/api/me')
+            .then(response => {
+                if (!response.ok) {
+                    // Nếu không OK (lỗi 401, 500, etc.), nghĩa là chưa đăng nhập
+                    throw new Error('User not authenticated');
+                }
+                // Nếu OK, tiếp tục chạy code của trang
+                initializeUploadPage();
+            })
+            .catch(error => {
+                // Nếu có lỗi (chưa đăng nhập), hiển thị lớp phủ và khóa trang
+                console.error(error.message);
+                authBlocker.style.display = 'flex';
+            });
+    });
+
+    /**
+     * Hàm này chỉ được gọi sau khi đã xác thực người dùng thành công.
+     */
+    function initializeUploadPage() {
         /**
          * Hàm chính để thiết lập sự kiện và logic cho mỗi khu vực upload.
-         * @param {string} inputId - ID của thẻ input file
-         * @param {string} listId - ID của thẻ div để hiển thị danh sách và trạng thái file
-         * @param {string} uploadBtnId - ID của nút "Tải Lên"
-         * @param {string} statusBoxId - ID của div chứa kết quả cuối cùng
-         * @param {string} urlsTextareaId - ID của textarea để hiển thị danh sách URL
          */
         function setupUploadSection(inputId, listId, uploadBtnId, statusBoxId, urlsTextareaId) {
             const fileInput = document.getElementById(inputId);
@@ -97,15 +143,12 @@
             const statusBox = document.getElementById(statusBoxId);
             const urlsTextarea = document.getElementById(urlsTextareaId);
 
-            // Sự kiện khi người dùng chọn file
             fileInput.addEventListener('change', () => {
                 if (fileInput.files.length > 5) {
                     alert('Bạn chỉ có thể chọn tối đa 5 file.');
-                    fileInput.value = ''; // Xóa các file đã chọn
+                    fileInput.value = '';
                     return;
                 }
-
-                // Hiển thị danh sách các file đã chọn
                 if (fileInput.files.length > 0) {
                     filesListDiv.innerHTML = Array.from(fileInput.files).map(f => `<div>• ${f.name} (${(f.size / 1024).toFixed(1)} KB)</div>`).join('');
                     uploadButton.disabled = false;
@@ -115,20 +158,17 @@
                 }
             });
 
-            // Sự kiện khi người dùng nhấn nút "Tải Lên"
             uploadButton.addEventListener('click', async () => {
                 const files = fileInput.files;
                 if (files.length === 0) return;
 
                 uploadButton.disabled = true;
                 uploadButton.textContent = 'Đang xử lý...';
-                statusBox.style.display = 'none'; // Ẩn kết quả cũ
+                statusBox.style.display = 'none';
                 urlsTextarea.value = '';
 
-                // GHI CHÚ: Nâng cấp để hiển thị trạng thái cho từng file
                 filesListDiv.innerHTML = Array.from(files).map(f => `<div id="status-${f.name.replace(/[^a-zA-Z0-9]/g, '')}">${f.name}: ⏳ Đang chờ...</div>`).join('');
 
-                // NÂNG CẤP: Tải lên tất cả các file song song
                 const uploadPromises = Array.from(files).map(file => uploadFileToGCS(file, filesListDiv));
                 const results = await Promise.all(uploadPromises);
                 
@@ -146,15 +186,11 @@
                 }
                 
                 uploadButton.textContent = 'Tải Lên';
-                // Không bật lại nút uploadButton.disabled = false; để tránh người dùng tải lại cùng một bộ file.
             });
         }
 
         /**
          * Hàm thực hiện quy trình tải 1 file lên Google Cloud Storage.
-         * @param {File} file - File cần tải lên.
-         * @param {HTMLElement} statusContainer - Div để cập nhật trạng thái trực quan.
-         * @returns {Promise<{success: boolean, url?: string, error?: string}>}
          */
         async function uploadFileToGCS(file, statusContainer) {
             const statusElement = statusContainer.querySelector(`#status-${file.name.replace(/[^a-zA-Z0-9]/g, '')}`);
@@ -165,7 +201,6 @@
 
             try {
                 updateStatus('🔄 Đang lấy link upload từ server...');
-                // Bước 1: Gọi API của chúng ta để lấy Signed URL
                 const response = await fetch('/api/generate-upload-url', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -174,22 +209,19 @@
 
                 if (!response.ok) {
                     let errorMsg = 'Lỗi không xác định từ server.';
-                    try {
-                        const err = await response.json();
-                        // Phân tích lỗi cụ thể
-                        if (response.status === 401) {
-                            errorMsg = 'Lỗi xác thực. Bạn chưa đăng nhập?';
-                        } else {
-                            errorMsg = err.error || errorMsg;
-                        }
-                    } catch (e) { /* Giữ lỗi mặc định nếu parse JSON thất bại */ }
+                    if (response.status === 401) errorMsg = 'Lỗi xác thực. Phiên đăng nhập hết hạn?';
+                    else {
+                        try {
+                           const err = await response.json();
+                           errorMsg = err.error || errorMsg;
+                        } catch(e) {}
+                    }
                     throw new Error(errorMsg);
                 }
                 
                 const { uploadUrl, accessUrl } = await response.json();
                 
                 updateStatus('⬆️ Đang tải file lên Cloud...');
-                // Bước 2: Dùng Signed URL để tải thẳng file lên GCS
                 const uploadResponse = await fetch(uploadUrl, {
                     method: 'PUT',
                     headers: { 'Content-Type': file.type || 'application/octet-stream' },
@@ -217,14 +249,13 @@
         setupUploadSection('drawing-input', 'drawing-files-list', 'upload-drawings-btn', 'drawing-status', 'drawing-urls');
         setupUploadSection('materials-input', 'materials-files-list', 'upload-materials-btn', 'materials-status', 'materials-urls');
 
-        // NÂNG CẤP: Sử dụng Clipboard API hiện đại để sao chép
+        // Gắn sự kiện cho các nút sao chép
         document.querySelectorAll('.copy-btn').forEach(button => {
             button.addEventListener('click', (e) => {
                 const targetId = e.target.dataset.target;
                 const textarea = document.getElementById(targetId);
                 
                 if (navigator.clipboard && window.isSecureContext) {
-                    // Phương pháp hiện đại
                     navigator.clipboard.writeText(textarea.value).then(() => {
                         alert('Đã sao chép danh sách URL!');
                     }).catch(err => {
@@ -232,13 +263,13 @@
                         console.error('Lỗi clipboard:', err);
                     });
                 } else {
-                    // Phương pháp cũ (fallback)
                     textarea.select();
                     document.execCommand('copy');
-                    alert('Đã sao chép danh sách URL! (chế độ cũ)');
+                    alert('Đã sao chép danh sách URL!');
                 }
             });
         });
+    }
     </script>
 </body>
 </html>
