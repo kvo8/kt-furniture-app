@@ -204,6 +204,9 @@
                     </div>
                 </div>
                 
+                // Dòng này sẽ ưu tiên link GCS, nếu không có sẽ dùng link cũ
+const finalImageUrl = fullProductData.imageUrl || fullProductData.imageurl || '';
+// ...
                 <img class="product-image" src="${finalImageUrl}" alt="Hình ảnh cho ${fullProductData.name_vi}" onerror="this.style.display='none';">
 
                 <div class="details-grid">

@@ -235,16 +235,19 @@ app.post("/api/products", isLoggedIn, textOnlyUpload, async (req, res) => {
     const user = req.session.user;
     
     // Các URL này được frontend gửi lên sau khi đã upload thành công lên GCS
-    const imageUrl = data.imageUrl || null;
-    const drawingUrl = data.drawingUrl || null;
-    const materialsUrl = data.materialsUrl || null;
+   // Chuyển đổi chuỗi từ textarea (nếu có) thành mảng, hoặc nhận mảng trực tiếp
+const imageUrls = Array.isArray(req.body.imageUrls) ? req.body.imageUrls : (req.body.imageUrls || '').split('\n').filter(link => link.trim() !== '');
+const drawingUrls = Array.isArray(req.body.drawingUrls) ? req.body.drawingUrls : (req.body.drawingUrls || '').split('\n').filter(link => link.trim() !== '');
+const materialsUrls = Array.isArray(req.body.materialsUrls) ? req.body.materialsUrls : (req.body.materialsUrls || '').split('\n').filter(link => link.trim() !== '');
 
+// ... và trong câu lệnh SQL, bạn sẽ dùng các biến mảng này
+// Ví dụ: '..., "imageUrl", ...' và trong params là '..., imageUrls, ...'
     const sql = `
         INSERT INTO products (
             id, name_vi, name_en, collection_vi, collection_en, color_vi, color_en, 
             fabric_vi, fabric_en, wicker_vi, wicker_en, production_place,
             company, customer, specification, material_vi, material_en, aluminum_profile, 
-            "imageUrl", "drawingUrl", "materialsUrl", other_details,
+            "imageUrl", "drawingUrl", supplier_vi, supplier_en, "materialsUrl", other_details,
             created_by_name, created_by_id, parent_id
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25)
     `;
@@ -253,7 +256,7 @@ app.post("/api/products", isLoggedIn, textOnlyUpload, async (req, res) => {
         data.color_vi, data.color_en, data.fabric_vi, data.fabric_en, data.wicker_vi, data.wicker_en,
         data.production_place, data.company, data.customer, data.specification,
         data.material_vi, data.material_en, data.aluminum_profile, imageUrl,
-        drawingUrl, materialsUrl, data.other_details, user.name, user.id,
+        drawingUrl, data.supplier, materialsUrl, data.other_details, user.name, user.id,
         data.parent_id || null
     ];
 
@@ -304,6 +307,7 @@ app.put("/api/products/:id", isLoggedIn, textOnlyUpload, async (req, res) => {
     addField('company', data.company);
     addField('customer', data.customer);
     addField('specification', data.specification);
+    addField('supplier', data.supplier);
     addField('material_vi', data.material_vi);
     addField('material_en', data.material_en);
     addField('aluminum_profile', data.aluminum_profile);

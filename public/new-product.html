@@ -87,6 +87,7 @@
                 <h2>Thông Tin Thương Mại & Kỹ Thuật</h2>
                 <div class="form-grid">
                      <div class="form-group"><label for="company">Công ty</label><input type="text" id="company" name="company"></div>
+                     <div class="form-group"><label for="supplier">Nhà cung cấp</label><input type="text" id="supplier" name="supplier"></div>
                      <div class="form-group"><label for="customer">Khách hàng</label><input type="text" id="customer" name="customer"></div>
                      <div class="form-group full-width"><label for="specification">Thông số</label><input type="text" id="specification" name="specification"></div>
                      <div class="form-group full-width"><label for="other_details">Chi tiết khác</label><textarea id="other_details" name="other_details" rows="3"></textarea></div>
@@ -94,14 +95,23 @@
             </div>
             
             <div class="form-section">
-                <h2>Tệp Đính Kèm</h2>
-                <div class="form-grid">
-                    <!-- Các thẻ input file này không còn thuộc tính 'name' nữa, vì chúng không được gửi trực tiếp qua form -->
-                    <div class="form-group full-width"><label for="productImage">Hình ảnh sản phẩm</label><input type="file" id="productImage" accept="image/*"></div>
-                    <div class="form-group full-width"><label for="drawingFile">Bản vẽ (PDF)</label><input type="file" id="drawingFile" accept=".pdf"></div>
-                    <div class="form-group full-width"><label for="materialsFile">Vật tư (Word, Excel, PDF)</label><input type="file" id="materialsFile" accept=".doc,.docx,.xls,.xlsx,.pdf"></div>
-                </div>
-            </div>
+    <h2>Tệp Đính Kèm</h2>
+    <p style="font-style: italic; margin-bottom: 15px;">
+        Sử dụng <a href="/upload.html" target="_blank">Công cụ Upload</a> để tải file lên và dán danh sách link vào các ô dưới đây.
+    </p>
+    <div class="form-group full-width">
+        <label for="imageUrls">Danh sách URL Hình ảnh sản phẩm (mỗi link một dòng)</label>
+        <textarea id="imageUrls" name="imageUrls" rows="5" placeholder="Dán danh sách link ảnh từ trang Upload vào đây..."></textarea>
+    </div>
+    <div class="form-group full-width">
+        <label for="drawingUrls">Danh sách URL Bản vẽ (PDF)</label>
+        <textarea id="drawingUrls" name="drawingUrls" rows="5" placeholder="Dán danh sách link bản vẽ từ trang Upload vào đây..."></textarea>
+    </div>
+    <div class="form-group full-width">
+        <label for="materialsUrls">Danh sách URL Vật tư</label>
+        <textarea id="materialsUrls" name="materialsUrls" rows="5" placeholder="Dán danh sách link vật tư từ trang Upload vào đây..."></textarea>
+    </div>
+</div>
             
             <div class="form-actions">
                 <button type="submit" id="submit-button">Lưu và Xem lại</button>
@@ -119,118 +129,65 @@
     <!-- === PHẦN JAVASCRIPT XỬ LÝ UPLOAD LÊN GCS (HOÀN TOÀN MỚI) === -->
     <!-- =================================================================== -->
     <script>
-        // Lấy các element quan trọng của form và lưu vào biến để dễ dàng truy cập.
-        const form = document.getElementById('product-form');
-        const submitButton = document.getElementById('submit-button');
-        const statusDiv = document.getElementById('upload-status');
-        
-        // Lấy các thẻ input của file
-        const imageInput = document.getElementById('productImage');
-        const drawingInput = document.getElementById('drawingFile');
-        const materialsInput = document.getElementById('materialsFile');
+    // Lấy form và nút submit bằng ID của chúng
+    const form = document.getElementById('product-form');
+    const submitButton = document.getElementById('submit-button');
 
-        /**
-         * Hàm này là cốt lõi của giải pháp mới.
-         * Nó nhận vào một đối tượng file, sau đó thực hiện 3 bước:
-         * 1. Gọi API của server để lấy một đường link upload đặc biệt (Signed URL).
-         * 2. Dùng đường link đó để upload file thẳng lên Google Cloud Storage.
-         * 3. Trả về đường link công khai của file sau khi đã upload thành công.
-         * @param {File} file - Đối tượng file được chọn từ thẻ <input type="file">.
-         * @returns {Promise<string|null>} - Trả về một chuỗi URL công khai của file, hoặc null nếu không có file.
-         */
-        async function uploadFileToGCS(file) {
-            // Nếu không có file nào được chọn, bỏ qua và trả về null.
-            if (!file) {
-                return null;
-            }
+    // Gán một hàm xử lý cho sự kiện 'submit' của form
+    form.addEventListener('submit', async function(event) {
+        // Ngăn chặn hành vi mặc định của form là tải lại trang
+        event.preventDefault();
 
-            // --- Bước 1: Gọi backend để lấy Signed URL ---
-            statusDiv.style.display = 'block'; // Hiển thị ô trạng thái
-            statusDiv.textContent = `Đang chuẩn bị để tải lên: ${file.name}...`;
-            
-            const response = await fetch('/api/generate-upload-url', {
+        // Vô hiệu hóa nút submit để ngăn người dùng click nhiều lần
+        submitButton.disabled = true;
+        submitButton.textContent = 'Đang lưu...';
+
+        try {
+            // Lấy toàn bộ dữ liệu từ các trường input và textarea của form
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData.entries());
+
+            // Xử lý riêng cho ID sản phẩm
+            const idSuffixInput = document.getElementById('product-id-suffix');
+            data.id = 'KT' + idSuffixInput.value;
+
+            // Chuyển đổi chuỗi URL từ các textarea thành một mảng các URL
+            // .split('\n') -> Tách chuỗi thành mảng dựa trên ký tự xuống dòng.
+            // .filter(link => link.trim() !== '') -> Loại bỏ các dòng trống nếu người dùng vô tình enter thừa.
+            data.imageUrls = data.imageUrls.split('\n').filter(link => link.trim() !== '');
+            data.drawingUrls = data.drawingUrls.split('\n').filter(link => link.trim() !== '');
+            data.materialsUrls = data.materialsUrls.split('\n').filter(link => link.trim() !== '');
+
+            // Gửi dữ liệu đã xử lý lên server
+            const response = await fetch('/api/products', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                // Gửi tên file và loại file để server tạo link phù hợp.
-                body: JSON.stringify({
-                    fileName: file.name,
-                    contentType: file.type || 'application/octet-stream' // Cung cấp loại file mặc định
-                }),
+                headers: {
+                    'Content-Type': 'application/json', // Báo cho server biết chúng ta đang gửi JSON
+                },
+                body: JSON.stringify(data), // Chuyển đối tượng data thành chuỗi JSON
             });
 
+            // Xử lý phản hồi từ server
+            const result = await response.json();
             if (!response.ok) {
-                const err = await response.json();
-                throw new Error(err.error || 'Không thể lấy link upload từ server.');
-            }
-            const { uploadUrl, accessUrl } = await response.json();
-
-            // --- Bước 2: Upload file thẳng lên GCS bằng Signed URL ---
-            statusDiv.textContent = `Đang tải lên: ${file.name}...`;
-            const uploadResponse = await fetch(uploadUrl, {
-                method: 'PUT',
-                headers: { 'Content-Type': file.type || 'application/octet-stream' },
-                body: file, // Nội dung gửi đi chính là file gốc
-            });
-
-            if (!uploadResponse.ok) {
-                throw new Error(`Tải file ${file.name} lên Google Cloud Storage thất bại.`);
+                // Nếu server trả về lỗi, ném ra để khối catch ở dưới xử lý
+                throw new Error(result.error || 'Lỗi không xác định từ server.');
             }
 
-            // --- Bước 3: Trả về URL công khai để lưu vào database ---
-            statusDiv.textContent = `Tải lên ${file.name} thành công!`;
-            return accessUrl;
+            // Nếu thành công
+            alert(result.message || 'Tạo sản phẩm thành công!');
+            // Chuyển hướng đến trang success
+            window.location.href = `/success.html?id=${result.id}`;
+
+        } catch (error) {
+            // Nếu có bất kỳ lỗi nào xảy ra trong quá trình trên, hiển thị thông báo
+            alert('Có lỗi xảy ra: ' + error.message);
+            // Kích hoạt lại nút để người dùng có thể thử lại
+            submitButton.disabled = false;
+            submitButton.textContent = 'Lưu và Xem lại';
         }
+    });
+</script>
 
-        // Gán hàm xử lý sự kiện 'submit' cho form.
-        form.addEventListener('submit', async function(event) {
-            event.preventDefault(); // Ngăn form tải lại trang
-            submitButton.disabled = true; // Vô hiệu hóa nút
-            
-            try {
-                // --- UPLOAD CÁC FILE LÊN GCS TRƯỚC KHI LƯU THÔNG TIN ---
-                const imageUrl = await uploadFileToGCS(imageInput.files[0]);
-                const drawingUrl = await uploadFileToGCS(drawingInput.files[0]);
-                const materialsUrl = await uploadFileToGCS(materialsInput.files[0]);
-                
-                // --- GỬI FORM CHÍNH VỚI CÁC URL ---
-                statusDiv.textContent = 'Đang lưu thông tin sản phẩm...';
-                
-                const idSuffixInput = document.getElementById('product-id-suffix');
-                const fullIdInput = document.getElementById('full-product-id');
-                fullIdInput.value = 'KT' + idSuffixInput.value;
-
-                // Tạo một FormData mới chỉ chứa dữ liệu text từ form
-                const textFormData = new FormData(form);
-                const data = Object.fromEntries(textFormData.entries());
-                
-                // Thêm các URL đã upload vào đối tượng data để gửi về server
-                data.imageUrl = imageUrl;
-                data.drawingUrl = drawingUrl;
-                data.materialsUrl = materialsUrl;
-
-                // Gửi request cuối cùng về server để lưu thông tin vào database
-                const finalResponse = await fetch('/api/products', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data), // Chỉ gửi dữ liệu JSON, rất nhẹ
-                });
-
-                if (!finalResponse.ok) {
-                    const errorResult = await finalResponse.json();
-                    throw new Error(errorResult.error || 'Lỗi khi lưu thông tin sản phẩm.');
-                }
-
-                const result = await finalResponse.json();
-                alert('Tạo sản phẩm thành công!');
-                window.location.href = `/success.html?id=${result.id}`;
-
-            } catch (error) {
-                // Nếu có bất kỳ lỗi nào trong toàn bộ quá trình, hiển thị thông báo
-                alert('Có lỗi xảy ra: ' + error.message);
-                statusDiv.textContent = `Lỗi: ${error.message}`;
-                submitButton.disabled = false; // Kích hoạt lại nút để người dùng thử lại
-            }
-        });
-    </script>
 </body>
 </html>

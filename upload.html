@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Công Cụ Upload File</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .container { max-width: 800px; }
+        .upload-section { margin-bottom: 30px; border: 1px solid #ddd; padding: 20px; border-radius: 8px; background-color: #fdfdfd; }
+        .upload-section h3 { border-bottom: 2px solid #007bff; padding-bottom: 10px; margin-top: 0; }
+        .upload-area { border: 2px dashed #ccc; padding: 20px; text-align: center; border-radius: 8px; margin-bottom: 15px; }
+        .upload-btn { background-color: #007bff; color: white; padding: 10px 15px; border-radius: 5px; cursor: pointer; display: inline-block; }
+        .upload-btn:disabled { background-color: #6c757d; cursor: not-allowed; }
+        .status-box { margin-top: 15px; }
+        .status-box .label { font-weight: bold; }
+        .result-textarea { width: 100%; height: 120px; font-family: monospace; margin-top: 10px; padding: 10px; border-radius: 5px; border: 1px solid #ccc; }
+        .copy-btn { margin-top: 5px; padding: 5px 10px; font-size: 12px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Công Cụ Upload File Lên Cloud Storage</h1>
+            <p>Sử dụng trang này để tải file lên và sao chép danh sách link để dán vào form sản phẩm.</p>
+        </header>
+
+        <!-- MỤC 1: UPLOAD HÌNH ẢNH SẢN PHẨM -->
+        <div class="upload-section">
+            <h3>1. Hình ảnh sản phẩm (Tối đa 5 file)</h3>
+            <div class="upload-area">
+                <input type="file" id="image-input" accept="image/*" multiple style="display: none;">
+                <label for="image-input" class="upload-btn">Chọn Ảnh</label>
+                <p id="image-files-list"></p>
+            </div>
+            <button class="upload-btn" id="upload-images-btn" disabled>Tải Ảnh Lên</button>
+            <div class="status-box" id="image-status" style="display: none;">
+                <p class="label">Danh sách URL ảnh (sao chép và dán vào form):</p>
+                <textarea id="image-urls" class="result-textarea" readonly></textarea>
+                <button class="copy-btn" data-target="image-urls">Sao chép</button>
+            </div>
+        </div>
+
+        <!-- MỤC 2: UPLOAD BẢN VẼ PDF -->
+        <div class="upload-section">
+            <h3>2. Bản vẽ (PDF, Tối đa 5 file)</h3>
+            <div class="upload-area">
+                <input type="file" id="drawing-input" accept=".pdf" multiple style="display: none;">
+                <label for="drawing-input" class="upload-btn">Chọn File PDF</label>
+                <p id="drawing-files-list"></p>
+            </div>
+            <button class="upload-btn" id="upload-drawings-btn" disabled>Tải Bản Vẽ Lên</button>
+            <div class="status-box" id="drawing-status" style="display: none;">
+                <p class="label">Danh sách URL bản vẽ (sao chép và dán vào form):</p>
+                <textarea id="drawing-urls" class="result-textarea" readonly></textarea>
+                <button class="copy-btn" data-target="drawing-urls">Sao chép</button>
+            </div>
+        </div>
+
+        <!-- MỤC 3: UPLOAD VẬT TƯ -->
+        <div class="upload-section">
+            <h3>3. Vật tư (Word, Excel, PDF, Tối đa 5 file)</h3>
+            <div class="upload-area">
+                <input type="file" id="materials-input" accept=".doc,.docx,.xls,.xlsx,.pdf" multiple style="display: none;">
+                <label for="materials-input" class="upload-btn">Chọn File Vật Tư</label>
+                <p id="materials-files-list"></p>
+            </div>
+            <button class="upload-btn" id="upload-materials-btn" disabled>Tải Vật Tư Lên</button>
+            <div class="status-box" id="materials-status" style="display: none;">
+                <p class="label">Danh sách URL vật tư (sao chép và dán vào form):</p>
+                <textarea id="materials-urls" class="result-textarea" readonly></textarea>
+                <button class="copy-btn" data-target="materials-urls">Sao chép</button>
+            </div>
+        </div>
+        
+        <div class="nav-link" style="margin-top: 30px;">
+            <a href="/dashboard.html">Quay về Dashboard</a>
+        </div>
+    </div>
+
+    <script>
+        // Hàm chung để xử lý logic cho một khu vực upload
+        function setupUploadSection(inputId, listId, uploadBtnId, statusBoxId, urlsTextareaId) {
+            const fileInput = document.getElementById(inputId);
+            const filesList = document.getElementById(listId);
+            const uploadButton = document.getElementById(uploadBtnId);
+            const statusBox = document.getElementById(statusBoxId);
+            const urlsTextarea = document.getElementById(urlsTextareaId);
+
+            fileInput.addEventListener('change', () => {
+                if (fileInput.files.length > 5) {
+                    alert('Bạn chỉ có thể chọn tối đa 5 file.');
+                    fileInput.value = ''; // Xóa các file đã chọn
+                    return;
+                }
+                if (fileInput.files.length > 0) {
+                    filesList.innerHTML = Array.from(fileInput.files).map(f => `<div>${f.name}</div>`).join('');
+                    uploadButton.disabled = false;
+                } else {
+                    uploadButton.disabled = true;
+                }
+            });
+
+            uploadButton.addEventListener('click', async () => {
+                const files = fileInput.files;
+                if (files.length === 0) return;
+
+                uploadButton.disabled = true;
+                uploadButton.textContent = 'Đang xử lý...';
+                statusBox.style.display = 'block';
+                urlsTextarea.value = '';
+
+                try {
+                    const uploadedUrls = [];
+                    for (const file of files) {
+                        urlsTextarea.value += `Đang tải lên ${file.name}...\n`;
+                        const accessUrl = await uploadFileToGCS(file);
+                        uploadedUrls.push(accessUrl);
+                        urlsTextarea.value = urlsTextarea.value.replace(`Đang tải lên ${file.name}...\n`, `${accessUrl}\n`);
+                    }
+                    alert('Tất cả file đã được tải lên thành công!');
+                } catch (error) {
+                    alert(`Lỗi: ${error.message}`);
+                } finally {
+                    uploadButton.disabled = false;
+                    uploadButton.textContent = 'Tải Lên';
+                }
+            });
+        }
+
+        // Hàm upload một file lên GCS (giống hệt logic cũ)
+        async function uploadFileToGCS(file) {
+            const response = await fetch('/api/generate-upload-url', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ fileName: file.name, contentType: file.type || 'application/octet-stream' }),
+            });
+            if (!response.ok) throw new Error('Không thể lấy link upload từ server.');
+            const { uploadUrl, accessUrl } = await response.json();
+            
+            const uploadResponse = await fetch(uploadUrl, {
+                method: 'PUT',
+                headers: { 'Content-Type': file.type || 'application/octet-stream' },
+                body: file,
+            });
+            if (!uploadResponse.ok) throw new Error(`Tải file ${file.name} thất bại.`);
+            return accessUrl;
+        }
+
+        // Thiết lập cho từng khu vực
+        setupUploadSection('image-input', 'image-files-list', 'upload-images-btn', 'image-status', 'image-urls');
+        setupUploadSection('drawing-input', 'drawing-files-list', 'upload-drawings-btn', 'drawing-status', 'drawing-urls');
+        setupUploadSection('materials-input', 'materials-files-list', 'upload-materials-btn', 'materials-status', 'materials-urls');
+
+        // Gán sự kiện cho tất cả các nút sao chép
+        document.querySelectorAll('.copy-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const targetId = e.target.dataset.target;
+                const textarea = document.getElementById(targetId);
+                textarea.select();
+                document.execCommand('copy');
+                alert('Đã sao chép danh sách URL!');
+            });
+        });
+    </script>
+</body>
+</html>
