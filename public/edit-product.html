@@ -4,32 +4,75 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chỉnh Sửa Sản Phẩm</title>
+    <!-- Sử dụng file CSS chung của bạn -->
     <link rel="stylesheet" href="/css/style.css">
     <style>
+        /*
+         * CSS Nâng Cao Cho Trải Nghiệm Người Dùng Tốt Hơn
+         * Khi nút submit bị vô hiệu hóa (trong lúc đang gửi form),
+         * nó sẽ đổi màu và con trỏ chuột để người dùng biết không thể click được nữa.
+         */
         button[type="submit"]:disabled {
-            background-color: #5a6268;
-            cursor: not-allowed;
-            opacity: 0.7;
+            background-color: #5a6268; /* Một màu xám đậm hơn */
+            border-color: #5a6268;
+            cursor: not-allowed;      /* Biểu tượng con trỏ chuột "cấm" */
+            opacity: 0.65;            /* Làm mờ nút đi một chút */
         }
-        .file-info img { max-width: 100px; max-height: 100px; border-radius: 5px; vertical-align: middle; margin-left: 10px; border: 1px solid #ddd; }
-        .file-info a { text-decoration: none; font-weight: bold; }
-        .file-info { margin-top: 8px; font-style: italic; color: #555; }
-        .upload-status { margin-top: 15px; padding: 10px; background-color: #e9f7fe; border-left: 4px solid #007bff; font-style: italic; color: #333; display: none; }
+        
+        /* Style cho phần hiển thị file hiện tại */
+        .file-info {
+            margin-top: 8px;
+            font-size: 0.9em;
+            font-style: italic;
+            color: #555;
+        }
+        .file-info img {
+            max-width: 100px;
+            max-height: 100px;
+            border-radius: 5px;
+            vertical-align: middle;
+            margin-left: 10px;
+            border: 1px solid #ddd;
+        }
+        .file-info a {
+            text-decoration: none;
+            color: #007bff;
+            font-weight: bold;
+        }
+        .file-info a:hover {
+            text-decoration: underline;
+        }
+        .file-info span.no-file {
+            color: #888;
+        }
+        /* Style cho phần hiển thị trạng thái upload */
+        .upload-status {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #e9f7fe;
+            border-left: 4px solid #007bff;
+            font-style: italic;
+            color: #333;
+            display: none; /* Mặc định sẽ ẩn đi */
+            text-align: left;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Chỉnh Sửa Sản Phẩm / Edit Product</h1>
-        <p>Thay đổi thông tin và nhấn "Lưu Thay Đổi" để cập nhật.</p>
+        <p>Thay đổi thông tin sản phẩm và nhấn "Lưu Thay Đổi" để cập nhật.</p>
 
+        <!-- Form này sẽ được điền dữ liệu tự động bằng JavaScript -->
         <form id="edit-form">
-            <!-- Các trường input sẽ được điền dữ liệu tự động bằng JavaScript -->
+            
+            <!-- CÁC PHẦN FORM HTML CỦA BẠN ĐƯỢC GIỮ NGUYÊN, KHÔNG THAY ĐỔI -->
             <div class="form-section">
                 <h2>Thông Tin Chung</h2>
                 <div class="form-grid">
                     <div class="form-group full-width">
                         <label>Mã Sản Phẩm / Product ID (Không thể sửa)</label>
-                        <input type="text" name="id" readonly style="background-color: #e9ecef;">
+                        <input type="text" name="id" readonly style="background-color: #e9ecef; color: #495057;">
                     </div>
                     <div class="form-group"><label>Tên Sản Phẩm (VI)</label><input type="text" name="name_vi" required></div>
                     <div class="form-group"><label>Product Name (EN)</label><input type="text" name="name_en" required></div>
@@ -97,73 +140,109 @@
         <div class="nav-link"><a href="/product-list.html">Quay về danh sách</a></div>
     </div>
 
+    <!-- =================================================================== -->
+    <!-- === PHẦN JAVASCRIPT XỬ LÝ UPLOAD LÊN GCS (HOÀN TOÀN MỚI) === -->
+    <!-- =================================================================== -->
     <script>
+        // Lấy các element quan trọng của form và lưu vào biến để dễ dàng truy cập.
         const form = document.getElementById('edit-form');
         const submitButton = document.getElementById('submit-button');
         const statusDiv = document.getElementById('upload-status');
         const urlParams = new URLSearchParams(window.location.search);
         const productId = urlParams.get('id');
 
+        // Lấy các thẻ input của file
         const imageInput = document.getElementById('productImage');
         const drawingInput = document.getElementById('drawingFile');
         const materialsInput = document.getElementById('materialsFile');
 
-        // Hàm upload file lên GCS (giống hệt trang new-product)
+        /**
+         * Hàm này là cốt lõi của giải pháp mới.
+         * Nó nhận vào một đối tượng file, sau đó thực hiện 3 bước:
+         * 1. Gọi API của server để lấy một đường link upload đặc biệt (Signed URL).
+         * 2. Dùng đường link đó để upload file thẳng lên Google Cloud Storage.
+         * 3. Trả về đường link công khai của file sau khi đã upload thành công.
+         * @param {File} file - Đối tượng file được chọn từ thẻ <input type="file">.
+         * @returns {Promise<string|null>} - Trả về một chuỗi URL công khai của file, hoặc null nếu không có file.
+         */
         async function uploadFileToGCS(file) {
-            if (!file) return null;
-            statusDiv.style.display = 'block';
+            // Nếu không có file nào được chọn, bỏ qua và trả về null.
+            if (!file) {
+                return null;
+            }
+
+            // --- Bước 1: Gọi backend để lấy Signed URL ---
+            statusDiv.style.display = 'block'; // Hiển thị ô trạng thái
             statusDiv.textContent = `Đang chuẩn bị để tải lên: ${file.name}...`;
+            
             const response = await fetch('/api/generate-upload-url', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ fileName: file.name, contentType: file.type || 'application/octet-stream' }),
+                body: JSON.stringify({
+                    fileName: file.name,
+                    contentType: file.type || 'application/octet-stream'
+                }),
             });
-            if (!response.ok) throw new Error('Không thể lấy link upload.');
+
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.error || 'Không thể lấy link upload từ server.');
+            }
             const { uploadUrl, accessUrl } = await response.json();
-            
+
+            // --- Bước 2: Upload file thẳng lên GCS bằng Signed URL ---
             statusDiv.textContent = `Đang tải lên: ${file.name}...`;
             const uploadResponse = await fetch(uploadUrl, {
                 method: 'PUT',
                 headers: { 'Content-Type': file.type || 'application/octet-stream' },
                 body: file,
             });
-            if (!uploadResponse.ok) throw new Error(`Tải file ${file.name} thất bại.`);
-            
+
+            if (!uploadResponse.ok) {
+                throw new Error(`Tải file ${file.name} lên Google Cloud Storage thất bại.`);
+            }
+
+            // --- Bước 3: Trả về URL công khai để lưu vào database ---
             statusDiv.textContent = `Tải lên ${file.name} thành công!`;
             return accessUrl;
         }
 
-        // Hàm điền dữ liệu vào form
+        /**
+         * Hàm này dùng để điền dữ liệu sản phẩm lấy từ server vào các ô input trong form.
+         * @param {object} product - Đối tượng sản phẩm chứa đầy đủ thông tin.
+         */
         function populateForm(product) {
+            // Lặp qua tất cả các key trong đối tượng 'product'
             for (const key in product) {
                 if (form.elements[key]) {
                     form.elements[key].value = product[key] || '';
                 }
             }
+            // Xử lý riêng cho các link file để hiển thị đúng
             const imageUrl = product.imageUrl || product.imageurl;
             if (imageUrl) {
                 document.getElementById('current-image-info').innerHTML = `Ảnh hiện tại: <a href="${imageUrl}" target="_blank"><img src="${imageUrl}" alt="Ảnh sản phẩm"></a>`;
                 form.elements['existingImageUrl'].value = imageUrl;
             } else {
-                document.getElementById('current-image-info').innerHTML = `Ảnh hiện tại: <span>Không có</span>`;
+                document.getElementById('current-image-info').innerHTML = `Ảnh hiện tại: <span class="no-file">Không có</span>`;
             }
             const drawingUrl = product.drawingUrl || product.drawingurl;
             if (drawingUrl) {
                 document.getElementById('current-drawing-info').innerHTML = `Bản vẽ hiện tại: <a href="${drawingUrl}" target="_blank">Xem File</a>`;
                 form.elements['existingDrawingUrl'].value = drawingUrl;
             } else {
-                document.getElementById('current-drawing-info').innerHTML = `Bản vẽ hiện tại: <span>Không có</span>`;
+                document.getElementById('current-drawing-info').innerHTML = `Bản vẽ hiện tại: <span class="no-file">Không có</span>`;
             }
             const materialsUrl = product.materialsUrl || product.materialsurl;
             if (materialsUrl) {
                 document.getElementById('current-materials-info').innerHTML = `Vật tư hiện tại: <a href="${materialsUrl}" target="_blank">Xem File</a>`;
                 form.elements['existingMaterialsUrl'].value = materialsUrl;
             } else {
-                document.getElementById('current-materials-info').innerHTML = `Vật tư hiện tại: <span>Không có</span>`;
+                document.getElementById('current-materials-info').innerHTML = `Vật tư hiện tại: <span class="no-file">Không có</span>`;
             }
         }
 
-        // Tải dữ liệu sản phẩm khi trang mở
+        // 1. Lấy dữ liệu sản phẩm cũ và điền vào form khi trang tải
         document.addEventListener('DOMContentLoaded', async () => {
             if (!productId) {
                 alert('Không tìm thấy ID sản phẩm.');
@@ -179,7 +258,7 @@
             }
         });
 
-        // Xử lý sự kiện submit form
+        // 2. Xử lý việc gửi form đi để cập nhật
         form.addEventListener('submit', async function(event) {
             event.preventDefault();
             submitButton.disabled = true;
@@ -202,6 +281,7 @@
                 data.drawingUrl = newDrawingUrl || data.existingDrawingUrl;
                 data.materialsUrl = newMaterialsUrl || data.existingMaterialsUrl;
 
+                // Gửi request UPDATE (PUT) lên server với dữ liệu JSON
                 const finalResponse = await fetch(`/api/products/${productId}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },

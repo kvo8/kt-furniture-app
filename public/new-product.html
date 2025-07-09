@@ -26,6 +26,7 @@
             font-style: italic;
             color: #333;
             display: none; /* Mặc định sẽ ẩn đi */
+            text-align: left;
         }
     </style>
 </head>
@@ -36,7 +37,8 @@
             <p>Điền đầy đủ các thông tin dưới đây và nhấn "Lưu" để tạo sản phẩm mới.</p>
         </header>
 
-        <!-- Phần form HTML của bạn được giữ nguyên, không thay đổi -->
+        <!-- Phần form HTML của bạn được giữ nguyên. Thuộc tính enctype không còn cần thiết
+             vì chúng ta không gửi form theo cách truyền thống nữa, nhưng giữ lại cũng không sao. -->
         <form id="product-form">
             
             <div class="form-section">
