@@ -21,8 +21,6 @@
         .file-status-list div { padding: 4px 0; }
         .file-status-list .success { color: #28a745; }
         .file-status-list .error { color: #dc3545; }
-
-        /* GHI CHÚ: Bổ sung style cho lớp phủ yêu cầu đăng nhập */
         #auth-blocker {
             position: absolute;
             top: 0;
@@ -59,7 +57,7 @@
         </header>
 
         <div class="upload-section">
-            <h3>1. Hình ảnh sản phẩm (Tối đa 5 file)</h3>
+            <h3>1. Hình ảnh sản phẩm (Tối đa 5 file, mỗi file dưới 10MB)</h3>
             <div class="upload-area">
                 <input type="file" id="image-input" accept="image/*" multiple style="display: none;">
                 <label for="image-input" class="upload-btn">Chọn Ảnh</label>
@@ -74,7 +72,7 @@
         </div>
 
         <div class="upload-section">
-            <h3>2. Bản vẽ (PDF, Tối đa 5 file)</h3>
+            <h3>2. Bản vẽ (PDF, Tối đa 5 file, mỗi file dưới 10MB)</h3>
             <div class="upload-area">
                 <input type="file" id="drawing-input" accept=".pdf" multiple style="display: none;">
                 <label for="drawing-input" class="upload-btn">Chọn File PDF</label>
@@ -89,7 +87,7 @@
         </div>
 
         <div class="upload-section">
-            <h3>3. Vật tư (Word, Excel, PDF, Tối đa 5 file)</h3>
+            <h3>3. Vật tư (Word, Excel, PDF, Tối đa 5 file, mỗi file dưới 10MB)</h3>
             <div class="upload-area">
                 <input type="file" id="materials-input" accept=".doc,.docx,.xls,.xlsx,.pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/pdf" multiple style="display: none;">
                 <label for="materials-input" class="upload-btn">Chọn File Vật Tư</label>
@@ -109,21 +107,25 @@
     </div>
 
     <script>
+    /**
+     * GHI CHÚ: Toàn bộ script này đã được viết lại theo Kế Hoạch Z.
+     * Logic chính đã thay đổi: thay vì lấy signedURL, trình duyệt sẽ gửi thẳng file
+     * đến server của chúng ta tại endpoint /api/upload-direct để né lỗi CORS.
+     */
     document.addEventListener('DOMContentLoaded', () => {
         const authBlocker = document.getElementById('auth-blocker');
 
-        // GHI CHÚ: Bước quan trọng nhất - Kiểm tra trạng thái đăng nhập
+        // 1. Kiểm tra trạng thái đăng nhập trước khi cho phép sử dụng trang.
         fetch('/api/me')
             .then(response => {
                 if (!response.ok) {
-                    // Nếu không OK (lỗi 401, 500, etc.), nghĩa là chưa đăng nhập
                     throw new Error('User not authenticated');
                 }
-                // Nếu OK, tiếp tục chạy code của trang
+                // Nếu đã đăng nhập, khởi tạo các chức năng của trang
                 initializeUploadPage();
             })
             .catch(error => {
-                // Nếu có lỗi (chưa đăng nhập), hiển thị lớp phủ và khóa trang
+                // Nếu chưa đăng nhập, khóa trang lại và yêu cầu đăng nhập
                 console.error(error.message);
                 authBlocker.style.display = 'flex';
             });
@@ -134,7 +136,7 @@
      */
     function initializeUploadPage() {
         /**
-         * Hàm chính để thiết lập sự kiện và logic cho mỗi khu vực upload.
+         * Hàm thiết lập logic cho một khu vực upload.
          */
         function setupUploadSection(inputId, listId, uploadBtnId, statusBoxId, urlsTextareaId) {
             const fileInput = document.getElementById(inputId);
@@ -143,14 +145,30 @@
             const statusBox = document.getElementById(statusBoxId);
             const urlsTextarea = document.getElementById(urlsTextareaId);
 
+            // Gắn sự kiện khi người dùng chọn file
             fileInput.addEventListener('change', () => {
-                if (fileInput.files.length > 5) {
-                    alert('Bạn chỉ có thể chọn tối đa 5 file.');
+                const maxFiles = 5;
+                const maxFileSizeMB = 10; // Giới hạn kích thước file là 10MB
+                const files = Array.from(fileInput.files);
+
+                if (files.length > maxFiles) {
+                    alert(`Bạn chỉ có thể chọn tối đa ${maxFiles} file.`);
                     fileInput.value = '';
                     return;
                 }
-                if (fileInput.files.length > 0) {
-                    filesListDiv.innerHTML = Array.from(fileInput.files).map(f => `<div>• ${f.name} (${(f.size / 1024).toFixed(1)} KB)</div>`).join('');
+
+                // Kiểm tra kích thước từng file
+                const oversizedFiles = files.filter(f => f.size > maxFileSizeMB * 1024 * 1024);
+                if (oversizedFiles.length > 0) {
+                    const fileNames = oversizedFiles.map(f => f.name).join(', ');
+                    alert(`Các file sau vượt quá giới hạn ${maxFileSizeMB}MB: ${fileNames}`);
+                    fileInput.value = '';
+                    return;
+                }
+                
+                // Hiển thị danh sách file đã chọn
+                if (files.length > 0) {
+                    filesListDiv.innerHTML = files.map(f => `<div>• ${f.name} (${(f.size / 1024).toFixed(1)} KB)</div>`).join('');
                     uploadButton.disabled = false;
                 } else {
                     filesListDiv.innerHTML = '';
@@ -158,6 +176,7 @@
                 }
             });
 
+            // Gắn sự kiện khi nhấn nút upload
             uploadButton.addEventListener('click', async () => {
                 const files = fileInput.files;
                 if (files.length === 0) return;
@@ -167,9 +186,11 @@
                 statusBox.style.display = 'none';
                 urlsTextarea.value = '';
 
+                // Hiển thị trạng thái ban đầu cho tất cả file
                 filesListDiv.innerHTML = Array.from(files).map(f => `<div id="status-${f.name.replace(/[^a-zA-Z0-9]/g, '')}">${f.name}: ⏳ Đang chờ...</div>`).join('');
 
-                const uploadPromises = Array.from(files).map(file => uploadFileToGCS(file, filesListDiv));
+                // Tải lên song song tất cả các file
+                const uploadPromises = Array.from(files).map(file => uploadFileDirectly(file, filesListDiv));
                 const results = await Promise.all(uploadPromises);
                 
                 const successfulUrls = results.filter(r => r.success).map(r => r.url);
@@ -190,51 +211,38 @@
         }
 
         /**
-         * Hàm thực hiện quy trình tải 1 file lên Google Cloud Storage.
+         * Hàm upload file theo Kế Hoạch Z: gửi thẳng đến server của chúng ta.
          */
-        async function uploadFileToGCS(file, statusContainer) {
-            const statusElement = statusContainer.querySelector(`#status-${file.name.replace(/[^a-zA-Z0-9]/g, '')}`);
-            
+        async function uploadFileDirectly(file, statusContainer) {
+            // Tạo một ID duy nhất cho status element để tránh lỗi với các tên file giống nhau
+            const fileId = `status-${file.name.replace(/[^a-zA-Z0-9]/g, '')}-${Date.now()}`;
+            statusContainer.querySelector(`div[id^="status-${file.name.replace(/[^a-zA-Z0-9]/g, '')}"]`).id = fileId;
+            const statusElement = document.getElementById(fileId);
+
             const updateStatus = (message) => {
                 if (statusElement) statusElement.innerHTML = `${file.name}: ${message}`;
             };
 
             try {
-                updateStatus('🔄 Đang lấy link upload từ server...');
-                const response = await fetch('/api/generate-upload-url', {
+                updateStatus('⬆️ Đang tải file lên server...');
+                
+                const formData = new FormData();
+                formData.append('file', file);
+
+                const response = await fetch('/api/upload-direct', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ fileName: file.name, contentType: file.type || 'application/octet-stream' }),
+                    body: formData, // Trình duyệt sẽ tự động đặt Content-Type là multipart/form-data
                 });
+
+                const result = await response.json();
 
                 if (!response.ok) {
-                    let errorMsg = 'Lỗi không xác định từ server.';
-                    if (response.status === 401) errorMsg = 'Lỗi xác thực. Phiên đăng nhập hết hạn?';
-                    else {
-                        try {
-                           const err = await response.json();
-                           errorMsg = err.error || errorMsg;
-                        } catch(e) {}
-                    }
-                    throw new Error(errorMsg);
-                }
-                
-                const { uploadUrl, accessUrl } = await response.json();
-                
-                updateStatus('⬆️ Đang tải file lên Cloud...');
-                const uploadResponse = await fetch(uploadUrl, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': file.type || 'application/octet-stream' },
-                    body: file,
-                });
-
-                if (!uploadResponse.ok) {
-                    throw new Error(`Tải file lên Cloud thất bại (HTTP ${uploadResponse.status}).`);
+                    throw new Error(result.error || 'Lỗi không xác định từ server.');
                 }
                 
                 updateStatus('✔ Thành công');
                 statusElement.classList.add('success');
-                return { success: true, url: accessUrl };
+                return { success: true, url: result.accessUrl };
 
             } catch (error) {
                 console.error(`Lỗi với file ${file.name}:`, error);
@@ -244,7 +252,7 @@
             }
         }
 
-        // Thiết lập cho cả 3 khu vực
+        // Thiết lập cho cả 3 khu vực upload
         setupUploadSection('image-input', 'image-files-list', 'upload-images-btn', 'image-status', 'image-urls');
         setupUploadSection('drawing-input', 'drawing-files-list', 'upload-drawings-btn', 'drawing-status', 'drawing-urls');
         setupUploadSection('materials-input', 'materials-files-list', 'upload-materials-btn', 'materials-status', 'materials-urls');
@@ -252,21 +260,11 @@
         // Gắn sự kiện cho các nút sao chép
         document.querySelectorAll('.copy-btn').forEach(button => {
             button.addEventListener('click', (e) => {
-                const targetId = e.target.dataset.target;
-                const textarea = document.getElementById(targetId);
-                
-                if (navigator.clipboard && window.isSecureContext) {
-                    navigator.clipboard.writeText(textarea.value).then(() => {
-                        alert('Đã sao chép danh sách URL!');
-                    }).catch(err => {
-                        alert('Sao chép thất bại!');
-                        console.error('Lỗi clipboard:', err);
-                    });
-                } else {
-                    textarea.select();
-                    document.execCommand('copy');
-                    alert('Đã sao chép danh sách URL!');
-                }
+                const textarea = document.getElementById(e.target.dataset.target);
+                textarea.select();
+                navigator.clipboard.writeText(textarea.value)
+                    .then(() => alert('Đã sao chép danh sách URL!'))
+                    .catch(() => alert('Sao chép thất bại!'));
             });
         });
     }
