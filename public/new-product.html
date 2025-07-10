@@ -77,9 +77,35 @@
             </div>
 
             <div class="form-section">
+                <h2>Thông Tin Thương Mại & Kỹ Thuật</h2>
+                <div class="form-grid">
+                     <div class="form-group"><label for="company">Công ty</label><input type="text" id="company" name="company"></div>
+                     <div class="form-group"><label for="customer">Khách hàng</label><input type="text" id="customer" name="customer"></div>
+                     <div class="form-group full-width"><label for="specification">Thông số</label><input type="text" id="specification" name="specification"></div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h2>Kích Thước & Chi Tiết Khác</h2>
+                <div class="form-grid">
+                    <div class="form-group"><label>Chiều dài (cm)</label><input type="number" step="0.01" name="length" placeholder="Ví dụ: 120.5"></div>
+                    <div class="form-group"><label>Chiều rộng (cm)</label><input type="number" step="0.01" name="width" placeholder="Ví dụ: 80"></div>
+                    <div class="form-group"><label>Chiều cao (cm)</label><input type="number" step="0.01" name="height" placeholder="Ví dụ: 75.2"></div>
+
+                    <div class="form-group"><label>Chiều dài đóng gói (cm)</label><input type="number" step="0.01" name="packed_length"></div>
+                    <div class="form-group"><label>Chiều rộng đóng gói (cm)</label><input type="number" step="0.01" name="packed_width"></div>
+                    <div class="form-group"><label>Chiều cao đóng gói (cm)</label><input type="number" step="0.01" name="packed_height"></div>
+
+                    <div class="form-group full-width">
+                        <label>Các chi tiết khác</label>
+                        <textarea name="other_details" rows="4" placeholder="Ghi chú thêm về sản phẩm..."></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="form-section">
                 <h2>Tệp Đính Kèm</h2>
                 <p style="font-style: italic; margin-bottom: 15px;">
-                    Sử dụng <a href="/upload.html" target="_blank">Công cụ Upload</a> để tải file lên và dán danh sách link vào các ô dưới đây.
+                    Sử dụng <a href="/upload.html" target="_blank" rel="noopener noreferrer">Công cụ Upload</a> để tải file lên và dán danh sách link vào các ô dưới đây.
                 </p>
                 <div class="form-group full-width">
                     <label for="imageUrls">Danh sách URL Hình ảnh sản phẩm (mỗi link một dòng)</label>
@@ -97,7 +123,6 @@
             
             <div class="form-actions">
                 <button type="submit" id="submit-button">Lưu và Xem lại</button>
-                <div class="upload-status" id="upload-status"></div>
             </div>
         </form>
         
@@ -107,105 +132,73 @@
     </div>
 
     <script>
+    // GHI CHÚ: Phần script này đã được cập nhật lên phiên bản đầy đủ và mạnh mẽ nhất,
+    // có khả năng xử lý tất cả các trường trong form và xử lý lỗi tốt hơn.
     const form = document.getElementById('product-form'); 
     form.addEventListener('submit', async function(event) {
         event.preventDefault();
         const submitButton = document.getElementById('submit-button');
-        const isEditing = form.id === 'edit-form'; // Biến này sẽ false ở trang new-product
+        const isEditing = form.id === 'edit-form'; // Luôn là false ở trang này
 
         submitButton.disabled = true;
         submitButton.textContent = 'Đang lưu...';
 
         try {
+            // Bước 1: Thu thập tất cả dữ liệu từ form một cách tự động
             const formData = new FormData(this);
             const data = Object.fromEntries(formData.entries());
 
-            // Xử lý ID cho form tạo mới
-            if (!isEditing) {
-                const idSuffixInput = document.getElementById('product-id-suffix');
-                data.id = 'KT' + idSuffixInput.value;
+            // Bước 2: Xử lý và kiểm tra Mã Sản Phẩm
+            const idSuffixInput = document.getElementById('product-id-suffix');
+            if (idSuffixInput.value.length !== 11) {
+                throw new Error("Mã sản phẩm phải có đúng 11 ký tự.");
             }
-
-            // ===================================================================
-            // GHI CHÚ: PHẦN SỬA LỖI QUAN TRỌNG NHẤT NẰM Ở ĐÂY
-            // Chuyển đổi chuỗi URL từ textarea thành định dạng mảng đúng chuẩn
-            // mà backend mong đợi để tránh gây lỗi server.
-            // ===================================================================
-
-            // Hàm tiện ích để lấy tên file từ một URL
+            data.id = 'KT' + idSuffixInput.value;
+            
+            // Hàm tiện ích để lấy tên file từ URL
             function getFileNameFromUrl(url) {
                 try {
-                    // Tách phần path từ URL và lấy phần cuối cùng
                     const path = new URL(url).pathname;
                     const filename = path.substring(path.lastIndexOf('/') + 1);
-                    // Giải mã các ký tự đặc biệt như %20 thành khoảng trắng
                     return decodeURIComponent(filename);
                 } catch (e) {
-                    // Nếu URL không hợp lệ, trả về một phần của URL làm tên tạm
                     return url.split('/').pop() || 'File không tên';
                 }
             }
 
-            // 1. Dữ liệu imageUrls vẫn là mảng các chuỗi (string)
-            data.imageUrls = (data.imageUrls || '')
-                .split('\n')
-                .map(link => link.trim()) // Cắt khoảng trắng thừa
-                .filter(link => link !== ''); // Bỏ các dòng trống
+            // Bước 3: Định dạng lại dữ liệu link từ các ô textarea
+            data.imageUrls = (data.imageUrls || '').split('\n').map(link => link.trim()).filter(Boolean);
+            data.drawingUrls = (data.drawingUrls || '').split('\n').map(link => link.trim()).filter(Boolean).map(link => ({ name: getFileNameFromUrl(link), url: link }));
+            data.materialsUrls = (data.materialsUrls || '').split('\n').map(link => link.trim()).filter(Boolean).map(link => ({ name: getFileNameFromUrl(link), url: link }));
 
-            // 2. Dữ liệu drawingUrls phải là mảng các object {name, url}
-            data.drawingUrls = (data.drawingUrls || '')
-                .split('\n')
-                .map(link => link.trim())
-                .filter(link => link !== '')
-                .map(link => ({ name: getFileNameFromUrl(link), url: link }));
-
-            // 3. Dữ liệu materialsUrls cũng phải là mảng các object {name, url}
-            data.materialsUrls = (data.materialsUrls || '')
-                .split('\n')
-                .map(link => link.trim())
-                .filter(link => link !== '')
-                .map(link => ({ name: getFileNameFromUrl(link), url: link }));
-
-            // Xác định phương thức và URL
-            const url = isEditing ? `/api/products/${data.id}` : '/api/products';
-            const method = isEditing ? 'PUT' : 'POST';
-
-            const response = await fetch(url, {
-                method: method,
+            // Bước 4: Gửi dữ liệu đã xử lý lên server
+            const response = await fetch('/api/products', {
+                method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data),
             });
 
-            // GHI CHÚ: Cải thiện phần xử lý lỗi để đọc được thông báo từ server
+            // Bước 5: Xử lý kết quả trả về một cách chi tiết
             if (!response.ok) {
-                let errorMessage = `Lỗi ${response.status}: ${response.statusText}`;
+                let errorMessage = `Lỗi ${response.status}`;
                 try {
-                    // Ưu tiên đọc lỗi dạng JSON nếu server trả về
                     const errorResult = await response.json();
                     errorMessage = errorResult.error || JSON.stringify(errorResult);
-                } catch (jsonError) {
-                    // Nếu không phải JSON, đọc lỗi dạng text (như "Service Unavailable")
+                } catch (e) {
                     const textError = await response.text();
-                    if (textError) {
-                        errorMessage = textError;
-                    }
+                    if (textError) errorMessage = textError;
                 }
-                // Ném lỗi với thông báo rõ ràng
                 throw new Error(errorMessage);
             }
             
-            const result = await response.json(); // Chỉ gọi khi response.ok
-            
+            const result = await response.json();
             alert(result.message || 'Thao tác thành công!');
-            // Chuyển hướng sau khi thành công
-            window.location.href = isEditing ? '/product-list.html' : `/success.html?id=${result.id}`;
+            window.location.href = `/success.html?id=${result.id}`;
 
         } catch (error) {
-            // Hiển thị thông báo lỗi đã được xử lý ở trên
             alert('Có lỗi xảy ra: ' + error.message);
-            // Kích hoạt lại nút bấm để người dùng có thể thử lại
             submitButton.disabled = false;
-            submitButton.textContent = isEditing ? 'Lưu Thay Đổi' : 'Lưu và Xem lại';
+            submitButton.textContent = 'Lưu và Xem lại';
         }
     });
     </script>
