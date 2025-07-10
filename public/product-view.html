@@ -30,8 +30,8 @@
             border-radius: 8px;
         }
         .gallery-image {
-            width: 120px;
-            height: 120px;
+            width: 180px;
+            height: 180px;
             object-fit: cover;
             border: 2px solid #ddd;
             border-radius: 8px;
@@ -252,6 +252,7 @@
             ${imageHTML}
             <div class="details-grid">
                 <p><strong>${l.productCode}:</strong> ${fullProductData.id || 'N/A'}</p>
+                <p><strong>${l.productName}:</strong> ${fullProductData[`name_${currentLang}`] || 'N/A'}</p>
                 <p><strong>${l.dimensions}:</strong> ${formatDimensions(fullProductData.length, fullProductData.width, fullProductData.height)}</p>
                 <p><strong>${l.collection}:</strong> ${fullProductData[`collection_${currentLang}`] || 'N/A'}</p>
                 <p><strong>${l.packed_dimensions}:</strong> ${formatDimensions(fullProductData.packed_length, fullProductData.packed_width, fullProductData.packed_height)}</p>
@@ -417,7 +418,7 @@
         const qr = qrcode(0, 'H');
         qr.addData(publicUrl);
         qr.make();
-        document.getElementById('qrcode-container').innerHTML = qr.createImgTag(8, 10);
+        document.getElementById('qrcode-container').innerHTML = qr.createImgTag(5, 8);
     }
     
     /**
