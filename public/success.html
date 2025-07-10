@@ -104,9 +104,9 @@
         }
 
         statusMessage.textContent = `🎉 Thêm sản phẩm ${productId} thành công!`;
-        productReviewDiv.style.display = 'block'; // Hiển thị khu vực review
+        productReviewDiv.style.display = 'block';
 
-        // --- NÂNG CẤP: Định nghĩa nhãn và thứ tự hiển thị cho đẹp ---
+        // GHI CHÚ: Bổ sung các nhãn cho trường kích thước
         const fieldLabels = {
             name_vi: "Tên Sản Phẩm (VI)",
             name_en: "Product Name (EN)",
@@ -131,17 +131,34 @@
             parent_id: "Mã Sản Phẩm Gốc",
             imageUrls: "Danh sách URL Hình ảnh",
             drawingUrls: "Danh sách URL Bản vẽ",
-            materialsUrls: "Danh sách URL Vật tư"
+            materialsUrls: "Danh sách URL Vật tư",
+            // Nhãn đại diện cho các nhóm kích thước
+            dimensions: "Kích thước (D x R x C)",
+            packed_dimensions: "KT đóng gói (D x R x C)"
         };
         
-        // Mảng này quyết định trường nào được hiển thị và theo thứ tự nào
+        // GHI CHÚ: Bổ sung các trường đại diện cho kích thước vào thứ tự hiển thị
         const displayOrder = [
-            'name_vi', 'name_en', 'collection_vi', 'collection_en', 'color_vi', 'color_en',
-            'material_vi', 'material_en', 'fabric_vi', 'fabric_en', 'wicker_vi', 'wicker_en',
-            'specification', 'aluminum_profile', 'supplier', 'production_place', 'company', 
-            'customer', 'other_details', 'created_by_name', 'parent_id',
-            'imageUrls', 'drawingUrls', 'materialsUrls'
+            'name_vi', 'name_en', 'collection_vi', 'collection_en',
+            'dimensions', // Kích thước sản phẩm
+            'packed_dimensions', // Kích thước đóng gói
+            'color_vi', 'color_en', 'material_vi', 'material_en', 'fabric_vi', 'fabric_en', 
+            'wicker_vi', 'wicker_en', 'specification', 'aluminum_profile', 'supplier', 
+            'production_place', 'company', 'customer', 'other_details', 'created_by_name', 
+            'parent_id', 'imageUrls', 'drawingUrls', 'materialsUrls'
         ];
+        
+        /**
+         * Hàm tiện ích để định dạng kích thước (Dài x Rộng x Cao)
+         * @param {number|null} length - Chiều dài
+         * @param {number|null} width - Chiều rộng
+         * @param {number|null} height - Chiều cao
+         * @returns {string} - Chuỗi kích thước đã định dạng hoặc 'N/A'
+         */
+        function formatDimensions(length, width, height) {
+            const dims = [length, width, height].filter(d => d != null && d !== '').join(' x ');
+            return dims ? `${dims} cm` : 'N/A';
+        }
 
         // Gọi API để lấy lại thông tin chi tiết của sản phẩm vừa tạo
         fetch(`/api/products/${productId}`)
@@ -156,23 +173,29 @@
                     throw new Error(product.error || 'Không thể tải lại dữ liệu sản phẩm.');
                 }
 
-                // --- NÂNG CẤP: Vòng lặp hiển thị dữ liệu có cấu trúc ---
                 detailsDiv.innerHTML = ''; // Xóa nội dung cũ
                 
+                // Vòng lặp hiển thị dữ liệu có cấu trúc, đã được nâng cấp
                 displayOrder.forEach(key => {
-                    const value = product[key];
+                    let value = product[key];
+                    let contentHTML = '';
+
+                    // GHI CHÚ: Xử lý đặc biệt cho các trường kích thước
+                    if (key === 'dimensions') {
+                        value = formatDimensions(product.length, product.width, product.height);
+                    } else if (key === 'packed_dimensions') {
+                        value = formatDimensions(product.packed_length, product.packed_width, product.packed_height);
+                    }
+
                     // Chỉ hiển thị nếu trường đó có giá trị
-                    if (value && (typeof value !== 'object' || Array.isArray(value) && value.length > 0)) {
+                    if (value && (typeof value !== 'object' || (Array.isArray(value) && value.length > 0))) {
                         const label = fieldLabels[key] || key;
                         const detailItem = document.createElement('div');
                         detailItem.className = 'detail-item';
+                        contentHTML += `<strong>${label}:</strong>`;
 
-                        let contentHTML = `<strong>${label}:</strong>`;
-
-                        // Xử lý đặc biệt cho các trường chứa URL
                         if (['imageUrls', 'drawingUrls', 'materialsUrls'].includes(key)) {
                             contentHTML += '<ul>';
-                            // `product[key]` đã được server parse sẵn thành array
                             value.forEach(item => {
                                 const url = typeof item === 'object' ? item.url : item;
                                 const name = typeof item === 'object' ? item.name : url.split('/').pop();
@@ -188,7 +211,6 @@
                     }
                 });
 
-
                 // Tạo và hiển thị mã QR
                 const publicUrl = `${window.location.origin}/product-view.html?id=${productId}`;
                 const qr = qrcode(0, 'H');
@@ -199,7 +221,8 @@
                 // Thêm nút "Xem trang công khai"
                 const viewPublicBtn = document.createElement('a');
                 viewPublicBtn.href = publicUrl;
-                viewPublicBtn.target = "_blank"; // Mở trong tab mới
+                viewPublicBtn.target = "_blank";
+                viewPublicBtn.rel = "noopener noreferrer";
                 viewPublicBtn.className = 'view-public-btn';
                 viewPublicBtn.textContent = 'Xem Trang Công Khai';
                 document.querySelector('.action-buttons').appendChild(viewPublicBtn);
