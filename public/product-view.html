@@ -57,6 +57,7 @@
             font-weight: 500;
             text-decoration: none;
             color: #007bff;
+            word-break: break-all;
         }
         .internal-file-list a:hover {
             text-decoration: underline;
@@ -72,6 +73,11 @@
             color: #333; 
             border-bottom: 2px solid #eee; 
             padding-bottom: 10px; 
+        }
+        h4 { 
+            margin-top: 20px; 
+            margin-bottom: 5px; 
+            color: #444; 
         }
         .header-container {
             display: flex;
@@ -151,7 +157,7 @@
             </div>
             <div id="internal-details-section">
                 <h2 id="internal-title">Chi tiết Nội bộ</h2>
-                <div id="internal-content" class="details-grid"></div>
+                <div id="internal-content"></div>
             </div>
         </div>
         <div id="qr-code-section" class="container">
@@ -164,42 +170,23 @@
             <hr>
             <div class="review-form">
                 <h3 id="form-title">Để lại đánh giá của bạn</h3>
-                <form id="review-form">
-                    <input type="text" name="author_name" placeholder="Tên của bạn (bắt buộc)" required>
-                    <select name="rating" required><option value="">-- Chọn số sao --</option><option value="5">⭐⭐⭐⭐⭐</option><option value="4">⭐⭐⭐⭐</option><option value="3">⭐⭐⭐</option><option value="2">⭐⭐</option><option value="1">⭐</option></select>
-                    <textarea name="comment" rows="4" placeholder="Viết bình luận của bạn..."></textarea>
-                    <button type="submit" id="submit-review-btn">Gửi Đánh Giá</button>
-                </form>
+                <form id="review-form"><input type="text" name="author_name" placeholder="Tên của bạn (bắt buộc)" required><select name="rating" required><option value="">-- Chọn số sao --</option><option value="5">⭐⭐⭐⭐⭐</option><option value="4">⭐⭐⭐⭐</option><option value="3">⭐⭐⭐</option><option value="2">⭐⭐</option><option value="1">⭐</option></select><textarea name="comment" rows="4" placeholder="Viết bình luận của bạn..."></textarea><button type="submit" id="submit-review-btn">Gửi Đánh Giá</button></form>
             </div>
         </div>
     </div>
     
-    <div id="loading-container" class="container" style="text-align: center;">
-        <h1>⏳ Đang tải dữ liệu sản phẩm...</h1>
-        <p>Vui lòng chờ trong giây lát.</p>
-    </div>
-
-    <div id="login-modal" class="modal-overlay">
-        <div class="modal-content">
-            <h2>Đăng Nhập</h2>
-            <form id="internal-login-form">
-                <input type="text" name="ma_nhan_vien" placeholder="Mã Nhân Viên / Employee ID" required>
-                <input type="password" name="password" placeholder="Mật khẩu / Password" required>
-                <button type="submit">Đăng Nhập</button>
-                <button type="button" id="close-modal-btn">Đóng</button>
-            </form>
-        </div>
-    </div>
+    <div id="loading-container" class="container" style="text-align: center;"><h1>⏳ Đang tải dữ liệu sản phẩm...</h1></div>
+    <div id="login-modal" class="modal-overlay"><div class="modal-content"><h2>Đăng Nhập</h2><form id="internal-login-form"><input type="text" name="ma_nhan_vien" placeholder="Mã Nhân Viên / Employee ID" required><input type="password" name="password" placeholder="Mật khẩu / Password" required><button type="submit">Đăng Nhập</button><button type="button" id="close-modal-btn">Đóng</button></form></div></div>
 
     <script>
     // --- KHAI BÁO BIẾN TOÀN CỤC VÀ CÁC HẰNG SỐ ---
-    let fullProductData = null; // Biến lưu trữ toàn bộ dữ liệu sản phẩm
-    let currentLang = 'vi'; // Ngôn ngữ hiển thị mặc định
+    let fullProductData = null;
+    let currentLang = 'vi';
     
     const urlParams = new URLSearchParams(window.location.search);
     const productId = urlParams.get('id');
 
-    // Object chứa các chuỗi văn bản cho đa ngôn ngữ
+    // GHI CHÚ: Cập nhật object labels với các nhãn mới cho kích thước
     const labels = {
         vi: {
             productCode: 'Mã sản phẩm', company: 'Công ty', collection: 'Bộ sưu tập', color: 'Màu sắc',
@@ -210,7 +197,8 @@
             fabric: 'Vải', wicker: 'Dây', productionPlace: 'Nơi sản xuất', otherDetails: 'Chi tiết khác',
             noImage: 'Sản phẩm này hiện chưa có hình ảnh.', noReviews: 'Chưa có đánh giá nào cho sản phẩm này.',
             errorLoading: 'Lỗi tải dữ liệu sản phẩm', noProductId: 'Lỗi: Không có ID sản phẩm.',
-            loginFailed: 'Đăng nhập thất bại', loginSuccess: 'Đăng nhập thành công!'
+            loginFailed: 'Đăng nhập thất bại', loginSuccess: 'Đăng nhập thành công!',
+            dimensions: 'Kích thước (D x R x C)', packed_dimensions: 'KT đóng gói (D x R x C)', noFile: 'Không có tệp đính kèm.'
         },
         en: {
             productCode: 'Product ID', company: 'Company', collection: 'Collection', color: 'Color',
@@ -221,13 +209,13 @@
             fabric: 'Fabric', wicker: 'Wicker', productionPlace: 'Production Place', otherDetails: 'Other Details',
             noImage: 'No image is available for this product.', noReviews: 'There are no reviews for this product yet.',
             errorLoading: 'Error Loading Product Data', noProductId: 'Error: No Product ID provided.',
-            loginFailed: 'Login failed', loginSuccess: 'Login successful!'
+            loginFailed: 'Login failed', loginSuccess: 'Login successful!',
+            dimensions: 'Dimensions (L x W x H)', packed_dimensions: 'Packed (L x W x H)', noFile: 'No file attached.'
         }
     };
 
     /**
      * Hàm render phần thông tin công khai của sản phẩm.
-     * Được gọi mỗi khi tải trang hoặc đổi ngôn ngữ.
      */
     function renderPublicPage() {
         if (!fullProductData) return;
@@ -246,6 +234,12 @@
         } else {
             imageHTML = `<p>${l.noImage}</p>`;
         }
+        
+        // GHI CHÚ: Hàm tiện ích để định dạng kích thước (Dài x Rộng x Cao)
+        const formatDimensions = (length, width, height) => {
+            const dims = [length, width, height].filter(d => d != null && d !== '').join(' x ');
+            return dims ? `${dims} cm` : 'N/A';
+        };
 
         detailsDiv.innerHTML = `
             <div class="header-container">
@@ -258,22 +252,19 @@
             ${imageHTML}
             <div class="details-grid">
                 <p><strong>${l.productCode}:</strong> ${fullProductData.id || 'N/A'}</p>
-                <p><strong>${l.company}:</strong> ${fullProductData.company || 'N/A'}</p>
+                <p><strong>${l.dimensions}:</strong> ${formatDimensions(fullProductData.length, fullProductData.width, fullProductData.height)}</p>
                 <p><strong>${l.collection}:</strong> ${fullProductData[`collection_${currentLang}`] || 'N/A'}</p>
+                <p><strong>${l.packed_dimensions}:</strong> ${formatDimensions(fullProductData.packed_length, fullProductData.packed_width, fullProductData.packed_height)}</p>
                 <p><strong>${l.color}:</strong> ${fullProductData[`color_${currentLang}`] || 'N/A'}</p>
                 <p><strong>${l.material}:</strong> ${fullProductData[`material_${currentLang}`] || 'N/A'}</p>
-                <p><strong>${l.spec}:</strong> ${fullProductData.specification || 'N/A'}</p>
-                <p><strong>${l.profile}:</strong> ${fullProductData.aluminum_profile || 'N/A'}</p>
+                <p><strong>${l.fabric}:</strong> ${fullProductData[`fabric_${currentLang}`] || 'N/A'}</p>
+                 <p><strong>${l.wicker}:</strong> ${fullProductData[`wicker_${currentLang}`] || 'N/A'}</p>
+                <p><strong>${l.productionPlace}:</strong> ${fullProductData.production_place || 'N/A'}</p>
                 <p><strong>${l.customer}:</strong> ${fullProductData.customer || 'N/A'}</p>
                 <p><strong>${l.creator}:</strong> ${fullProductData.created_by_name || 'N/A'}</p>
-                <p><strong>${l.fabric}:</strong> ${fullProductData[`fabric_${currentLang}`] || 'N/A'}</p>
-                <p><strong>${l.wicker}:</strong> ${fullProductData[`wicker_${currentLang}`] || 'N/A'}</p>
-                <p><strong>${l.productionPlace}:</strong> ${fullProductData.production_place || 'N/A'}</p>
                 <p><strong>${l.otherDetails}:</strong> ${fullProductData.other_details || 'N/A'}</p>
             </div>
         `;
-        
-        // Gắn lại sự kiện cho nút ngôn ngữ sau khi render lại
         document.getElementById('btn-vi').addEventListener('click', () => switchLanguage('vi'));
         document.getElementById('btn-en').addEventListener('click', () => switchLanguage('en'));
     }
@@ -284,36 +275,41 @@
      */
     function showInternalInfo(isRerender = false) {
         if (!fullProductData) return;
-        
-        if (isRerender && document.getElementById('internal-details-section').style.display !== 'block') {
-            return; // Nếu chỉ đổi ngôn ngữ, không render lại nếu mục này đang ẩn
+        const internalSection = document.getElementById('internal-details-section');
+        if (isRerender && internalSection.style.display !== 'block') {
+            return;
         }
 
         const internalDiv = document.getElementById('internal-content');
         const l = labels[currentLang];
-
-        let internalHTML = `<p><strong>${l.supplier}:</strong> ${fullProductData.supplier || 'N/A'}</p>`;
         
+        let internalHTML = `<div class="details-grid"><p><strong>${l.supplier}:</strong> ${fullProductData.supplier || 'N/A'}</p></div>`;
+        
+        // GHI CHÚ: Hàm render danh sách file đã được nâng cấp để hiển thị thông báo nếu không có file.
         const renderFileList = (urls, label) => {
+            let listContent = '';
             if (Array.isArray(urls) && urls.length > 0) {
-                return `<div><strong>${label}:</strong><ul class="internal-file-list">${urls.map(file => 
+                listContent = `<ul class="internal-file-list">${urls.map(file => 
                     `<li><a href="${file.url}" target="_blank" rel="noopener noreferrer">${file.name || file.url.split('/').pop()}</a></li>`
-                ).join('')}</ul></div>`;
+                ).join('')}</ul>`;
+            } else {
+                // Hiển thị thông báo nếu mảng rỗng hoặc không tồn tại
+                listContent = `<p><em>(${l.noFile})</em></p>`; 
             }
-            return '';
+            return `<div><h4>${label}</h4>${listContent}</div>`;
         };
-
+        
+        // Sử dụng hàm render mới để đảm bảo luôn có phản hồi cho người dùng
         internalHTML += renderFileList(fullProductData.drawingUrls, l.drawing);
         internalHTML += renderFileList(fullProductData.materialsUrls, l.materials);
         
         internalDiv.innerHTML = internalHTML;
-        document.getElementById('internal-details-section').style.display = 'block';
+        internalSection.style.display = 'block';
         document.getElementById('view-internal-btn-container').style.display = 'none';
     }
 
     /**
      * Hàm render danh sách đánh giá từ khách hàng.
-     * @param {Array} reviews - Mảng các object đánh giá.
      */
     function renderReviews(reviews) {
         const reviewListDiv = document.getElementById('review-list');
@@ -345,17 +341,17 @@
         document.getElementById('reviews-title').textContent = l.reviewsTitle;
         document.getElementById('form-title').textContent = l.formTitle;
         document.getElementById('submit-review-btn').textContent = l.submitReview;
+        document.getElementById('view-internal-btn').textContent = "Sign In to Unlock / Đăng Nhập để Xem Chi Tiết Nội Bộ";
     }
 
     /**
      * Hàm chuyển đổi ngôn ngữ và render lại toàn bộ trang.
-     * @param {string} lang - Ngôn ngữ mới ('vi' hoặc 'en').
      */
     function switchLanguage(lang) {
         currentLang = lang;
         renderPublicPage();
-        showInternalInfo(true); // Render lại mục nội bộ nếu đang hiển thị
-        fetchReviews(); // Tải lại review theo ngôn ngữ mới (nếu cần)
+        showInternalInfo(true);
+        fetchReviews();
         updateAllLabels();
     }
     
@@ -388,24 +384,22 @@
         }
         
         try {
-            // Tải dữ liệu sản phẩm
             const response = await fetch(`/api/products/${productId}`);
             if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
             fullProductData = await response.json();
             
-            // Render trang và các thành phần
             renderPublicPage();
             updateAllLabels();
             generateQRCode(productId);
-            await fetchReviews();
+            
+            // Tải reviews và kiểm tra đăng nhập song song để tăng tốc
+            await Promise.all([
+                fetchReviews(),
+                fetch('/api/me').then(res => {
+                    if (res.ok) showInternalInfo();
+                })
+            ]);
 
-            // Kiểm tra trạng thái đăng nhập để hiển thị mục nội bộ
-            const userResponse = await fetch('/api/me');
-            if (userResponse.ok) {
-                showInternalInfo();
-            }
-
-            // Ẩn màn hình chờ và hiện nội dung chính
             loadingContainer.style.display = 'none';
             mainContent.style.visibility = 'visible';
 
@@ -417,7 +411,6 @@
 
     /**
      * Tạo mã QR Code cho sản phẩm.
-     * @param {string} pId - ID của sản phẩm.
      */
     function generateQRCode(pId) {
         const publicUrl = `${window.location.origin}/product-view.html?id=${pId}`;
@@ -428,10 +421,9 @@
     }
     
     /**
-     * Gắn các sự kiện cho các form trên trang.
+     * Gắn các sự kiện cho các form và nút bấm trên trang.
      */
     function setupEventListeners() {
-        // Sự kiện cho popup đăng nhập
         document.getElementById('view-internal-btn').addEventListener('click', () => {
             document.getElementById('login-modal').style.display = 'flex';
         });
@@ -440,7 +432,6 @@
             document.getElementById('login-modal').style.display = 'none';
         });
 
-        // Sự kiện submit form đăng nhập
         document.getElementById('internal-login-form').addEventListener('submit', async function(event) {
             event.preventDefault();
             const data = Object.fromEntries(new FormData(this).entries());
@@ -461,20 +452,19 @@
             }
         });
 
-        // Sự kiện submit form đánh giá
         document.getElementById('review-form').addEventListener('submit', async function(event) {
             event.preventDefault();
             const submitBtn = document.getElementById('submit-review-btn');
-            const originalBtnText = labels[currentLang].submitReview;
+            const l = labels[currentLang];
             
             submitBtn.disabled = true;
-            submitBtn.textContent = labels[currentLang].submitReviewSending;
+            submitBtn.textContent = l.submitReviewSending;
             
             const data = Object.fromEntries(new FormData(this).entries());
             if (!data.author_name || !data.rating) {
                 alert('Vui lòng nhập tên và chọn số sao đánh giá.');
                 submitBtn.disabled = false;
-                submitBtn.textContent = originalBtnText;
+                submitBtn.textContent = l.submitReview;
                 return;
             }
             
@@ -489,12 +479,12 @@
                 
                 alert(result.message);
                 this.reset();
-                fetchReviews(); // Tải lại danh sách review mới
+                fetchReviews();
             } catch (error) {
                 alert('Lỗi: ' + error.message);
             } finally {
                 submitBtn.disabled = false;
-                submitBtn.textContent = originalBtnText;
+                submitBtn.textContent = l.submitReview;
             }
         });
     }

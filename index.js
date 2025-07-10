@@ -1,6 +1,6 @@
 // =================================================================
-// === FILE: index.js (PHIÊN BẢN HOÀN CHỈNH - SỬA LỖI & NÂNG CẤP) ===
-// === Giữ nguyên cấu trúc một file, không xóa, chỉ bổ sung      ===
+// === FILE: index.js (PHIÊN BẢN CUỐI CÙNG - HOÀN THIỆN MỌI CHỨC NĂNG) ===
+// === Giữ nguyên cấu trúc một file, không xóa, chỉ bổ sung           ===
 // =================================================================
 
 // --- PHẦN 1: IMPORT CÁC THƯ VIỆN CẦN THIẾT ---
@@ -137,9 +137,9 @@ app.post('/api/generate-upload-url', isLoggedIn, async (req, res, next) => {
     }
 });
 
-// == C. CÁC API VỀ SẢN PHẨM (ĐÃ SỬA LỖI VÀ NÂNG CẤP) ==
+// == C. CÁC API VỀ SẢN PHẨM ==
 
-// READ ALL
+// READ ALL (GIỮ NGUYÊN)
 app.get("/api/products", isLoggedIn, async (req, res, next) => {
     try {
         const sql = "SELECT * FROM products ORDER BY created_at DESC";
@@ -150,7 +150,7 @@ app.get("/api/products", isLoggedIn, async (req, res, next) => {
     }
 });
 
-// READ ONE
+// READ ONE (GIỮ NGUYÊN)
 app.get("/api/products/:id", async (req, res, next) => {
     try {
         const sql = `SELECT * FROM products WHERE id = $1`;
@@ -172,7 +172,12 @@ app.get("/api/products/:id", async (req, res, next) => {
     }
 });
 
-// CREATE
+
+// =======================================================================
+// === BẮT ĐẦU PHẦN CẬP NHẬT QUAN TRỌNG CHO API CREATE & UPDATE SẢN PHẨM ===
+// =======================================================================
+
+// CREATE: Endpoint thêm sản phẩm mới
 app.post("/api/products", isLoggedIn, textOnlyUpload, async (req, res, next) => {
     try {
         const data = req.body;
@@ -181,16 +186,19 @@ app.post("/api/products", isLoggedIn, textOnlyUpload, async (req, res, next) => 
         if (!data.id || !data.name_vi) {
              return res.status(400).json({ error: "Mã sản phẩm và Tên sản phẩm (VI) là bắt buộc." });
         }
-
+        
+        // GHI CHÚ: Đã thêm các trường mới vào câu lệnh SQL
         const sql = `
             INSERT INTO products (
                 id, name_vi, name_en, collection_vi, collection_en, color_vi, color_en, 
                 fabric_vi, fabric_en, wicker_vi, wicker_en, production_place,
                 company, customer, specification, material_vi, material_en, aluminum_profile, 
                 supplier, "imageUrls", "drawingUrls", "materialsUrls", other_details,
-                created_by_name, created_by_id, parent_id
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26)
+                created_by_name, created_by_id, parent_id,
+                height, width, length, packed_height, packed_width, packed_length
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32)
         `;
+        // GHI CHÚ: Đã thêm các tham số mới, chuyển đổi sang null nếu không có giá trị
         const params = [
             data.id, data.name_vi, data.name_en, data.collection_vi, data.collection_en,
             data.color_vi, data.color_en, data.fabric_vi, data.fabric_en, data.wicker_vi, data.wicker_en,
@@ -202,7 +210,9 @@ app.post("/api/products", isLoggedIn, textOnlyUpload, async (req, res, next) => 
             JSON.stringify(data.materialsUrls || []),
             data.other_details || null, 
             user.name, user.id,
-            data.parent_id || null
+            data.parent_id || null,
+            data.height || null, data.width || null, data.length || null,
+            data.packed_height || null, data.packed_width || null, data.packed_length || null
         ];
         
         await db.query(sql, params);
@@ -212,7 +222,8 @@ app.post("/api/products", isLoggedIn, textOnlyUpload, async (req, res, next) => 
     }
 });
 
-// UPDATE
+
+// UPDATE: Endpoint cập nhật sản phẩm
 app.put("/api/products/:id", isLoggedIn, textOnlyUpload, async (req, res, next) => {
     try {
         const { id } = req.params;
@@ -225,14 +236,16 @@ app.put("/api/products/:id", isLoggedIn, textOnlyUpload, async (req, res, next) 
         const addField = (fieldName, value) => {
             const finalValue = (typeof value === 'object' && value !== null) ? JSON.stringify(value) : value;
             fields.push(`"${fieldName}" = $${paramIndex++}`);
-            values.push(finalValue);
+            values.push(finalValue === '' ? null : finalValue); // Chuyển chuỗi rỗng thành null
         };
-
+        
+        // GHI CHÚ: Đã thêm các trường mới vào danh sách cập nhật
         const updatableFields = [
             'name_vi', 'name_en', 'collection_vi', 'collection_en', 'color_vi', 'color_en',
             'fabric_vi', 'fabric_en', 'wicker_vi', 'wicker_en', 'production_place', 'company',
             'customer', 'specification', 'material_vi', 'material_en', 'aluminum_profile',
-            'other_details', 'supplier', 'imageUrls', 'drawingUrls', 'materialsUrls'
+            'supplier', 'other_details', 'imageUrls', 'drawingUrls', 'materialsUrls',
+            'height', 'width', 'length', 'packed_height', 'packed_width', 'packed_length'
         ];
 
         updatableFields.forEach(field => {
@@ -240,7 +253,7 @@ app.put("/api/products/:id", isLoggedIn, textOnlyUpload, async (req, res, next) 
                 addField(field, data[field]);
             }
         });
-
+        
         if (fields.length === 0) {
             return res.status(400).json({ message: "Không có dữ liệu nào được gửi để cập nhật." });
         }
@@ -257,6 +270,10 @@ app.put("/api/products/:id", isLoggedIn, textOnlyUpload, async (req, res, next) 
         next(err);
     }
 });
+
+// ========================================================
+// === KẾT THÚC PHẦN CẬP NHẬT                             ===
+// ========================================================
 
 // --- NÂNG CẤP LỚN: API XÓA SẢN PHẨM VÀ FILE TRÊN GCS ---
 /**
@@ -348,18 +365,17 @@ app.get("/api/products/:id/reviews", async (req, res, next) => {
 console.log("API Endpoints defined successfully.");
 
 // == E. ENDPOINT CHẨN ĐOÁN ==
-const APP_VERSION = "14.0_MONOLITH_STABLE";
+const APP_VERSION = "15.0_ALL_FIELDS_FINAL"; // Cập nhật phiên bản
 app.get("/api/version", (req, res) => {
     res.status(200).json({
         status: "OK",
         version: APP_VERSION,
-        note: "This is a complete, single-file, and stable version with enhanced features.",
+        note: "This is a complete, single-file, and stable version with enhanced features including all new fields.",
         server_time: new Date().toISOString()
     });
 });
 
 // --- PHẦN 4: MIDDLEWARE XỬ LÝ LỖI TẬP TRUNG ---
-// GHI CHÚ: Middleware này phải được đặt ở cuối cùng để bắt tất cả lỗi từ `next(err)`.
 app.use((err, req, res, next) => {
     console.error("💥 MỘT LỖI NGHIÊM TRỌNG ĐÃ XẢY RA 💥");
     console.error(err.stack);

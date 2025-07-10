@@ -41,7 +41,8 @@
         <h1>Chỉnh Sửa Sản Phẩm / Edit Product</h1>
         <p>Thay đổi thông tin và nhấn "Lưu Thay Đổi" để cập nhật.</p>
 
-        <form id="edit-form" style="display: none;"> <div class="form-section">
+        <form id="edit-form" style="display: none;">
+            <div class="form-section">
                 <h2>Thông Tin Chung</h2>
                 <div class="form-grid">
                     <div class="form-group full-width">
@@ -73,7 +74,24 @@
                     </div>
                 </div>
             </div>
+            
+            <div class="form-section">
+                <h2>Kích Thước & Chi Tiết Khác</h2>
+                <div class="form-grid">
+                    <div class="form-group"><label>Chiều dài (cm)</label><input type="number" step="0.01" name="length" placeholder="Ví dụ: 120.5"></div>
+                    <div class="form-group"><label>Chiều rộng (cm)</label><input type="number" step="0.01" name="width" placeholder="Ví dụ: 80"></div>
+                    <div class="form-group"><label>Chiều cao (cm)</label><input type="number" step="0.01" name="height" placeholder="Ví dụ: 75.2"></div>
 
+                    <div class="form-group"><label>Chiều dài đóng gói (cm)</label><input type="number" step="0.01" name="packed_length"></div>
+                    <div class="form-group"><label>Chiều rộng đóng gói (cm)</label><input type="number" step="0.01" name="packed_width"></div>
+                    <div class="form-group"><label>Chiều cao đóng gói (cm)</label><input type="number" step="0.01" name="packed_height"></div>
+
+                    <div class="form-group full-width">
+                        <label>Các chi tiết khác</label>
+                        <textarea name="other_details" rows="4" placeholder="Ghi chú thêm về sản phẩm..."></textarea>
+                    </div>
+                </div>
+            </div>
             <div class="form-section">
                 <h2>Thông Tin Thương Mại & Kỹ Thuật</h2>
                 <div class="form-grid">
@@ -81,7 +99,6 @@
                      <div class="form-group"><label>Khách hàng</label><input type="text" name="customer"></div>
                      <div class="form-group"><label for="supplier">Nhà cung cấp</label><input type="text" id="supplier" name="supplier"></div>
                      <div class="form-group full-width"><label>Thông số</label><input type="text" name="specification"></div>
-                     <div class="form-group full-width"><label>Chi tiết khác</label><textarea name="other_details" rows="3"></textarea></div>
                 </div>
             </div>
 
@@ -113,15 +130,15 @@
 
     <script>
     /**
-     * GHI CHÚ: File này có 2 nhiệm vụ chính:
-     * 1. Tải dữ liệu của sản phẩm hiện tại và điền vào form.
-     * 2. Xử lý việc gửi dữ liệu đã chỉnh sửa lên server.
+     * GHI CHÚ: Toàn bộ phần script này được giữ nguyên vì nó đã được thiết kế
+     * để tự động xử lý các trường mới trong form mà không cần chỉnh sửa.
      */
     const form = document.getElementById('edit-form');
     const submitButton = document.getElementById('submit-button');
     const loadingOverlay = document.getElementById('loading');
     
     // --- NHIỆM VỤ 1: TẢI VÀ ĐIỀN DỮ LIỆU VÀO FORM ---
+    // Script này sẽ tự động tìm và điền dữ liệu cho các trường mới như 'length', 'width'...
     document.addEventListener('DOMContentLoaded', async () => {
         const urlParams = new URLSearchParams(window.location.search);
         const productId = urlParams.get('id');
@@ -148,17 +165,15 @@
 
                     // Xử lý đặc biệt cho các trường chứa URL (là một mảng)
                     if (['imageUrls', 'drawingUrls', 'materialsUrls'].includes(key) && Array.isArray(value)) {
-                        // Chuyển mảng thành chuỗi, mỗi phần tử một dòng
                         const urlString = value.map(item => (typeof item === 'object' ? item.url : item)).join('\n');
                         field.value = urlString;
                     } else {
-                        // Gán giá trị cho các trường thông thường
+                        // Gán giá trị cho các trường thông thường (bao gồm cả các trường mới)
                         field.value = value || '';
                     }
                 }
             }
             
-            // Sau khi điền xong, ẩn loading và hiện form
             loadingOverlay.style.display = 'none';
             form.style.display = 'block';
 
@@ -170,6 +185,7 @@
 
 
     // --- NHIỆM VỤ 2: XỬ LÝ VIỆC SUBMIT FORM ---
+    // Script này cũng tự động thu thập dữ liệu từ các trường mới để gửi đi.
     form.addEventListener('submit', async function(event) {
         event.preventDefault();
         submitButton.disabled = true;
@@ -178,12 +194,7 @@
         try {
             const formData = new FormData(this);
             const data = Object.fromEntries(formData.entries());
-
-            /**
-             * GHI CHÚ QUAN TRỌNG: Sửa lại logic để gửi đúng định dạng dữ liệu.
-             * Giống như trang new-product, chúng ta cần chuyển đổi các chuỗi URL trong textarea
-             * thành mảng object {name, url} cho bản vẽ và vật tư.
-             */
+            
             function getFileNameFromUrl(url) {
                 try {
                     const path = new URL(url).pathname;
@@ -193,11 +204,11 @@
                 }
             }
 
+            // Chuyển đổi dữ liệu URL từ textarea sang định dạng mảng đúng chuẩn
             data.imageUrls = (data.imageUrls || '').split('\n').map(link => link.trim()).filter(Boolean);
             data.drawingUrls = (data.drawingUrls || '').split('\n').map(link => link.trim()).filter(Boolean).map(link => ({ name: getFileNameFromUrl(link), url: link }));
             data.materialsUrls = (data.materialsUrls || '').split('\n').map(link => link.trim()).filter(Boolean).map(link => ({ name: getFileNameFromUrl(link), url: link }));
 
-            // Luôn là 'PUT' cho trang edit
             const url = `/api/products/${data.id}`;
             const method = 'PUT';
 
@@ -207,7 +218,6 @@
                 body: JSON.stringify(data),
             });
             
-            // Xử lý lỗi từ server tốt hơn
             if (!response.ok) {
                 let errorMessage = `Lỗi ${response.status}`;
                 try {
@@ -219,7 +229,7 @@
 
             const result = await response.json();
             alert(result.message || 'Cập nhật thành công!');
-            window.location.href = '/product-list.html'; // Quay về danh sách sau khi sửa
+            window.location.href = '/product-list.html';
 
         } catch (error) {
             console.error('Lỗi khi cập nhật:', error);
