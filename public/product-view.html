@@ -22,7 +22,7 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.1); 
             margin-bottom: 25px; 
         }
-        /* GHI CHÚ: CSS cho thư viện ảnh Swiper */
+        /* GHI CHÚ: CSS mới cho thư viện ảnh Swiper */
         .swiper {
             width: 100%;
             max-width: 600px;
@@ -48,69 +48,17 @@
         .swiper-button-next, .swiper-button-prev {
             color: #007bff;
         }
-        .internal-file-list {
-            list-style-type: none;
-            padding-left: 0;
-            margin-top: 10px;
-        }
-        .internal-file-list li {
-            background-color: #f8f9fa;
-            border: 1px solid #dee2e6;
-            padding: 12px 15px;
-            margin-bottom: 8px;
-            border-radius: 5px;
-        }
-        .internal-file-list a {
-            font-weight: 500;
-            text-decoration: none;
-            color: #007bff;
-            word-break: break-all;
-        }
-        .internal-file-list a:hover {
-            text-decoration: underline;
-        }
-        h1, h2 { 
-            color: #333; 
-            border-bottom: 2px solid #eee; 
-            padding-bottom: 10px; 
-        }
-        h4 { 
-            margin-top: 20px; 
-            margin-bottom: 5px; 
-            color: #444; 
-        }
-        .header-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 15px;
-        }
-        .details-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 15px;
-        }
-        @media (min-width: 768px) {
-            .details-grid {
-                grid-template-columns: 1fr 1fr;
-                gap: 15px 25px;
-            }
-        }
-        .details-grid p { 
-            font-size: 17px; 
-            line-height: 1.6; 
-            color: #555; 
-            border-bottom: 1px solid #f0f0f0;
-            padding-bottom: 8px;
-            margin: 0;
-            word-break: break-word;
-        }
-        strong { 
-            color: #000; 
-            min-width: 150px; 
-            display: inline-block;
-        }
+        .internal-file-list { list-style-type: none; padding-left: 0; margin-top: 10px; }
+        .internal-file-list li { background-color: #f8f9fa; border: 1px solid #dee2e6; padding: 12px 15px; margin-bottom: 8px; border-radius: 5px; }
+        .internal-file-list a { font-weight: 500; text-decoration: none; color: #007bff; word-break: break-all; }
+        .internal-file-list a:hover { text-decoration: underline; }
+        h1, h2 { color: #333; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        h4 { margin-top: 20px; margin-bottom: 5px; color: #444; }
+        .header-container { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
+        .details-grid { display: grid; grid-template-columns: 1fr; gap: 15px; }
+        @media (min-width: 768px) { .details-grid { grid-template-columns: 1fr 1fr; gap: 15px 25px; } }
+        .details-grid p { font-size: 17px; line-height: 1.6; color: #555; border-bottom: 1px solid #f0f0f0; padding-bottom: 8px; margin: 0; word-break: break-word; }
+        strong { color: #000; min-width: 150px; display: inline-block; }
         #qrcode-container { text-align: center; padding: 20px; }
         #qrcode-image { border: 1px solid #ccc; padding: 10px; display: inline-block; }
         .review { border-top: 1px solid #eee; padding: 15px 0; }
@@ -123,23 +71,8 @@
         .lang-switcher { text-align: right; }
         .lang-switcher button { padding: 8px 12px; border: 1px solid #333; background-color: white; cursor: pointer; border-radius: 5px; margin-left: 5px; }
         .lang-switcher button.active { background-color: #333; color: white; }
-        #internal-details-section { 
-            display: none;
-            border-top: 2px dashed #007bff; 
-            margin-top: 20px; 
-            padding-top: 20px; 
-        }
-        #view-internal-btn { 
-            font-size: 16px; 
-            padding: 12px 20px; 
-            background-color: #007bff; 
-            color: white; 
-            border: none; 
-            border-radius: 5px; 
-            cursor: pointer; 
-            display: block; 
-            margin: 20px auto; 
-        }
+        #internal-details-section { display: none; border-top: 2px dashed #007bff; margin-top: 20px; padding-top: 20px; }
+        #view-internal-btn { font-size: 16px; padding: 12px 20px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; display: block; margin: 20px auto; }
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 1000; }
         .modal-content { background: white; padding: 30px; border-radius: 8px; width: 90%; max-width: 400px; text-align: center; }
         .modal-content form { display: flex; flex-direction: column; gap: 15px; }
@@ -161,12 +94,6 @@
         <div id="qr-code-section" class="container">
             <h2 id="qr-title">Mã QR của sản phẩm</h2>
             <div id="qrcode-container"></div>
-        </div>
-        <div id="barcode-section" class="container">
-            <h2>Mã Vạch (Barcode)</h2>
-            <div style="text-align: center;">
-                <svg id="barcode-display"></svg>
-            </div>
         </div>
         <div id="reviews-section" class="container">
             <h2 id="reviews-title">Đánh giá của khách hàng</h2>
@@ -222,6 +149,7 @@
 
     /**
      * Hàm render phần thông tin công khai của sản phẩm.
+     * Sẽ được gọi lại mỗi khi đổi ngôn ngữ để cập nhật nội dung.
      */
     function renderPublicPage() {
         if (!fullProductData) return;
@@ -230,6 +158,7 @@
 
         const detailsDiv = document.getElementById('product-details');
         
+        // Tạo cấu trúc HTML cho thư viện ảnh Swiper
         let imageHTML = '';
         if (Array.isArray(fullProductData.imageUrls) && fullProductData.imageUrls.length > 0) {
             imageHTML = `
@@ -252,6 +181,7 @@
             return dims ? `${dims} cm` : 'N/A';
         };
 
+        // Ghi chú: Đã xóa dòng "Người tạo" trong phiên bản trước
         detailsDiv.innerHTML = `
             <div class="header-container">
                 <h1>${fullProductData[`name_${currentLang}`] || 'N/A'}</h1>
@@ -264,40 +194,50 @@
             <div class="details-grid">
                 <p><strong>${l.productCode}:</strong> ${fullProductData.id || 'N/A'}</p>
                 <p><strong>${l.productName}:</strong> ${fullProductData[`name_${currentLang}`] || 'N/A'}</p>
+                <p><strong>${l.dimensions}:</strong> ${formatDimensions(fullProductData.length, fullProductData.width, fullProductData.height)}</p>
                 <p><strong>${l.company}:</strong> ${fullProductData.company || 'N/A'}</p>
-                <p><strong>${l.customer}:</strong> ${fullProductData.customer || 'N/A'}</p>
+<p><strong>${l.spec}:</strong> ${fullProductData.specification || 'N/A'}</p>
+<p><strong>${l.profile}:</strong> ${fullProductData.aluminum_profile || 'N/A'}</p>
                 <p><strong>${l.collection}:</strong> ${fullProductData[`collection_${currentLang}`] || 'N/A'}</p>
+                <p><strong>${l.packed_dimensions}:</strong> ${formatDimensions(fullProductData.packed_length, fullProductData.packed_width, fullProductData.packed_height)}</p>
                 <p><strong>${l.color}:</strong> ${fullProductData[`color_${currentLang}`] || 'N/A'}</p>
                 <p><strong>${l.material}:</strong> ${fullProductData[`material_${currentLang}`] || 'N/A'}</p>
                 <p><strong>${l.fabric}:</strong> ${fullProductData[`fabric_${currentLang}`] || 'N/A'}</p>
                 <p><strong>${l.wicker}:</strong> ${fullProductData[`wicker_${currentLang}`] || 'N/A'}</p>
                 <p><strong>${l.productionPlace}:</strong> ${fullProductData.production_place || 'N/A'}</p>
-                <p><strong>${l.dimensions}:</strong> ${formatDimensions(fullProductData.length, fullProductData.width, fullProductData.height)}</p>
-                <p><strong>${l.packed_dimensions}:</strong> ${formatDimensions(fullProductData.packed_length, fullProductData.packed_width, fullProductData.packed_height)}</p>
-                <p><strong>${l.spec}:</strong> ${fullProductData.specification || 'N/A'}</p>
-                <p><strong>${l.profile}:</strong> ${fullProductData.aluminum_profile || 'N/A'}</p>
+                <p><strong>${l.customer}:</strong> ${fullProductData.customer || 'N/A'}</p>
                 <p><strong>${l.otherDetails}:</strong> ${fullProductData.other_details || 'N/A'}</p>
             </div>
         `;
         document.getElementById('btn-vi').addEventListener('click', () => switchLanguage('vi'));
         document.getElementById('btn-en').addEventListener('click', () => switchLanguage('en'));
 
-        // GHI CHÚ: Di chuyển code khởi tạo Swiper vào đây để sửa lỗi mũi tên
+        // GHI CHÚ QUAN TRỌNG: Di chuyển code khởi tạo Swiper vào đúng vị trí này.
+        // Nó phải được chạy SAU KHI cấu trúc HTML của swiper đã được chèn vào trang.
         if (Array.isArray(fullProductData.imageUrls) && fullProductData.imageUrls.length > 0) {
             new Swiper('.swiper', {
                 loop: true,
-                navigation: { nextEl: '.swiper-button-next', prevEl: '.swiper-button-prev' },
+                navigation: {
+                    nextEl: '.swiper-button-next',
+                    prevEl: '.swiper-button-prev',
+                },
             });
         }
     }
     
+    /**
+     * Hàm render phần thông tin nội bộ (yêu cầu đăng nhập).
+     */
     function showInternalInfo(isRerender = false) {
         if (!fullProductData) return;
         const internalSection = document.getElementById('internal-details-section');
         if (isRerender && internalSection.style.display !== 'block') return;
+
         const internalDiv = document.getElementById('internal-content');
         const l = labels[currentLang];
+        
         let internalHTML = `<div class="details-grid"><p><strong>${l.supplier}:</strong> ${fullProductData.supplier || 'N/A'}</p></div>`;
+        
         const renderFileList = (urls, label) => {
             let listContent = '';
             if (Array.isArray(urls) && urls.length > 0) {
@@ -307,13 +247,18 @@
             }
             return `<div><h4>${label}</h4>${listContent}</div>`;
         };
+
         internalHTML += renderFileList(fullProductData.drawingUrls, l.drawing);
         internalHTML += renderFileList(fullProductData.materialsUrls, l.materials);
+        
         internalDiv.innerHTML = internalHTML;
         internalSection.style.display = 'block';
         document.getElementById('view-internal-btn-container').style.display = 'none';
     }
 
+    /**
+     * Hàm render danh sách các đánh giá của khách hàng.
+     */
     function renderReviews(reviews) {
         const reviewListDiv = document.getElementById('review-list');
         reviewListDiv.innerHTML = '';
@@ -329,6 +274,9 @@
         });
     }
 
+    /**
+     * Hàm cập nhật các nhãn tĩnh trên trang khi đổi ngôn ngữ.
+     */
     function updateAllLabels() {
         const l = labels[currentLang];
         document.getElementById('internal-title').textContent = l.internalTitle;
@@ -339,6 +287,9 @@
         document.getElementById('view-internal-btn').textContent = "Sign In to Unlock / Đăng Nhập để Xem Chi Tiết Nội Bộ";
     }
 
+    /**
+     * Hàm xử lý logic chuyển đổi ngôn ngữ.
+     */
     function switchLanguage(lang) {
         currentLang = lang;
         renderPublicPage();
@@ -347,6 +298,9 @@
         updateAllLabels();
     }
     
+    /**
+     * Hàm tải danh sách reviews từ server.
+     */
     async function fetchReviews() {
         if (!productId) return;
         try {
@@ -360,25 +314,32 @@
         }
     }
 
+    /**
+     * Hàm chính, khởi tạo và tải tất cả dữ liệu cần thiết cho trang.
+     */
     async function initializePage() {
         const loadingContainer = document.getElementById('loading-container');
         const mainContent = document.getElementById('main-content');
+        
         if (!productId) {
             loadingContainer.innerHTML = `<h1>${labels[currentLang].noProductId}</h1>`;
             return;
         }
+        
         try {
             const response = await fetch(`/api/products/${productId}`);
             if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
             fullProductData = await response.json();
+            
             renderPublicPage();
             updateAllLabels();
             generateQRCode(productId);
-            generateBarcode(productId); // Gọi hàm tạo barcode
+            
             await Promise.all([
                 fetchReviews(),
                 fetch('/api/me').then(res => { if (res.ok) showInternalInfo(); })
             ]);
+
             loadingContainer.style.display = 'none';
             mainContent.style.visibility = 'visible';
         } catch (error) {
@@ -387,6 +348,9 @@
         }
     }
 
+    /**
+     * Hàm tạo mã QR Code cho sản phẩm.
+     */
     function generateQRCode(pId) {
         const publicUrl = `${window.location.origin}/product-view.html?id=${pId}`;
         const qr = qrcode(0, 'H');
@@ -394,24 +358,26 @@
         qr.make();
         document.getElementById('qrcode-container').innerHTML = qr.createImgTag(5, 8);
     }
-
-    // GHI CHÚ: Thêm hàm tạo barcode
-    function generateBarcode(pId) {
-        if(pId) {
-            JsBarcode("#barcode-display", pId, {
-                format: "CODE128", width: 2, height: 80, displayValue: true
-            });
-        }
-    }
     
+    /**
+     * Hàm gắn các sự kiện cho các form và nút bấm trên trang.
+     */
     function setupEventListeners() {
-        document.getElementById('view-internal-btn').addEventListener('click', () => { document.getElementById('login-modal').style.display = 'flex'; });
-        document.getElementById('close-modal-btn').addEventListener('click', () => { document.getElementById('login-modal').style.display = 'none'; });
+        document.getElementById('view-internal-btn').addEventListener('click', () => {
+            document.getElementById('login-modal').style.display = 'flex';
+        });
+        document.getElementById('close-modal-btn').addEventListener('click', () => {
+            document.getElementById('login-modal').style.display = 'none';
+        });
         document.getElementById('internal-login-form').addEventListener('submit', async function(event) {
             event.preventDefault();
             const data = Object.fromEntries(new FormData(this).entries());
             try {
-                const response = await fetch('/api/users/login', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) });
+                const response = await fetch('/api/users/login', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data),
+                });
                 const result = await response.json();
                 if (!response.ok) throw new Error(result.error || labels[currentLang].loginFailed);
                 alert(labels[currentLang].loginSuccess);
@@ -428,6 +394,7 @@
             const l = labels[currentLang];
             submitBtn.disabled = true;
             submitBtn.textContent = l.submitReviewSending;
+            
             const data = Object.fromEntries(new FormData(this).entries());
             if (!data.author_name || !data.rating) {
                 alert('Vui lòng nhập tên và chọn số sao đánh giá.');
@@ -435,8 +402,13 @@
                 submitBtn.textContent = l.submitReview;
                 return;
             }
+            
             try {
-                const response = await fetch('/api/reviews', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ ...data, productId }) });
+                const response = await fetch('/api/reviews', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ ...data, productId }),
+                });
                 const result = await response.json();
                 if (!response.ok) throw new Error(result.error || 'Đã xảy ra lỗi.');
                 alert(result.message);
@@ -451,6 +423,7 @@
         });
     }
 
+    // --- ĐIỂM BẮT ĐẦU THỰC THI CODE ---
     document.addEventListener('DOMContentLoaded', () => {
         initializePage();
         setupEventListeners();
