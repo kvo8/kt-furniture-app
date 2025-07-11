@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Thêm Sản Phẩm Thành Công</title>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/qrcode-generator/qrcode.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
     <link rel="stylesheet" href="/css/style.css">
     <style>
         body { background-color: #f4f7f6; }
@@ -16,7 +17,7 @@
         #product-review { background-color: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.07); }
         .product-details {
             display: grid;
-            grid-template-columns: 1fr; /* 1 cột trên màn hình nhỏ */
+            grid-template-columns: 1fr;
             gap: 15px;
             text-align: left;
             margin-top: 20px;
@@ -24,7 +25,7 @@
         }
         @media (min-width: 768px) {
             .product-details {
-                grid-template-columns: 1fr 1fr; /* 2 cột trên màn hình lớn */
+                grid-template-columns: 1fr 1fr;
             }
         }
         .detail-item {
@@ -42,6 +43,8 @@
         .detail-item ul li a { word-break: break-all; }
 
         #qrcode-image { margin-top: 15px; border: 1px solid #ccc; padding: 10px; display: inline-block; background-color: #fff; }
+        /* GHI CHÚ: Thêm style cho khu vực barcode */
+        #barcode-container { margin-top: 15px; }
         
         .action-buttons { margin-top: 40px; display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; }
         .action-buttons a {
@@ -61,6 +64,7 @@
         .add-more-btn { background-color: #007bff; }
         .view-list-btn { background-color: #6c757d; }
         .view-public-btn { background-color: #17a2b8; }
+        .view-barcode-btn { background-color: #ffc107; color: #212529 !important;} /* Nút xem Barcode */
     </style>
 </head>
 <body>
@@ -75,6 +79,13 @@
             <h3>Mã QR Code</h3>
             <div id="qrcode-image"></div>
             <p><i>(Quét mã này để xem trang công khai của sản phẩm)</i></p>
+
+            <h3>Mã Vạch (Barcode)</h3>
+            <div id="barcode-container">
+                <svg id="barcode"></svg>
+            </div>
+            <p><i>(Dùng cho quản lý sản xuất nội bộ)</i></p>
+
         </div>
 
         <div class="action-buttons">
@@ -85,9 +96,9 @@
 
     <script>
     /**
-     * GHI CHÚ: File này được thực thi sau khi tạo sản phẩm thành công.
-     * Mục tiêu: Lấy lại dữ liệu vừa tạo từ server, hiển thị một cách rõ ràng,
-     * và cung cấp mã QR cũng như các lựa chọn điều hướng cho người dùng.
+     * Script cho trang success.html
+     * Mục tiêu: Lấy lại dữ liệu vừa tạo từ server, hiển thị review,
+     * tạo mã QR và Barcode, cung cấp các lựa chọn điều hướng.
      */
     document.addEventListener('DOMContentLoaded', () => {
         const urlParams = new URLSearchParams(window.location.search);
@@ -106,93 +117,77 @@
         statusMessage.textContent = `🎉 Thêm sản phẩm ${productId} thành công!`;
         productReviewDiv.style.display = 'block';
 
-        // GHI CHÚ: Bổ sung các nhãn cho trường kích thước
         const fieldLabels = {
-            name_vi: "Tên Sản Phẩm (VI)",
-            name_en: "Product Name (EN)",
-            collection_vi: "Bộ Sưu Tập (VI)",
-            collection_en: "Collection (EN)",
-            color_vi: "Màu sắc (VI)",
-            color_en: "Color (EN)",
-            fabric_vi: "Vải (VI)",
-            fabric_en: "Fabric (EN)",
-            wicker_vi: "Dây (VI)",
-            wicker_en: "Wicker (EN)",
-            material_vi: "Chất liệu (VI)",
-            material_en: "Material (EN)",
-            specification: "Thông số",
-            aluminum_profile: "Biên dạng nhôm",
-            supplier: "Nhà cung cấp",
-            production_place: "Nơi sản xuất",
-            company: "Công ty",
-            customer: "Khách hàng",
-            other_details: "Chi tiết khác",
-            created_by_name: "Người tạo",
-            parent_id: "Mã Sản Phẩm Gốc",
-            imageUrls: "Danh sách URL Hình ảnh",
-            drawingUrls: "Danh sách URL Bản vẽ",
-            materialsUrls: "Danh sách URL Vật tư",
-            // Nhãn đại diện cho các nhóm kích thước
-            dimensions: "Kích thước (D x R x C)",
-            packed_dimensions: "KT đóng gói (D x R x C)"
+            name_vi: "Tên Sản Phẩm (VI)", name_en: "Product Name (EN)",
+            collection_vi: "Bộ Sưu Tập (VI)", collection_en: "Collection (EN)",
+            color_vi: "Màu sắc (VI)", color_en: "Color (EN)",
+            fabric_vi: "Vải (VI)", fabric_en: "Fabric (EN)",
+            wicker_vi: "Dây (VI)", wicker_en: "Wicker (EN)",
+            material_vi: "Chất liệu (VI)", material_en: "Material (EN)",
+            specification: "Thông số", aluminum_profile: "Biên dạng nhôm",
+            supplier: "Nhà cung cấp", production_place: "Nơi sản xuất",
+            company: "Công ty", customer: "Khách hàng",
+            other_details: "Chi tiết khác", created_by_name: "Người tạo",
+            parent_id: "Mã Sản Phẩm Gốc", imageUrls: "Danh sách URL Hình ảnh",
+            drawingUrls: "Danh sách URL Bản vẽ", materialsUrls: "Danh sách URL Vật tư",
+            dimensions: "Kích thước (D x R x C)", packed_dimensions: "KT đóng gói (D x R x C)"
         };
         
-        // GHI CHÚ: Bổ sung các trường đại diện cho kích thước vào thứ tự hiển thị
         const displayOrder = [
-            'name_vi', 'name_en', 'collection_vi', 'collection_en',
-            'dimensions', // Kích thước sản phẩm
-            'packed_dimensions', // Kích thước đóng gói
-            'color_vi', 'color_en', 'material_vi', 'material_en', 'fabric_vi', 'fabric_en', 
-            'wicker_vi', 'wicker_en', 'specification', 'aluminum_profile', 'supplier', 
-            'production_place', 'company', 'customer', 'other_details', 'created_by_name', 
-            'parent_id', 'imageUrls', 'drawingUrls', 'materialsUrls'
+            'name_vi', 'name_en', 'collection_vi', 'collection_en', 'dimensions',
+            'packed_dimensions', 'color_vi', 'color_en', 'material_vi', 'material_en', 
+            'fabric_vi', 'fabric_en', 'wicker_vi', 'wicker_en', 'specification', 'aluminum_profile', 
+            'supplier', 'production_place', 'company', 'customer', 'other_details', 
+            'created_by_name', 'parent_id', 'imageUrls', 'drawingUrls', 'materialsUrls'
         ];
         
-        /**
-         * Hàm tiện ích để định dạng kích thước (Dài x Rộng x Cao)
-         * @param {number|null} length - Chiều dài
-         * @param {number|null} width - Chiều rộng
-         * @param {number|null} height - Chiều cao
-         * @returns {string} - Chuỗi kích thước đã định dạng hoặc 'N/A'
-         */
         function formatDimensions(length, width, height) {
             const dims = [length, width, height].filter(d => d != null && d !== '').join(' x ');
             return dims ? `${dims} cm` : 'N/A';
         }
+        
+        // GHI CHÚ: Thêm hàm tạo mã vạch
+        /**
+         * Hàm tạo và hiển thị mã vạch cho sản phẩm bằng thư viện JsBarcode
+         * @param {string} barcodeValue - Giá trị cần mã hóa (chính là Product ID)
+         */
+        function generateBarcode(barcodeValue) {
+            if (barcodeValue) {
+                JsBarcode("#barcode", barcodeValue, {
+                    format: "CODE128",       // Loại mã vạch phổ biến, hỗ trợ chữ và số
+                    lineColor: "#000",       // Màu của các vạch
+                    width: 2,                // Độ dày của vạch
+                    height: 80,              // Chiều cao của mã vạch
+                    displayValue: true,      // Hiển thị mã số bên dưới mã vạch
+                    fontSize: 16,
+                    margin: 10
+                });
+            }
+        }
 
-        // Gọi API để lấy lại thông tin chi tiết của sản phẩm vừa tạo
         fetch(`/api/products/${productId}`)
             .then(response => {
-                if (!response.ok) {
-                    throw new Error(`Lỗi từ server: ${response.status} ${response.statusText}`);
-                }
+                if (!response.ok) throw new Error(`Lỗi từ server: ${response.status}`);
                 return response.json();
             })
             .then(product => {
-                if (!product || product.error) {
-                    throw new Error(product.error || 'Không thể tải lại dữ liệu sản phẩm.');
-                }
+                if (product.error) throw new Error(product.error);
 
-                detailsDiv.innerHTML = ''; // Xóa nội dung cũ
+                detailsDiv.innerHTML = '';
                 
-                // Vòng lặp hiển thị dữ liệu có cấu trúc, đã được nâng cấp
                 displayOrder.forEach(key => {
                     let value = product[key];
-                    let contentHTML = '';
-
-                    // GHI CHÚ: Xử lý đặc biệt cho các trường kích thước
                     if (key === 'dimensions') {
                         value = formatDimensions(product.length, product.width, product.height);
                     } else if (key === 'packed_dimensions') {
                         value = formatDimensions(product.packed_length, product.packed_width, product.packed_height);
                     }
 
-                    // Chỉ hiển thị nếu trường đó có giá trị
                     if (value && (typeof value !== 'object' || (Array.isArray(value) && value.length > 0))) {
                         const label = fieldLabels[key] || key;
                         const detailItem = document.createElement('div');
                         detailItem.className = 'detail-item';
-                        contentHTML += `<strong>${label}:</strong>`;
+                        let contentHTML = `<strong>${label}:</strong>`;
 
                         if (['imageUrls', 'drawingUrls', 'materialsUrls'].includes(key)) {
                             contentHTML += '<ul>';
@@ -211,21 +206,34 @@
                     }
                 });
 
-                // Tạo và hiển thị mã QR
+                // Tạo QR Code
                 const publicUrl = `${window.location.origin}/product-view.html?id=${productId}`;
                 const qr = qrcode(0, 'H');
                 qr.addData(publicUrl);
                 qr.make();
                 qrCodeDiv.innerHTML = qr.createImgTag(8, 10);
+                
+                // GHI CHÚ: Gọi hàm tạo Barcode
+                generateBarcode(productId);
 
-                // Thêm nút "Xem trang công khai"
+                // Thêm các nút hành động
+                const actionButtons = document.querySelector('.action-buttons');
                 const viewPublicBtn = document.createElement('a');
                 viewPublicBtn.href = publicUrl;
                 viewPublicBtn.target = "_blank";
                 viewPublicBtn.rel = "noopener noreferrer";
                 viewPublicBtn.className = 'view-public-btn';
                 viewPublicBtn.textContent = 'Xem Trang Công Khai';
-                document.querySelector('.action-buttons').appendChild(viewPublicBtn);
+                actionButtons.appendChild(viewPublicBtn);
+
+                // GHI CHÚ: Thêm nút xem/in Barcode
+                const viewBarcodeBtn = document.createElement('a');
+                viewBarcodeBtn.href = `/barcode.html?id=${productId}`;
+                viewBarcodeBtn.target = "_blank";
+                viewBarcodeBtn.rel = "noopener noreferrer";
+                viewBarcodeBtn.className = 'view-barcode-btn';
+                viewBarcodeBtn.textContent = 'In Mã Vạch';
+                actionButtons.appendChild(viewBarcodeBtn);
 
             })
             .catch(error => {

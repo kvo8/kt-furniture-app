@@ -20,11 +20,14 @@
         .nav-links { margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #ccc; display: flex; justify-content: space-between; align-items: center; }
         .nav-links a { margin-right: 20px; font-size: 18px; color: #007bff; text-decoration: none; font-weight: 500; }
 
-        /* === ▼▼▼ CSS MỚI CHO NÚT VÀ CỬA SỔ POPUP ĐÁNH GIÁ ▼▼▼ === */
+        /* === ▼▼▼ CSS CHO NÚT VÀ CỬA SỔ POPUP ĐÁNH GIÁ ▼▼▼ === */
         .reviews-btn { background-color: #6f42c1; } /* Màu tím cho nút xem đánh giá */
 
+        /* GHI CHÚ: Bổ sung CSS cho nút Barcode mới */
+        .barcode-btn { background-color: #343a40; } /* Màu đen/xám đậm */
+
         .modal {
-            display: none; /* Ẩn mặc định */
+            display: none; 
             position: fixed;
             z-index: 1000;
             left: 0;
@@ -70,7 +73,7 @@
         }
         #reviewsList {
             margin-top: 15px;
-            max-height: 400px; /* Giới hạn chiều cao và cho phép cuộn */
+            max-height: 400px; 
             overflow-y: auto;
         }
         .review-item {
@@ -87,7 +90,7 @@
             font-weight: bold;
         }
         .review-rating {
-            color: #f9ca24; /* Màu vàng cho ngôi sao */
+            color: #f9ca24; 
         }
         /* === ▲▲▲ KẾT THÚC CSS MỚI ▲▲▲ === */
 
@@ -114,7 +117,7 @@
                 <span class="close-button">&times;</span>
             </div>
             <div id="reviewsList">
-                </div>
+            </div>
         </div>
     </div>
     <script>
@@ -127,7 +130,7 @@
             products.forEach((product, index) => {
                 const row = document.createElement('tr');
                 
-                // === ▼▼▼ CẬP NHẬT Ở ĐÂY: Thêm nút "Xem Đ.giá" ▼▼▼ ===
+                // GHI CHÚ: Thêm nút "Xem Barcode" vào cột hành động
                 row.innerHTML = `
                     <td>${index + 1}</td>
                     <td>${product.id || 'N/A'}</td>
@@ -137,12 +140,12 @@
                     <td class="actions">
                         <a href="/product-view.html?id=${product.id}" target="_blank" class="details-btn">Chi tiết</a>
                         <a href="/qr-view.html?id=${product.id}" target="_blank" class="qr-btn">Xem QR</a>
+                        <a href="/barcode.html?id=${product.id}" target="_blank" class="barcode-btn">Xem Barcode</a>
                         <a href="/edit-product.html?id=${product.id}" class="edit-btn">Sửa</a>
                         <button class="reviews-btn" data-id="${product.id}" data-name="${product.name_vi || ''}">Xem Đ.giá</button>
                         <button class="delete-btn" data-id="${product.id}">Xóa</button>
                     </td>
                 `;
-                // === ▲▲▲ KẾT THÚC CẬP NHẬT ▲▲▲ ===
 
                 tableBody.appendChild(row);
             });
@@ -204,28 +207,25 @@
             }
         }
 
-        // === ▼▼▼ CODE MỚI: Xử lý nút "Xem Đ.giá" ▼▼▼ ===
+        // Xử lý nút "Xem Đ.giá"
         if (target && target.classList.contains('reviews-btn')) {
             const productId = target.dataset.id;
             const productName = target.dataset.name;
             showReviews(productId, productName);
         }
-        // === ▲▲▲ KẾT THÚC CODE MỚI ▲▲▲ ===
     });
 
     // Tải danh sách sản phẩm lần đầu khi trang được mở
     document.addEventListener('DOMContentLoaded', loadProducts);
 
 
-    // === ▼▼▼ CODE MỚI: CÁC HÀM ĐỂ XỬ LÝ MODAL ĐÁNH GIÁ ▼▼▼ ===
+    // === CÁC HÀM ĐỂ XỬ LÝ MODAL ĐÁNH GIÁ (GIỮ NGUYÊN) ===
 
-    // Lấy các phần tử HTML của Modal
     const modal = document.getElementById('reviewsModal');
     const closeButton = document.querySelector('.close-button');
     const reviewsListDiv = document.getElementById('reviewsList');
     const modalProductName = document.getElementById('modalProductName');
 
-    // Hàm đóng Modal
     function closeModal() {
         modal.style.display = 'none';
     }
@@ -236,11 +236,10 @@
         }
     };
 
-    // Hàm chính: Mở Modal và tải dữ liệu đánh giá từ server
     async function showReviews(productId, productName) {
-        modalProductName.textContent = productName; // Hiển thị tên sản phẩm trên Modal
+        modalProductName.textContent = productName; 
         reviewsListDiv.innerHTML = '<p>Đang tải đánh giá...</p>';
-        modal.style.display = 'block'; // Hiển thị Modal
+        modal.style.display = 'block';
 
         try {
             const response = await fetch(`/api/products/${productId}/reviews`);
@@ -252,7 +251,6 @@
             if (data.reviews && data.reviews.length > 0) {
                 let reviewsHtml = '';
                 data.reviews.forEach(review => {
-                    // Tạo chuỗi ngôi sao
                     const stars = '⭐'.repeat(review.rating) + '☆'.repeat(5 - review.rating);
                     reviewsHtml += `
                         <div class="review-item">
@@ -272,8 +270,6 @@
             reviewsListDiv.innerHTML = '<p style="color: red;">Không thể tải danh sách đánh giá. Vui lòng thử lại.</p>';
         }
     }
-    // === ▲▲▲ KẾT THÚC CODE MỚI ▲▲▲ ===
-
 </script>
 </body>
 </html>

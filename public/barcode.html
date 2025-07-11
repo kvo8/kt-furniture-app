@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>In Mã Vạch Sản Phẩm</title>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <style>
+        body { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; font-family: sans-serif; }
+        .barcode-container { text-align: center; padding: 40px; border: 1px solid #ccc; border-radius: 10px; background-color: #fff; }
+        .print-btn { margin-top: 30px; padding: 10px 20px; font-size: 16px; cursor: pointer; }
+        @media print {
+            .print-btn { display: none; } /* Ẩn nút in khi in */
+            .barcode-container { border: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="barcode-container">
+        <h1>Mã Vạch Sản Phẩm</h1>
+        <svg id="barcode-image"></svg>
+    </div>
+    <button class="print-btn" onclick="window.print()">In Mã Vạch</button>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const productId = urlParams.get('id');
+
+            if (productId) {
+                JsBarcode("#barcode-image", productId, {
+                    format: "CODE128",
+                    width: 4,
+                    height: 150,
+                    fontSize: 24,
+                    margin: 20,
+                    displayValue: true
+                });
+            } else {
+                document.querySelector('.barcode-container').innerHTML = '<h1>Lỗi: Không tìm thấy ID sản phẩm.</h1>';
+            }
+        });
+    </script>
+</body>
+</html>
