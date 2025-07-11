@@ -5,9 +5,38 @@
     <title>Quản Lý Nhân Viên</title>
     <link rel="stylesheet" href="/css/style.css">
     <style>
+        /* Giữ nguyên các style cũ của bạn */
         body { max-width: 1000px; }
         .actions button { min-width: 60px; }
-        .delete-btn { background-color: #dc3545; }
+        .delete-btn { 
+            background-color: #dc3545; 
+            color: white;
+            border: none;
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+        .delete-btn:hover {
+            background-color: #c82333;
+        }
+
+        /* GHI CHÚ: Thêm style để làm bảng đẹp hơn */
+        table {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+            border-radius: 8px;
+            overflow: hidden; /* Bo tròn các góc của table */
+        }
+        thead th {
+            background-color: #007bff;
+            color: white;
+            font-weight: 600; /* Chữ đậm hơn */
+            font-size: 1rem;
+        }
+        td {
+            vertical-align: middle;
+        }
     </style>
 </head>
 <body>
@@ -15,6 +44,7 @@
         <h1>Quản Lý Nhân Viên</h1>
         <div class="nav-links">
             <a href="/dashboard.html">Về Dashboard</a>
+            <a href="/register.html">Thêm Nhân Viên Mới</a>
         </div>
         <table>
             <thead>
@@ -27,77 +57,103 @@
                 </tr>
             </thead>
             <tbody id="employee-table-body">
-                </tbody>
+                <tr>
+                    <td colspan="5" style="text-align: center; padding: 20px; font-style: italic;">
+                        Đang tải dữ liệu nhân viên...
+                    </td>
+                </tr>
+            </tbody>
         </table>
     </div>
 
     <script>
-        /**
-         * Tải và hiển thị danh sách nhân viên
-         */
-        async function loadEmployees() {
-            const tableBody = document.getElementById('employee-table-body');
-            try {
-                const response = await fetch('/api/users');
-                if (!response.ok) {
-                    // Nếu chưa đăng nhập, chuyển về trang chủ
-                    if(response.status === 401) window.location.href = '/index.html';
-                    throw new Error(`Lỗi server: ${response.status}`);
+    /**
+     * @file employee-info.html
+     * @description Script quản lý việc hiển thị và xóa nhân viên.
+     */
+
+    /**
+     * Tải và hiển thị danh sách nhân viên từ API.
+     * Cập nhật giao diện bảng với dữ liệu mới hoặc thông báo lỗi.
+     */
+    async function loadEmployees() {
+        const tableBody = document.getElementById('employee-table-body');
+        try {
+            const response = await fetch('/api/users');
+            if (!response.ok) {
+                // Nếu chưa đăng nhập (lỗi 401), chuyển hướng về trang chủ
+                if(response.status === 401) {
+                    alert("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
+                    window.location.href = '/index.html';
                 }
-                const data = await response.json();
-                
-                tableBody.innerHTML = ''; // Xóa dữ liệu cũ
-                if (data.users && data.users.length > 0) {
-                    data.users.forEach(user => {
-                        const row = document.createElement('tr');
-                        row.innerHTML = `
-                            <td>${user.id}</td>
-                            <td>${user.ho_ten}</td>
-                            <td>${user.ma_nhan_vien}</td>
-                            <td>${user.chuc_vu || 'N/A'}</td>
-                            <td class="actions">
-                                <button class="delete-btn" data-id="${user.id}" data-name="${user.ho_ten}">Xóa</button>
-                            </td>
-                        `;
-                        tableBody.appendChild(row);
-                    });
-                } else {
-                    tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Không có nhân viên nào.</td></tr>';
+                throw new Error(`Lỗi server: ${response.status}`);
+            }
+            const data = await response.json();
+            
+            tableBody.innerHTML = ''; // Xóa dòng "Đang tải..."
+            
+            if (data.users && data.users.length > 0) {
+                data.users.forEach(user => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${user.id}</td>
+                        <td>${user.ho_ten || 'N/A'}</td>
+                        <td>${user.ma_nhan_vien || 'N/A'}</td>
+                        <td>${user.chuc_vu || 'Chưa xác định'}</td>
+                        <td class="actions">
+                            <button class="delete-btn" data-id="${user.id}" data-name="${user.ho_ten}">Xóa</button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            } else {
+                tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px;">Không có nhân viên nào trong hệ thống.</td></tr>';
+            }
+        } catch (error) {
+            console.error('Lỗi khi tải danh sách nhân viên:', error);
+            tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center; color: red; padding: 20px;">Không thể tải dữ liệu. Vui lòng kiểm tra lại kết nối.</td></tr>`;
+        }
+    }
+
+    /**
+     * Gắn sự kiện click cho toàn bộ tbody để xử lý các nút xóa (event delegation).
+     */
+    document.getElementById('employee-table-body').addEventListener('click', async (e) => {
+        // Chỉ thực hiện hành động nếu phần tử được click là nút xóa
+        if (e.target && e.target.classList.contains('delete-btn')) {
+            const userId = e.target.dataset.id;
+            const userName = e.target.dataset.name;
+
+            if (confirm(`Bạn có chắc chắn muốn xóa nhân viên "${userName}" (ID: ${userId}) không? Hành động này không thể hoàn tác.`)) {
+                try {
+                    e.target.disabled = true; // Vô hiệu hóa nút trong khi chờ
+                    e.target.textContent = 'Đang xóa...';
+
+                    const response = await fetch(`/api/users/${userId}`, { method: 'DELETE' });
+                    const result = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(result.error || 'Xóa thất bại.');
+                    }
+                    
+                    alert(result.message || 'Xóa thành công!');
+                    loadEmployees(); // Tải lại danh sách để cập nhật
+                } catch (error) {
+                    alert(`Lỗi: ${error.message}`);
+                    e.target.disabled = false; // Bật lại nút nếu có lỗi
+                    e.target.textContent = 'Xóa';
                 }
-            } catch (error) {
-                console.error('Lỗi khi tải danh sách nhân viên:', error);
-                tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center; color: red;">Không thể tải dữ liệu.</td></tr>`;
             }
         }
+    });
 
-        /**
-         * Xử lý sự kiện click nút xóa
-         */
-        document.getElementById('employee-table-body').addEventListener('click', async (e) => {
-            if (e.target && e.target.classList.contains('delete-btn')) {
-                const userId = e.target.dataset.id;
-                const userName = e.target.dataset.name;
-
-                if (confirm(`Bạn có chắc chắn muốn xóa nhân viên "${userName}" (ID: ${userId}) không?`)) {
-                    try {
-                        const response = await fetch(`/api/users/${userId}`, { method: 'DELETE' });
-                        const result = await response.json();
-
-                        if (!response.ok) {
-                            throw new Error(result.error || 'Xóa thất bại.');
-                        }
-                        
-                        alert(result.message || 'Xóa thành công!');
-                        loadEmployees(); // Tải lại danh sách
-                    } catch (error) {
-                        alert(`Lỗi: ${error.message}`);
-                    }
-                }
-            }
-        });
-
-        // Tải dữ liệu khi trang được mở
-        document.addEventListener('DOMContentLoaded', loadEmployees);
+    /**
+     * Sự kiện chính khi tài liệu HTML được tải xong.
+     */
+    document.addEventListener('DOMContentLoaded', () => {
+        // Bắt đầu tải danh sách nhân viên
+        loadEmployees();
+    });
     </script>
 </body>
 </html>
