@@ -15,20 +15,36 @@
         .file-info a { text-decoration: none; font-weight: bold; }
         .file-info { margin-top: 8px; font-style: italic; color: #555; }
         .upload-status { margin-top: 15px; padding: 10px; background-color: #e9f7fe; border-left: 4px solid #007bff; font-style: italic; color: #333; display: none; }
-        /* Thêm style cho trạng thái loading */
         .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(255, 255, 255, 0.8);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 1.5em;
-            color: #333;
-            z-index: 1000;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 1.5em; color: #333; z-index: 1000;
+        }
+        
+        /* GHI CHÚ: Bổ sung style cho nút Upload popup */
+        .form-group-with-button {
+            position: relative;
+        }
+        .form-group-with-button textarea {
+            padding-right: 110px !important;
+        }
+        .popup-upload-btn {
+            position: absolute;
+            top: 50%;
+            right: 10px;
+            transform: translateY(-25%); 
+            padding: 8px 12px;
+            background-color: #17a2b8;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+        .popup-upload-btn:hover {
+             background-color: #138496;
         }
     </style>
 </head>
@@ -45,10 +61,7 @@
             <div class="form-section">
                 <h2>Thông Tin Chung</h2>
                 <div class="form-grid">
-                    <div class="form-group full-width">
-                        <label>Mã Sản Phẩm / Product ID (Không thể sửa)</label>
-                        <input type="text" name="id" readonly style="background-color: #e9ecef;">
-                    </div>
+                    <div class="form-group full-width"><label>Mã Sản Phẩm / Product ID (Không thể sửa)</label><input type="text" name="id" readonly style="background-color: #e9ecef;"></div>
                     <div class="form-group"><label>Tên Sản Phẩm (VI)</label><input type="text" name="name_vi" required></div>
                     <div class="form-group"><label>Product Name (EN)</label><input type="text" name="name_en" required></div>
                     <div class="form-group"><label>Bộ Sưu Tập (VI)</label><input type="text" name="collection_vi"></div>
@@ -68,36 +81,29 @@
                     <div class="form-group"><label>Chất liệu (VI)</label><input type="text" name="material_vi"></div>
                     <div class="form-group"><label>Material (EN)</label><input type="text" name="material_en"></div>
                     <div class="form-group full-width"><label>Biên dạng nhôm</label><input type="text" name="aluminum_profile"></div>
-                    <div class="form-group">
-                        <label>Nơi sản xuất</label>
-                        <select name="production_place"><option value="KT">KT</option><option value="Minh Tien">Minh Tiến</option><option value="Other">Khác</option></select>
-                    </div>
+                    <div class="form-group"><label>Nơi sản xuất</label><select name="production_place"><option value="KT">KT</option><option value="Minh Tien">Minh Tiến</option><option value="Other">Khác</option></select></div>
                 </div>
             </div>
             
             <div class="form-section">
                 <h2>Kích Thước & Chi Tiết Khác</h2>
                 <div class="form-grid">
-                    <div class="form-group"><label>Chiều dài (cm)</label><input type="number" step="0.01" name="length" placeholder="Ví dụ: 120.5"></div>
-                    <div class="form-group"><label>Chiều rộng (cm)</label><input type="number" step="0.01" name="width" placeholder="Ví dụ: 80"></div>
-                    <div class="form-group"><label>Chiều cao (cm)</label><input type="number" step="0.01" name="height" placeholder="Ví dụ: 75.2"></div>
-
+                    <div class="form-group"><label>Chiều dài (cm)</label><input type="number" step="0.01" name="length"></div>
+                    <div class="form-group"><label>Chiều rộng (cm)</label><input type="number" step="0.01" name="width"></div>
+                    <div class="form-group"><label>Chiều cao (cm)</label><input type="number" step="0.01" name="height"></div>
                     <div class="form-group"><label>Chiều dài đóng gói (cm)</label><input type="number" step="0.01" name="packed_length"></div>
                     <div class="form-group"><label>Chiều rộng đóng gói (cm)</label><input type="number" step="0.01" name="packed_width"></div>
                     <div class="form-group"><label>Chiều cao đóng gói (cm)</label><input type="number" step="0.01" name="packed_height"></div>
-
-                    <div class="form-group full-width">
-                        <label>Các chi tiết khác</label>
-                        <textarea name="other_details" rows="4" placeholder="Ghi chú thêm về sản phẩm..."></textarea>
-                    </div>
+                    <div class="form-group full-width"><label>Các chi tiết khác</label><textarea name="other_details" rows="4"></textarea></div>
                 </div>
             </div>
+
             <div class="form-section">
                 <h2>Thông Tin Thương Mại & Kỹ Thuật</h2>
                 <div class="form-grid">
                      <div class="form-group"><label>Công ty</label><input type="text" name="company"></div>
                      <div class="form-group"><label>Khách hàng</label><input type="text" name="customer"></div>
-                     <div class="form-group"><label for="supplier">Nhà cung cấp</label><input type="text" id="supplier" name="supplier"></div>
+                     <div class="form-group"><label>Nhà cung cấp</label><input type="text" name="supplier"></div>
                      <div class="form-group full-width"><label>Thông số</label><input type="text" name="specification"></div>
                 </div>
             </div>
@@ -105,19 +111,22 @@
             <div class="form-section">
                 <h2>Tệp Đính Kèm</h2>
                 <p style="font-style: italic; margin-bottom: 15px;">
-                    Chỉnh sửa danh sách link dưới đây. Dùng <a href="/upload.html" target="_blank">Công cụ Upload</a> để lấy link mới.
+                    Chỉnh sửa danh sách link dưới đây. Nhấn "Upload" để mở công cụ và thêm link mới.
                 </p>
-                <div class="form-group full-width">
-                    <label for="imageUrls">Danh sách URL Hình ảnh sản phẩm (mỗi link một dòng)</label>
-                    <textarea id="imageUrls" name="imageUrls" rows="5" placeholder="Dán danh sách link ảnh từ trang Upload vào đây..."></textarea>
+                <div class="form-group full-width form-group-with-button">
+                    <label for="imageUrls">Danh sách URL Hình ảnh sản phẩm</label>
+                    <textarea id="imageUrls" name="imageUrls" rows="5" placeholder="Các link ảnh sẽ tự động xuất hiện ở đây..."></textarea>
+                    <button type="button" class="popup-upload-btn" data-target="imageUrls">Upload Ảnh</button>
                 </div>
-                <div class="form-group full-width">
+                <div class="form-group full-width form-group-with-button">
                     <label for="drawingUrls">Danh sách URL Bản vẽ (PDF)</label>
-                    <textarea id="drawingUrls" name="drawingUrls" rows="5" placeholder="Dán danh sách link bản vẽ từ trang Upload vào đây..."></textarea>
+                    <textarea id="drawingUrls" name="drawingUrls" rows="5" placeholder="Các link bản vẽ sẽ tự động xuất hiện ở đây..."></textarea>
+                    <button type="button" class="popup-upload-btn" data-target="drawingUrls">Upload Bản Vẽ</button>
                 </div>
-                <div class="form-group full-width">
+                <div class="form-group full-width form-group-with-button">
                     <label for="materialsUrls">Danh sách URL Vật tư</label>
-                    <textarea id="materialsUrls" name="materialsUrls" rows="5" placeholder="Dán danh sách link vật tư từ trang Upload vào đây..."></textarea>
+                    <textarea id="materialsUrls" name="materialsUrls" rows="5" placeholder="Các link vật tư sẽ tự động xuất hiện ở đây..."></textarea>
+                    <button type="button" class="popup-upload-btn" data-target="materialsUrls">Upload Vật Tư</button>
                 </div>
             </div>
             
@@ -129,46 +138,36 @@
     </div>
 
     <script>
-    /**
-     * GHI CHÚ: Toàn bộ phần script này được giữ nguyên vì nó đã được thiết kế
-     * để tự động xử lý các trường mới trong form mà không cần chỉnh sửa.
-     */
     const form = document.getElementById('edit-form');
     const submitButton = document.getElementById('submit-button');
     const loadingOverlay = document.getElementById('loading');
     
     // --- NHIỆM VỤ 1: TẢI VÀ ĐIỀN DỮ LIỆU VÀO FORM ---
-    // Script này sẽ tự động tìm và điền dữ liệu cho các trường mới như 'length', 'width'...
     document.addEventListener('DOMContentLoaded', async () => {
         const urlParams = new URLSearchParams(window.location.search);
         const productId = urlParams.get('id');
 
         if (!productId) {
-            loadingOverlay.innerHTML = '<p style="color: red;">Lỗi: Không tìm thấy ID sản phẩm trong URL.</p>';
+            loadingOverlay.innerHTML = '<p style="color: red;">Lỗi: Không tìm thấy ID sản phẩm.</p>';
             return;
         }
 
         try {
             const response = await fetch(`/api/products/${productId}`);
             if (!response.ok) {
-                if (response.status === 404) throw new Error('Sản phẩm không tồn tại.');
                 throw new Error(`Lỗi server: ${response.status}`);
             }
             const product = await response.json();
 
-            // Lặp qua tất cả các key trong object product nhận về
+            // Vòng lặp này sẽ tự động điền dữ liệu cho tất cả các trường, kể cả các trường mới
             for (const key in product) {
-                // Kiểm tra xem có trường input/textarea/select nào trong form khớp với key không
                 if (form.elements[key]) {
                     const field = form.elements[key];
                     const value = product[key];
-
-                    // Xử lý đặc biệt cho các trường chứa URL (là một mảng)
                     if (['imageUrls', 'drawingUrls', 'materialsUrls'].includes(key) && Array.isArray(value)) {
                         const urlString = value.map(item => (typeof item === 'object' ? item.url : item)).join('\n');
                         field.value = urlString;
                     } else {
-                        // Gán giá trị cho các trường thông thường (bao gồm cả các trường mới)
                         field.value = value || '';
                     }
                 }
@@ -178,14 +177,12 @@
             form.style.display = 'block';
 
         } catch (error) {
-            console.error('Lỗi khi tải dữ liệu sản phẩm:', error);
-            loadingOverlay.innerHTML = `<p style="color: red;">Lỗi: ${error.message}</p>`;
+            loadingOverlay.innerHTML = `<p style="color: red;">Lỗi khi tải dữ liệu: ${error.message}</p>`;
         }
     });
 
 
     // --- NHIỆM VỤ 2: XỬ LÝ VIỆC SUBMIT FORM ---
-    // Script này cũng tự động thu thập dữ liệu từ các trường mới để gửi đi.
     form.addEventListener('submit', async function(event) {
         event.preventDefault();
         submitButton.disabled = true;
@@ -204,16 +201,12 @@
                 }
             }
 
-            // Chuyển đổi dữ liệu URL từ textarea sang định dạng mảng đúng chuẩn
             data.imageUrls = (data.imageUrls || '').split('\n').map(link => link.trim()).filter(Boolean);
             data.drawingUrls = (data.drawingUrls || '').split('\n').map(link => link.trim()).filter(Boolean).map(link => ({ name: getFileNameFromUrl(link), url: link }));
             data.materialsUrls = (data.materialsUrls || '').split('\n').map(link => link.trim()).filter(Boolean).map(link => ({ name: getFileNameFromUrl(link), url: link }));
 
-            const url = `/api/products/${data.id}`;
-            const method = 'PUT';
-
-            const response = await fetch(url, {
-                method: method,
+            const response = await fetch(`/api/products/${data.id}`, {
+                method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data),
             });
@@ -221,9 +214,8 @@
             if (!response.ok) {
                 let errorMessage = `Lỗi ${response.status}`;
                 try {
-                    const errorResult = await response.json();
-                    errorMessage = errorResult.error || JSON.stringify(errorResult);
-                } catch (e) { /* Bỏ qua nếu response không phải JSON */ }
+                    errorMessage = (await response.json()).error || errorMessage;
+                } catch (e) { /* Bỏ qua */ }
                 throw new Error(errorMessage);
             }
 
@@ -232,11 +224,24 @@
             window.location.href = '/product-list.html';
 
         } catch (error) {
-            console.error('Lỗi khi cập nhật:', error);
             alert('Có lỗi xảy ra: ' + error.message);
             submitButton.disabled = false;
             submitButton.textContent = 'Lưu Thay Đổi';
         }
+    });
+
+    // --- NHIỆM VỤ 3: MỞ CỬA SỔ UPLOAD POPUP ---
+    document.querySelectorAll('.popup-upload-btn').forEach(button => {
+        button.addEventListener('click', () => {
+            const targetId = button.dataset.target;
+            const url = `/upload.html?target=${targetId}`;
+            const popupWidth = 800;
+            const popupHeight = 700;
+            const left = (screen.width / 2) - (popupWidth / 2);
+            const top = (screen.height / 2) - (popupHeight / 2);
+
+            window.open(url, 'uploadWindow', `width=${popupWidth},height=${popupHeight},top=${top},left=${left},scrollbars=yes`);
+        });
     });
     </script>
 </body>
