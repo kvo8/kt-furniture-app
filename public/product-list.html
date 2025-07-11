@@ -48,6 +48,7 @@
         .review-author { font-weight: bold; }
         .review-rating { color: #f9ca24; }
         
+        /* CSS cho mục Hoạt động gần đây (activity log) */
         .activity-log {
             margin-top: 30px; padding: 20px; background-color: #fff;
             border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
@@ -67,13 +68,8 @@
             <a href="/new-product.html">Thêm Sản phẩm Mới</a>
             <a href="/employee-info.html">Quản Lý Nhân Viên</a>
         </div>
-        <input type="text" id="search-input" placeholder="Tìm kiếm theo Mã SP, Tên SP, Người tạo..." style="padding: 10px; font-size: 16px; border-radius: 5px; border: 1px solid #ccc; width: 300px;">
+        <input type="text" id="search-input" placeholder="Tìm kiếm..." style="padding: 10px; font-size: 16px; border-radius: 5px; border: 1px solid #ccc;">
     </div>
-
-    <table>
-        <thead><tr><th>STT</th><th>Mã SP</th><th>Tên Sản phẩm (VI)</th><th>Người tạo</th><th>Ngày tạo</th><th>Hành động / Actions</th></tr></thead>
-        <tbody id="product-table-body"></tbody>
-    </table>
     
     <div class="activity-log">
         <h2>Hoạt động gần đây</h2>
@@ -81,6 +77,11 @@
             <li>Đang tải...</li>
         </ul>
     </div>
+
+    <table>
+        <thead><tr><th>STT</th><th>Mã SP</th><th>Tên Sản phẩm (VI)</th><th>Người tạo</th><th>Ngày tạo</th><th>Hành động / Actions</th></tr></thead>
+        <tbody id="product-table-body"></tbody>
+    </table>
 
     <div id="reviewsModal" class="modal">
         <div class="modal-content">
@@ -91,14 +92,13 @@
             <div id="reviewsList"></div>
         </div>
     </div>
-
     <script>
     /**
      * @file product-list.html
      * @description Script để tải, hiển thị, tìm kiếm, xóa sản phẩm, xem đánh giá và xem hoạt động.
      */
 
-    // Biến toàn cục để lưu trữ danh sách sản phẩm, giúp việc tìm kiếm nhanh hơn
+    // Biến toàn cục để lưu trữ danh sách sản phẩm
     let allProducts = [];
 
     /**
@@ -111,8 +111,8 @@
         if (products && products.length > 0) {
             products.forEach((product, index) => {
                 const row = document.createElement('tr');
-                row.dataset.productId = product.id; // Thêm data-id để tham chiếu
                 
+                // GHI CHÚ: Thêm nút "Xem Barcode" vào cột hành động
                 row.innerHTML = `
                     <td>${index + 1}</td>
                     <td>${product.id || 'N/A'}</td>
@@ -128,6 +128,7 @@
                         <button class="delete-btn" data-id="${product.id}">Xóa</button>
                     </td>
                 `;
+
                 tableBody.appendChild(row);
             });
         } else {
@@ -142,7 +143,6 @@
         fetch('/api/products')
             .then(response => {
                 if (!response.ok) {
-                    if(response.status === 401) window.location.href = '/index.html';
                     throw new Error(`Lỗi khi tải dữ liệu: ${response.status}`);
                 }
                 return response.json();
@@ -162,7 +162,6 @@
      */
     async function loadActivityLog() {
         const list = document.getElementById('activity-list');
-        list.innerHTML = '<li>Đang tải...</li>'; // Reset trạng thái
         try {
             const response = await fetch('/api/activity-log');
             if (!response.ok) throw new Error('Không thể tải dữ liệu hoạt động.');
@@ -184,7 +183,7 @@
                 list.innerHTML = '<li>Không có hoạt động nào gần đây.</li>';
             }
         } catch (error) {
-            list.innerHTML = `<li style="color: red;">Lỗi: ${error.message}</li>`;
+            list.innerHTML = `<li>Lỗi: ${error.message}</li>`;
         }
     }
 
@@ -192,11 +191,7 @@
      * Xử lý sự kiện tìm kiếm sản phẩm
      */
     document.getElementById('search-input').addEventListener('input', e => {
-        const searchTerm = e.target.value.toLowerCase().trim();
-        if (!searchTerm) {
-            renderProducts(allProducts); // Hiển thị lại tất cả nếu ô tìm kiếm trống
-            return;
-        }
+        const searchTerm = e.target.value.toLowerCase();
         const filtered = allProducts.filter(p => 
             (p.id && p.id.toLowerCase().includes(searchTerm)) || 
             (p.name_vi && p.name_vi.toLowerCase().includes(searchTerm)) || 
@@ -210,18 +205,15 @@
      */
     document.getElementById('product-table-body').addEventListener('click', e => {
         const target = e.target;
-        const targetIsDeleteButton = target && target.classList.contains('delete-btn');
-        const targetIsReviewsButton = target && target.classList.contains('reviews-btn');
 
-        if (targetIsDeleteButton) {
+        if (target && target.classList.contains('delete-btn')) {
             const productId = target.dataset.id;
             if (confirm(`Bạn có chắc chắn muốn xóa sản phẩm có mã "${productId}" không?`)) {
                 fetch(`/api/products/${productId}`, { method: 'DELETE' })
                 .then(response => {
                     if (response.ok) {
                         alert('Xóa thành công!');
-                        loadProducts(); // Tải lại danh sách sau khi xóa
-                        loadActivityLog(); // Tải lại hoạt động (nếu có log xóa)
+                        loadProducts();
                     } else {
                         alert(`Xóa thất bại! Server báo lỗi: ${response.status}.`);
                     }
@@ -232,14 +224,15 @@
             }
         }
 
-        if (targetIsReviewsButton) {
+        if (target && target.classList.contains('reviews-btn')) {
             const productId = target.dataset.id;
             const productName = target.dataset.name;
             showReviews(productId, productName);
         }
     });
-    
+
     // --- CÁC HÀM XỬ LÝ MODAL ĐÁNH GIÁ ---
+
     const modal = document.getElementById('reviewsModal');
     const closeButton = document.querySelector('.close-button');
     const reviewsListDiv = document.getElementById('reviewsList');
@@ -292,15 +285,12 @@
     }
 
     /**
-     * Hàm khởi tạo chính của trang, gọi các hàm tải dữ liệu cần thiết.
+     * Hàm khởi tạo chính của trang
      */
-    functioninitializeApp() {
+    document.addEventListener('DOMContentLoaded', () => {
         loadProducts();
         loadActivityLog();
-    }
-
-    // Tải tất cả dữ liệu khi trang được mở
-    document.addEventListener('DOMContentLoaded', initializeApp);
+    });
 
     </script>
 </body>
