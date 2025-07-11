@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
-<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Thông Tin Chi Tiết Sản Phẩm</title>
@@ -22,105 +22,43 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.1); 
             margin-bottom: 25px; 
         }
+        /* GHI CHÚ: CSS mới cho thư viện ảnh Swiper */
         .swiper {
-    width: 100%;
-    max-width: 600px; /* Có thể điều chỉnh kích thước tối đa của khung ảnh */
-    height: 450px; /* Chiều cao của khung ảnh */
-    margin: 20px auto;
-    border-radius: 8px;
-}
-.swiper-slide {
-    text-align: center;
-    font-size: 18px;
-    background: #fff;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-.swiper-slide img {
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: contain; /* 'contain' để ảnh không bị cắt, 'cover' nếu muốn ảnh lấp đầy */
-}
-/* Style cho 2 nút mũi tên qua lại */
-.swiper-button-next, .swiper-button-prev {
-    color: #007bff; /* Màu của mũi tên */
-}
-        .gallery-image:hover {
-            transform: scale(1.05);
-            border-color: #007bff;
+            width: 100%;
+            max-width: 600px;
+            height: 450px;
+            margin: 20px auto;
+            border-radius: 8px;
+            background: #f1f1f1;
         }
-        .internal-file-list {
-            list-style-type: none;
-            padding-left: 0;
-            margin-top: 10px;
-        }
-        .internal-file-list li {
-            background-color: #f8f9fa;
-            border: 1px solid #dee2e6;
-            padding: 12px 15px;
-            margin-bottom: 8px;
-            border-radius: 5px;
-        }
-        .internal-file-list a {
-            font-weight: 500;
-            text-decoration: none;
-            color: #007bff;
-            word-break: break-all;
-        }
-        .internal-file-list a:hover {
-            text-decoration: underline;
-        }
-        .product-image { 
-            width: 100%; 
-            max-width: 400px;
-            display: block;
-            margin: 0 auto 20px;
-            border-radius: 8px; 
-        }
-        h1, h2 { 
-            color: #333; 
-            border-bottom: 2px solid #eee; 
-            padding-bottom: 10px; 
-        }
-        h4 { 
-            margin-top: 20px; 
-            margin-bottom: 5px; 
-            color: #444; 
-        }
-        .header-container {
+        .swiper-slide {
+            text-align: center;
+            font-size: 18px;
+            background: #fff;
             display: flex;
-            justify-content: space-between;
+            justify-content: center;
             align-items: center;
-            flex-wrap: wrap;
-            gap: 15px;
         }
-        .details-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 15px;
+        .swiper-slide img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
         }
-        @media (min-width: 768px) {
-            .details-grid {
-                grid-template-columns: 1fr 1fr;
-                gap: 15px 25px;
-            }
+        .swiper-button-next, .swiper-button-prev {
+            color: #007bff;
         }
-        .details-grid p { 
-            font-size: 17px; 
-            line-height: 1.6; 
-            color: #555; 
-            border-bottom: 1px solid #f0f0f0;
-            padding-bottom: 8px;
-            margin: 0;
-            word-break: break-word;
-        }
-        strong { 
-            color: #000; 
-            min-width: 150px; 
-            display: inline-block;
-        }
+        .internal-file-list { list-style-type: none; padding-left: 0; margin-top: 10px; }
+        .internal-file-list li { background-color: #f8f9fa; border: 1px solid #dee2e6; padding: 12px 15px; margin-bottom: 8px; border-radius: 5px; }
+        .internal-file-list a { font-weight: 500; text-decoration: none; color: #007bff; word-break: break-all; }
+        .internal-file-list a:hover { text-decoration: underline; }
+        h1, h2 { color: #333; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        h4 { margin-top: 20px; margin-bottom: 5px; color: #444; }
+        .header-container { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
+        .details-grid { display: grid; grid-template-columns: 1fr; gap: 15px; }
+        @media (min-width: 768px) { .details-grid { grid-template-columns: 1fr 1fr; gap: 15px 25px; } }
+        .details-grid p { font-size: 17px; line-height: 1.6; color: #555; border-bottom: 1px solid #f0f0f0; padding-bottom: 8px; margin: 0; word-break: break-word; }
+        strong { color: #000; min-width: 150px; display: inline-block; }
         #qrcode-container { text-align: center; padding: 20px; }
         #qrcode-image { border: 1px solid #ccc; padding: 10px; display: inline-block; }
         .review { border-top: 1px solid #eee; padding: 15px 0; }
@@ -133,23 +71,8 @@
         .lang-switcher { text-align: right; }
         .lang-switcher button { padding: 8px 12px; border: 1px solid #333; background-color: white; cursor: pointer; border-radius: 5px; margin-left: 5px; }
         .lang-switcher button.active { background-color: #333; color: white; }
-        #internal-details-section { 
-            display: none;
-            border-top: 2px dashed #007bff; 
-            margin-top: 20px; 
-            padding-top: 20px; 
-        }
-        #view-internal-btn { 
-            font-size: 16px; 
-            padding: 12px 20px; 
-            background-color: #007bff; 
-            color: white; 
-            border: none; 
-            border-radius: 5px; 
-            cursor: pointer; 
-            display: block; 
-            margin: 20px auto; 
-        }
+        #internal-details-section { display: none; border-top: 2px dashed #007bff; margin-top: 20px; padding-top: 20px; }
+        #view-internal-btn { font-size: 16px; padding: 12px 20px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; display: block; margin: 20px auto; }
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 1000; }
         .modal-content { background: white; padding: 30px; border-radius: 8px; width: 90%; max-width: 400px; text-align: center; }
         .modal-content form { display: flex; flex-direction: column; gap: 15px; }
@@ -162,9 +85,7 @@
     <div id="main-content" style="visibility: hidden;">
         <div id="product-details" class="container"></div>
         <div id="internal-details-container" class="container">
-            <div id="view-internal-btn-container">
-                <button id="view-internal-btn">Sign In to Unlock / Đăng Nhập để Xem Chi Tiết Nội Bộ</button>
-            </div>
+            <div id="view-internal-btn-container"><button id="view-internal-btn">Đăng Nhập để Xem Chi Tiết Nội Bộ</button></div>
             <div id="internal-details-section">
                 <h2 id="internal-title">Chi tiết Nội bộ</h2>
                 <div id="internal-content"></div>
@@ -180,7 +101,12 @@
             <hr>
             <div class="review-form">
                 <h3 id="form-title">Để lại đánh giá của bạn</h3>
-                <form id="review-form"><input type="text" name="author_name" placeholder="Tên của bạn (bắt buộc)" required><select name="rating" required><option value="">-- Chọn số sao --</option><option value="5">⭐⭐⭐⭐⭐</option><option value="4">⭐⭐⭐⭐</option><option value="3">⭐⭐⭐</option><option value="2">⭐⭐</option><option value="1">⭐</option></select><textarea name="comment" rows="4" placeholder="Viết bình luận của bạn..."></textarea><button type="submit" id="submit-review-btn">Gửi Đánh Giá</button></form>
+                <form id="review-form">
+                    <input type="text" name="author_name" placeholder="Tên của bạn (bắt buộc)" required>
+                    <select name="rating" required><option value="">-- Chọn số sao --</option><option value="5">⭐⭐⭐⭐⭐</option><option value="4">⭐⭐⭐⭐</option><option value="3">⭐⭐⭐</option><option value="2">⭐⭐</option><option value="1">⭐</option></select>
+                    <textarea name="comment" rows="4" placeholder="Viết bình luận của bạn..."></textarea>
+                    <button type="submit" id="submit-review-btn">Gửi Đánh Giá</button>
+                </form>
             </div>
         </div>
     </div>
@@ -189,19 +115,16 @@
     <div id="login-modal" class="modal-overlay"><div class="modal-content"><h2>Đăng Nhập</h2><form id="internal-login-form"><input type="text" name="ma_nhan_vien" placeholder="Mã Nhân Viên / Employee ID" required><input type="password" name="password" placeholder="Mật khẩu / Password" required><button type="submit">Đăng Nhập</button><button type="button" id="close-modal-btn">Đóng</button></form></div></div>
 
     <script>
-    // --- KHAI BÁO BIẾN TOÀN CỤC VÀ CÁC HẰNG SỐ ---
     let fullProductData = null;
     let currentLang = 'vi';
-    
     const urlParams = new URLSearchParams(window.location.search);
     const productId = urlParams.get('id');
 
-    // GHI CHÚ: Cập nhật object labels với các nhãn mới cho kích thước
     const labels = {
         vi: {
             productName: "Tên sản phẩm", productCode: 'Mã sản phẩm', company: 'Công ty', collection: 'Bộ sưu tập', color: 'Màu sắc',
             material: 'Chất liệu', spec: 'Thông số', profile: 'Biên dạng nhôm', customer: 'Khách hàng',
-             qrTitle: 'Mã QR của sản phẩm', reviewsTitle: 'Đánh giá của khách hàng',
+            qrTitle: 'Mã QR của sản phẩm', reviewsTitle: 'Đánh giá của khách hàng',
             formTitle: 'Để lại đánh giá của bạn', submitReview: 'Gửi Đánh Giá', submitReviewSending: 'Đang gửi...',
             internalTitle: 'Chi tiết Nội bộ', supplier: 'Nhà cung cấp', drawing: 'Bản vẽ', materials: 'Vật tư',
             fabric: 'Vải', wicker: 'Dây', productionPlace: 'Nơi sản xuất', otherDetails: 'Chi tiết khác',
@@ -213,7 +136,7 @@
         en: {
             productName: "Product Name", productCode: 'Product ID', company: 'Company', collection: 'Collection', color: 'Color',
             material: 'Material', spec: 'Specification', profile: 'Aluminum Profile', customer: 'Customer',
-             qrTitle: 'Product QR Code', reviewsTitle: 'Customer Reviews',
+            qrTitle: 'Product QR Code', reviewsTitle: 'Customer Reviews',
             formTitle: 'Leave Your Review', submitReview: 'Submit Review', submitReviewSending: 'Submitting...',
             internalTitle: 'Internal Details', supplier: 'Supplier', drawing: 'Drawing', materials: 'Materials',
             fabric: 'Fabric', wicker: 'Wicker', productionPlace: 'Production Place', otherDetails: 'Other Details',
@@ -226,6 +149,7 @@
 
     /**
      * Hàm render phần thông tin công khai của sản phẩm.
+     * Sẽ được gọi lại mỗi khi đổi ngôn ngữ để cập nhật nội dung.
      */
     function renderPublicPage() {
         if (!fullProductData) return;
@@ -234,16 +158,14 @@
 
         const detailsDiv = document.getElementById('product-details');
         
-        // GHI CHÚ: Đoạn code này tạo ra cấu trúc HTML mới cho thư viện ảnh Swiper
+        // Tạo cấu trúc HTML cho thư viện ảnh Swiper
         let imageHTML = '';
         if (Array.isArray(fullProductData.imageUrls) && fullProductData.imageUrls.length > 0) {
             imageHTML = `
                 <div class="swiper">
                     <div class="swiper-wrapper">
                         ${fullProductData.imageUrls.map(url => `
-                            <div class="swiper-slide">
-                                <img src="${url}" alt="Ảnh sản phẩm">
-                            </div>
+                            <div class="swiper-slide"><img src="${url}" alt="Ảnh sản phẩm"></div>
                         `).join('')}
                     </div>
                     <div class="swiper-button-next"></div>
@@ -254,12 +176,12 @@
             imageHTML = `<p>${l.noImage}</p>`;
         }
         
-        // GHI CHÚ: Hàm tiện ích để định dạng kích thước (Dài x Rộng x Cao)
         const formatDimensions = (length, width, height) => {
             const dims = [length, width, height].filter(d => d != null && d !== '').join(' x ');
             return dims ? `${dims} cm` : 'N/A';
         };
 
+        // Ghi chú: Đã xóa dòng "Người tạo" trong phiên bản trước
         detailsDiv.innerHTML = `
             <div class="header-container">
                 <h1>${fullProductData[`name_${currentLang}`] || 'N/A'}</h1>
@@ -278,7 +200,7 @@
                 <p><strong>${l.color}:</strong> ${fullProductData[`color_${currentLang}`] || 'N/A'}</p>
                 <p><strong>${l.material}:</strong> ${fullProductData[`material_${currentLang}`] || 'N/A'}</p>
                 <p><strong>${l.fabric}:</strong> ${fullProductData[`fabric_${currentLang}`] || 'N/A'}</p>
-                 <p><strong>${l.wicker}:</strong> ${fullProductData[`wicker_${currentLang}`] || 'N/A'}</p>
+                <p><strong>${l.wicker}:</strong> ${fullProductData[`wicker_${currentLang}`] || 'N/A'}</p>
                 <p><strong>${l.productionPlace}:</strong> ${fullProductData.production_place || 'N/A'}</p>
                 <p><strong>${l.customer}:</strong> ${fullProductData.customer || 'N/A'}</p>
                 <p><strong>${l.otherDetails}:</strong> ${fullProductData.other_details || 'N/A'}</p>
@@ -286,47 +208,43 @@
         `;
         document.getElementById('btn-vi').addEventListener('click', () => switchLanguage('vi'));
         document.getElementById('btn-en').addEventListener('click', () => switchLanguage('en'));
+
+        // GHI CHÚ QUAN TRỌNG: Di chuyển code khởi tạo Swiper vào đúng vị trí này.
+        // Nó phải được chạy SAU KHI cấu trúc HTML của swiper đã được chèn vào trang.
+        if (Array.isArray(fullProductData.imageUrls) && fullProductData.imageUrls.length > 0) {
+            new Swiper('.swiper', {
+                loop: true,
+                navigation: {
+                    nextEl: '.swiper-button-next',
+                    prevEl: '.swiper-button-prev',
+                },
+            });
+        }
     }
-    // GHI CHÚ: Khởi tạo Swiper sau khi đã render HTML
-        new Swiper('.swiper', {
-            // Các tùy chọn
-            loop: true, // Cho phép lặp lại vô tận
-            navigation: {
-                nextEl: '.swiper-button-next',
-                prevEl: '.swiper-button-prev',
-            },
-        });
+    
     /**
-     * Hàm render phần thông tin nội bộ (bản vẽ, vật tư) sau khi đăng nhập.
-     * @param {boolean} isRerender - Cờ xác định có phải là render lại do đổi ngôn ngữ không.
+     * Hàm render phần thông tin nội bộ (yêu cầu đăng nhập).
      */
     function showInternalInfo(isRerender = false) {
         if (!fullProductData) return;
         const internalSection = document.getElementById('internal-details-section');
-        if (isRerender && internalSection.style.display !== 'block') {
-            return;
-        }
+        if (isRerender && internalSection.style.display !== 'block') return;
 
         const internalDiv = document.getElementById('internal-content');
         const l = labels[currentLang];
         
         let internalHTML = `<div class="details-grid"><p><strong>${l.supplier}:</strong> ${fullProductData.supplier || 'N/A'}</p></div>`;
         
-        // GHI CHÚ: Hàm render danh sách file đã được nâng cấp để hiển thị thông báo nếu không có file.
         const renderFileList = (urls, label) => {
             let listContent = '';
             if (Array.isArray(urls) && urls.length > 0) {
-                listContent = `<ul class="internal-file-list">${urls.map(file => 
-                    `<li><a href="${file.url}" target="_blank" rel="noopener noreferrer">${file.name || file.url.split('/').pop()}</a></li>`
-                ).join('')}</ul>`;
+                listContent = `<ul class="internal-file-list">${urls.map(file => `<li><a href="${file.url}" target="_blank" rel="noopener noreferrer">${file.name || file.url.split('/').pop()}</a></li>`).join('')}</ul>`;
             } else {
-                // Hiển thị thông báo nếu mảng rỗng hoặc không tồn tại
-                listContent = `<p><em>(${l.noFile})</em></p>`; 
+                listContent = `<p><em>(${l.noFile})</em></p>`;
             }
             return `<div><h4>${label}</h4>${listContent}</div>`;
         };
-        
-        // Sử dụng hàm render mới để đảm bảo luôn có phản hồi cho người dùng
+
         internalHTML += renderFileList(fullProductData.drawingUrls, l.drawing);
         internalHTML += renderFileList(fullProductData.materialsUrls, l.materials);
         
@@ -336,7 +254,7 @@
     }
 
     /**
-     * Hàm render danh sách đánh giá từ khách hàng.
+     * Hàm render danh sách các đánh giá của khách hàng.
      */
     function renderReviews(reviews) {
         const reviewListDiv = document.getElementById('review-list');
@@ -348,18 +266,13 @@
         reviews.forEach(review => {
             const reviewDiv = document.createElement('div');
             reviewDiv.className = 'review';
-            reviewDiv.innerHTML = `
-                <p class="review-author">${review.author_name || 'Anonymous'}</p>
-                <p class="review-rating"><span>${'⭐'.repeat(review.rating)}${'☆'.repeat(5 - review.rating)}</span></p>
-                <p>${review.comment || ''}</p>
-                <small>${new Date(review.created_at).toLocaleString(currentLang === 'vi' ? 'vi-VN' : 'en-US')}</small>
-            `;
+            reviewDiv.innerHTML = `<p class="review-author">${review.author_name || 'Anonymous'}</p><p class="review-rating"><span>${'⭐'.repeat(review.rating)}${'☆'.repeat(5 - review.rating)}</span></p><p>${review.comment || ''}</p><small>${new Date(review.created_at).toLocaleString(currentLang === 'vi' ? 'vi-VN' : 'en-US')}</small>`;
             reviewListDiv.appendChild(reviewDiv);
         });
     }
 
     /**
-     * Hàm cập nhật tất cả các nhãn trên trang theo ngôn ngữ hiện tại.
+     * Hàm cập nhật các nhãn tĩnh trên trang khi đổi ngôn ngữ.
      */
     function updateAllLabels() {
         const l = labels[currentLang];
@@ -372,7 +285,7 @@
     }
 
     /**
-     * Hàm chuyển đổi ngôn ngữ và render lại toàn bộ trang.
+     * Hàm xử lý logic chuyển đổi ngôn ngữ.
      */
     function switchLanguage(lang) {
         currentLang = lang;
@@ -419,17 +332,13 @@
             updateAllLabels();
             generateQRCode(productId);
             
-            // Tải reviews và kiểm tra đăng nhập song song để tăng tốc
             await Promise.all([
                 fetchReviews(),
-                fetch('/api/me').then(res => {
-                    if (res.ok) showInternalInfo();
-                })
+                fetch('/api/me').then(res => { if (res.ok) showInternalInfo(); })
             ]);
 
             loadingContainer.style.display = 'none';
             mainContent.style.visibility = 'visible';
-
         } catch (error) {
             console.error("Lỗi khi tải trang:", error);
             loadingContainer.innerHTML = `<h1>${labels[currentLang].errorLoading}</h1><p>${error.message}</p>`;
@@ -437,7 +346,7 @@
     }
 
     /**
-     * Tạo mã QR Code cho sản phẩm.
+     * Hàm tạo mã QR Code cho sản phẩm.
      */
     function generateQRCode(pId) {
         const publicUrl = `${window.location.origin}/product-view.html?id=${pId}`;
@@ -448,17 +357,15 @@
     }
     
     /**
-     * Gắn các sự kiện cho các form và nút bấm trên trang.
+     * Hàm gắn các sự kiện cho các form và nút bấm trên trang.
      */
     function setupEventListeners() {
         document.getElementById('view-internal-btn').addEventListener('click', () => {
             document.getElementById('login-modal').style.display = 'flex';
         });
-
         document.getElementById('close-modal-btn').addEventListener('click', () => {
             document.getElementById('login-modal').style.display = 'none';
         });
-
         document.getElementById('internal-login-form').addEventListener('submit', async function(event) {
             event.preventDefault();
             const data = Object.fromEntries(new FormData(this).entries());
@@ -478,12 +385,10 @@
                 alert(`${labels[currentLang].loginFailed}: ${error.message}`);
             }
         });
-
         document.getElementById('review-form').addEventListener('submit', async function(event) {
             event.preventDefault();
             const submitBtn = document.getElementById('submit-review-btn');
             const l = labels[currentLang];
-            
             submitBtn.disabled = true;
             submitBtn.textContent = l.submitReviewSending;
             
@@ -503,7 +408,6 @@
                 });
                 const result = await response.json();
                 if (!response.ok) throw new Error(result.error || 'Đã xảy ra lỗi.');
-                
                 alert(result.message);
                 this.reset();
                 fetchReviews();
@@ -521,7 +425,6 @@
         initializePage();
         setupEventListeners();
     });
-
     </script>
 </body>
 </html>
