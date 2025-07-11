@@ -20,80 +20,44 @@
         .nav-links { margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #ccc; display: flex; justify-content: space-between; align-items: center; }
         .nav-links a { margin-right: 20px; font-size: 18px; color: #007bff; text-decoration: none; font-weight: 500; }
 
-        /* === ▼▼▼ CSS CHO NÚT VÀ CỬA SỔ POPUP ĐÁNH GIÁ ▼▼▼ === */
-        .reviews-btn { background-color: #6f42c1; } /* Màu tím cho nút xem đánh giá */
-
-        /* GHI CHÚ: Bổ sung CSS cho nút Barcode mới */
-        .barcode-btn { background-color: #343a40; } /* Màu đen/xám đậm */
+        /* === CSS CHO CÁC TÍNH NĂNG MỚI === */
+        .reviews-btn { background-color: #6f42c1; } 
+        .barcode-btn { background-color: #343a40; } 
 
         .modal {
-            display: none; 
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0,0,0,0.6);
+            display: none; position: fixed; z-index: 1000;
+            left: 0; top: 0; width: 100%; height: 100%;
+            overflow: auto; background-color: rgba(0,0,0,0.6);
         }
         .modal-content {
-            background-color: #fefefe;
-            margin: 10% auto;
-            padding: 20px;
-            border: 1px solid #888;
-            width: 60%;
-            max-width: 700px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+            background-color: #fefefe; margin: 10% auto; padding: 20px;
+            border: 1px solid #888; width: 60%; max-width: 700px;
+            border-radius: 8px; box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
         }
         .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #dee2e6;
-            padding-bottom: 1rem;
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid #dee2e6; padding-bottom: 1rem;
         }
-        .modal-header h2 {
-            margin: 0;
-            border-bottom: none;
-            padding-bottom: 0;
-            font-size: 1.5rem;
+        .modal-header h2 { margin: 0; border-bottom: none; padding-bottom: 0; font-size: 1.5rem; }
+        .close-button { color: #aaa; font-size: 28px; font-weight: bold; cursor: pointer; }
+        .close-button:hover, .close-button:focus { color: black; text-decoration: none; }
+        #reviewsList { margin-top: 15px; max-height: 400px; overflow-y: auto; }
+        .review-item { border-bottom: 1px solid #eee; padding: 10px 0; }
+        .review-item:last-child { border-bottom: none; }
+        .review-item p { margin: 5px 0; }
+        .review-author { font-weight: bold; }
+        .review-rating { color: #f9ca24; }
+        
+        /* CSS cho mục Hoạt động gần đây (activity log) */
+        .activity-log {
+            margin-top: 30px; padding: 20px; background-color: #fff;
+            border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
-        .close-button {
-            color: #aaa;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        .close-button:hover,
-        .close-button:focus {
-            color: black;
-            text-decoration: none;
-        }
-        #reviewsList {
-            margin-top: 15px;
-            max-height: 400px; 
-            overflow-y: auto;
-        }
-        .review-item {
-            border-bottom: 1px solid #eee;
-            padding: 10px 0;
-        }
-        .review-item:last-child {
-            border-bottom: none;
-        }
-        .review-item p {
-            margin: 5px 0;
-        }
-        .review-author {
-            font-weight: bold;
-        }
-        .review-rating {
-            color: #f9ca24; 
-        }
-        /* === ▲▲▲ KẾT THÚC CSS MỚI ▲▲▲ === */
-
+        .activity-log h2 { margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .activity-list { list-style: none; padding: 0; max-height: 300px; overflow-y: auto; }
+        .activity-item { padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
+        .activity-item:last-child { border-bottom: none; }
+        .activity-item small { color: #6c757d; }
     </style>
 </head>
 <body>
@@ -102,9 +66,18 @@
         <div>
             <a href="/dashboard.html">Về Dashboard</a>
             <a href="/new-product.html">Thêm Sản phẩm Mới</a>
+            <a href="/employee-info.html">Quản Lý Nhân Viên</a>
         </div>
         <input type="text" id="search-input" placeholder="Tìm kiếm..." style="padding: 10px; font-size: 16px; border-radius: 5px; border: 1px solid #ccc;">
     </div>
+    
+    <div class="activity-log">
+        <h2>Hoạt động gần đây</h2>
+        <ul id="activity-list">
+            <li>Đang tải...</li>
+        </ul>
+    </div>
+
     <table>
         <thead><tr><th>STT</th><th>Mã SP</th><th>Tên Sản phẩm (VI)</th><th>Người tạo</th><th>Ngày tạo</th><th>Hành động / Actions</th></tr></thead>
         <tbody id="product-table-body"></tbody>
@@ -116,13 +89,22 @@
                 <h2>Đánh giá cho sản phẩm: <span id="modalProductName"></span></h2>
                 <span class="close-button">&times;</span>
             </div>
-            <div id="reviewsList">
-            </div>
+            <div id="reviewsList"></div>
         </div>
     </div>
     <script>
+    /**
+     * @file product-list.html
+     * @description Script để tải, hiển thị, tìm kiếm, xóa sản phẩm, xem đánh giá và xem hoạt động.
+     */
+
+    // Biến toàn cục để lưu trữ danh sách sản phẩm
     let allProducts = [];
 
+    /**
+     * Render danh sách sản phẩm ra bảng
+     * @param {Array<Object>} products - Mảng các đối tượng sản phẩm cần hiển thị
+     */
     function renderProducts(products) {
         const tableBody = document.getElementById('product-table-body');
         tableBody.innerHTML = '';
@@ -154,6 +136,9 @@
         }
     }
 
+    /**
+     * Tải danh sách sản phẩm từ API server
+     */
     function loadProducts() {
         fetch('/api/products')
             .then(response => {
@@ -168,11 +153,43 @@
             })
             .catch(error => {
                 console.error('Chi tiết lỗi tải sản phẩm:', error);
-                const tableBody = document.getElementById('product-table-body');
-                tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; color: red;">Không thể tải danh sách sản phẩm. Vui lòng kiểm tra lại server.</td></tr>`;
+                document.getElementById('product-table-body').innerHTML = `<tr><td colspan="6" style="text-align:center; color: red;">Không thể tải danh sách sản phẩm.</td></tr>`;
             });
     }
 
+    /**
+     * Tải và hiển thị nhật ký hoạt động
+     */
+    async function loadActivityLog() {
+        const list = document.getElementById('activity-list');
+        try {
+            const response = await fetch('/api/activity-log');
+            if (!response.ok) throw new Error('Không thể tải dữ liệu hoạt động.');
+            
+            const data = await response.json();
+            list.innerHTML = ''; 
+
+            if (data.activities && data.activities.length > 0) {
+                data.activities.forEach(act => {
+                    const item = document.createElement('li');
+                    item.className = 'activity-item';
+                    item.innerHTML = `
+                        <p>${act.details}</p>
+                        <small>Bởi: <strong>${act.user_name}</strong> - lúc ${new Date(act.created_at).toLocaleString('vi-VN')}</small>
+                    `;
+                    list.appendChild(item);
+                });
+            } else {
+                list.innerHTML = '<li>Không có hoạt động nào gần đây.</li>';
+            }
+        } catch (error) {
+            list.innerHTML = `<li>Lỗi: ${error.message}</li>`;
+        }
+    }
+
+    /**
+     * Xử lý sự kiện tìm kiếm sản phẩm
+     */
     document.getElementById('search-input').addEventListener('input', e => {
         const searchTerm = e.target.value.toLowerCase();
         const filtered = allProducts.filter(p => 
@@ -183,10 +200,12 @@
         renderProducts(filtered);
     });
 
+    /**
+     * Xử lý các sự kiện click trên bảng (xóa, xem đánh giá)
+     */
     document.getElementById('product-table-body').addEventListener('click', e => {
         const target = e.target;
 
-        // Xử lý nút Xóa
         if (target && target.classList.contains('delete-btn')) {
             const productId = target.dataset.id;
             if (confirm(`Bạn có chắc chắn muốn xóa sản phẩm có mã "${productId}" không?`)) {
@@ -197,17 +216,14 @@
                         loadProducts();
                     } else {
                         alert(`Xóa thất bại! Server báo lỗi: ${response.status}.`);
-                        console.error('Server-side error on delete:', response);
                     }
                 })
                 .catch(error => {
-                    console.error('Network error on delete:', error);
                     alert('Lỗi mạng! Không thể gửi yêu cầu xóa.');
                 });
             }
         }
 
-        // Xử lý nút "Xem Đ.giá"
         if (target && target.classList.contains('reviews-btn')) {
             const productId = target.dataset.id;
             const productName = target.dataset.name;
@@ -215,11 +231,7 @@
         }
     });
 
-    // Tải danh sách sản phẩm lần đầu khi trang được mở
-    document.addEventListener('DOMContentLoaded', loadProducts);
-
-
-    // === CÁC HÀM ĐỂ XỬ LÝ MODAL ĐÁNH GIÁ (GIỮ NGUYÊN) ===
+    // --- CÁC HÀM XỬ LÝ MODAL ĐÁNH GIÁ ---
 
     const modal = document.getElementById('reviewsModal');
     const closeButton = document.querySelector('.close-button');
@@ -229,6 +241,7 @@
     function closeModal() {
         modal.style.display = 'none';
     }
+    
     closeButton.onclick = closeModal;
     window.onclick = (event) => {
         if (event.target == modal) {
@@ -270,6 +283,15 @@
             reviewsListDiv.innerHTML = '<p style="color: red;">Không thể tải danh sách đánh giá. Vui lòng thử lại.</p>';
         }
     }
-</script>
+
+    /**
+     * Hàm khởi tạo chính của trang
+     */
+    document.addEventListener('DOMContentLoaded', () => {
+        loadProducts();
+        loadActivityLog();
+    });
+
+    </script>
 </body>
 </html>
