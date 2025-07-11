@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Thông Tin Chi Tiết Sản Phẩm</title>
@@ -20,23 +22,31 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.1); 
             margin-bottom: 25px; 
         }
-        .image-gallery {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin: 20px 0;
-            padding: 10px;
-            background-color: #f9f9f9;
-            border-radius: 8px;
-        }
-        .gallery-image {
-            width: 180px;
-            height: 180px;
-            object-fit: cover;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            transition: transform 0.2s ease-in-out, border-color 0.2s;
-        }
+        .swiper {
+    width: 100%;
+    max-width: 600px; /* Có thể điều chỉnh kích thước tối đa của khung ảnh */
+    height: 450px; /* Chiều cao của khung ảnh */
+    margin: 20px auto;
+    border-radius: 8px;
+}
+.swiper-slide {
+    text-align: center;
+    font-size: 18px;
+    background: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.swiper-slide img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain; /* 'contain' để ảnh không bị cắt, 'cover' nếu muốn ảnh lấp đầy */
+}
+/* Style cho 2 nút mũi tên qua lại */
+.swiper-button-next, .swiper-button-prev {
+    color: #007bff; /* Màu của mũi tên */
+}
         .gallery-image:hover {
             transform: scale(1.05);
             border-color: #007bff;
@@ -191,7 +201,7 @@
         vi: {
             productName: "Tên sản phẩm", productCode: 'Mã sản phẩm', company: 'Công ty', collection: 'Bộ sưu tập', color: 'Màu sắc',
             material: 'Chất liệu', spec: 'Thông số', profile: 'Biên dạng nhôm', customer: 'Khách hàng',
-            creator: 'Người tạo', qrTitle: 'Mã QR của sản phẩm', reviewsTitle: 'Đánh giá của khách hàng',
+             qrTitle: 'Mã QR của sản phẩm', reviewsTitle: 'Đánh giá của khách hàng',
             formTitle: 'Để lại đánh giá của bạn', submitReview: 'Gửi Đánh Giá', submitReviewSending: 'Đang gửi...',
             internalTitle: 'Chi tiết Nội bộ', supplier: 'Nhà cung cấp', drawing: 'Bản vẽ', materials: 'Vật tư',
             fabric: 'Vải', wicker: 'Dây', productionPlace: 'Nơi sản xuất', otherDetails: 'Chi tiết khác',
@@ -203,7 +213,7 @@
         en: {
             productName: "Product Name", productCode: 'Product ID', company: 'Company', collection: 'Collection', color: 'Color',
             material: 'Material', spec: 'Specification', profile: 'Aluminum Profile', customer: 'Customer',
-            creator: 'Created By', qrTitle: 'Product QR Code', reviewsTitle: 'Customer Reviews',
+             qrTitle: 'Product QR Code', reviewsTitle: 'Customer Reviews',
             formTitle: 'Leave Your Review', submitReview: 'Submit Review', submitReviewSending: 'Submitting...',
             internalTitle: 'Internal Details', supplier: 'Supplier', drawing: 'Drawing', materials: 'Materials',
             fabric: 'Fabric', wicker: 'Wicker', productionPlace: 'Production Place', otherDetails: 'Other Details',
@@ -224,13 +234,22 @@
 
         const detailsDiv = document.getElementById('product-details');
         
+        // GHI CHÚ: Đoạn code này tạo ra cấu trúc HTML mới cho thư viện ảnh Swiper
         let imageHTML = '';
         if (Array.isArray(fullProductData.imageUrls) && fullProductData.imageUrls.length > 0) {
-            imageHTML = `<div class="image-gallery">${fullProductData.imageUrls.map(url => `
-                <a href="${url}" target="_blank" rel="noopener noreferrer">
-                    <img src="${url}" class="gallery-image" alt="Ảnh sản phẩm">
-                </a>`).join('')}
-            </div>`;
+            imageHTML = `
+                <div class="swiper">
+                    <div class="swiper-wrapper">
+                        ${fullProductData.imageUrls.map(url => `
+                            <div class="swiper-slide">
+                                <img src="${url}" alt="Ảnh sản phẩm">
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="swiper-button-next"></div>
+                    <div class="swiper-button-prev"></div>
+                </div>
+            `;
         } else {
             imageHTML = `<p>${l.noImage}</p>`;
         }
@@ -262,14 +281,21 @@
                  <p><strong>${l.wicker}:</strong> ${fullProductData[`wicker_${currentLang}`] || 'N/A'}</p>
                 <p><strong>${l.productionPlace}:</strong> ${fullProductData.production_place || 'N/A'}</p>
                 <p><strong>${l.customer}:</strong> ${fullProductData.customer || 'N/A'}</p>
-                <p><strong>${l.creator}:</strong> ${fullProductData.created_by_name || 'N/A'}</p>
                 <p><strong>${l.otherDetails}:</strong> ${fullProductData.other_details || 'N/A'}</p>
             </div>
         `;
         document.getElementById('btn-vi').addEventListener('click', () => switchLanguage('vi'));
         document.getElementById('btn-en').addEventListener('click', () => switchLanguage('en'));
     }
-    
+    // GHI CHÚ: Khởi tạo Swiper sau khi đã render HTML
+        new Swiper('.swiper', {
+            // Các tùy chọn
+            loop: true, // Cho phép lặp lại vô tận
+            navigation: {
+                nextEl: '.swiper-button-next',
+                prevEl: '.swiper-button-prev',
+            },
+        });
     /**
      * Hàm render phần thông tin nội bộ (bản vẽ, vật tư) sau khi đăng nhập.
      * @param {boolean} isRerender - Cờ xác định có phải là render lại do đổi ngôn ngữ không.
