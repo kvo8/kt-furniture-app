@@ -3,6 +3,7 @@
 <head>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Thông Tin Chi Tiết Sản Phẩm</title>
@@ -95,6 +96,16 @@
             <h2 id="qr-title">Mã QR của sản phẩm</h2>
             <div id="qrcode-container"></div>
         </div>
+        <div id="qr-code-section" class="container">
+        <h2 id="qr-title">Mã QR của sản phẩm</h2>
+        <div id="qrcode-container"></div>
+    </div>
+    <div id="barcode-section" class="container">
+        <h2>Mã Vạch (Barcode)</h2>
+        <div style="text-align: center;">
+            <svg id="barcode-display"></svg>
+        </div>
+    </div>
         <div id="reviews-section" class="container">
             <h2 id="reviews-title">Đánh giá của khách hàng</h2>
             <div id="review-list"></div>
@@ -334,6 +345,7 @@
             renderPublicPage();
             updateAllLabels();
             generateQRCode(productId);
+            generateBarcode(productId); 
             
             await Promise.all([
                 fetchReviews(),
@@ -358,7 +370,20 @@
         qr.make();
         document.getElementById('qrcode-container').innerHTML = qr.createImgTag(5, 8);
     }
-    
+    /**
+ * Hàm tạo và hiển thị mã vạch trên trang chi tiết
+ */
+function generateBarcode(pId) {
+    if(pId) {
+        JsBarcode("#barcode-display", pId, {
+            format: "CODE128",
+            lineColor: "#000",
+            width: 2,
+            height: 80,
+            displayValue: true
+        });
+    }
+}
     /**
      * Hàm gắn các sự kiện cho các form và nút bấm trên trang.
      */
