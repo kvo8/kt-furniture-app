@@ -22,6 +22,33 @@
             display: none;
             text-align: left;
         }
+        
+        /* GHI CHÚ: Bổ sung style cho các nút upload mới */
+        .form-group-with-button {
+            position: relative;
+        }
+        .form-group-with-button textarea {
+            /* Tạo không gian bên phải trong ô textarea để đặt nút bấm */
+            padding-right: 110px !important;
+        }
+        .popup-upload-btn {
+            position: absolute;
+            top: 50%;
+            right: 10px;
+            /* Dịch chuyển nút lên trên một chút để nó nằm giữa label và textarea */
+            transform: translateY(-25%); 
+            padding: 8px 12px;
+            background-color: #17a2b8; /* Đổi màu cho khác biệt */
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+        .popup-upload-btn:hover {
+             background-color: #138496;
+        }
     </style>
 </head>
 <body>
@@ -91,33 +118,35 @@
                     <div class="form-group"><label>Chiều dài (cm)</label><input type="number" step="0.01" name="length" placeholder="Ví dụ: 120.5"></div>
                     <div class="form-group"><label>Chiều rộng (cm)</label><input type="number" step="0.01" name="width" placeholder="Ví dụ: 80"></div>
                     <div class="form-group"><label>Chiều cao (cm)</label><input type="number" step="0.01" name="height" placeholder="Ví dụ: 75.2"></div>
-
                     <div class="form-group"><label>Chiều dài đóng gói (cm)</label><input type="number" step="0.01" name="packed_length"></div>
                     <div class="form-group"><label>Chiều rộng đóng gói (cm)</label><input type="number" step="0.01" name="packed_width"></div>
                     <div class="form-group"><label>Chiều cao đóng gói (cm)</label><input type="number" step="0.01" name="packed_height"></div>
-
                     <div class="form-group full-width">
                         <label>Các chi tiết khác</label>
                         <textarea name="other_details" rows="4" placeholder="Ghi chú thêm về sản phẩm..."></textarea>
                     </div>
                 </div>
             </div>
+
             <div class="form-section">
                 <h2>Tệp Đính Kèm</h2>
                 <p style="font-style: italic; margin-bottom: 15px;">
-                    Sử dụng <a href="/upload.html" target="_blank" rel="noopener noreferrer">Công cụ Upload</a> để tải file lên và dán danh sách link vào các ô dưới đây.
+                    Nhấn nút "Upload" bên cạnh mỗi ô để mở công cụ tải file. Các link sẽ tự động được điền vào.
                 </p>
-                <div class="form-group full-width">
-                    <label for="imageUrls">Danh sách URL Hình ảnh sản phẩm (mỗi link một dòng)</label>
-                    <textarea id="imageUrls" name="imageUrls" rows="5" placeholder="Dán danh sách link ảnh từ trang Upload vào đây..."></textarea>
+                <div class="form-group full-width form-group-with-button">
+                    <label for="imageUrls">Danh sách URL Hình ảnh sản phẩm</label>
+                    <textarea id="imageUrls" name="imageUrls" rows="5" placeholder="Các link ảnh sẽ tự động xuất hiện ở đây sau khi upload..."></textarea>
+                    <button type="button" class="popup-upload-btn" data-target="imageUrls">Upload Ảnh</button>
                 </div>
-                <div class="form-group full-width">
+                <div class="form-group full-width form-group-with-button">
                     <label for="drawingUrls">Danh sách URL Bản vẽ (PDF)</label>
-                    <textarea id="drawingUrls" name="drawingUrls" rows="5" placeholder="Dán danh sách link bản vẽ từ trang Upload vào đây..."></textarea>
+                    <textarea id="drawingUrls" name="drawingUrls" rows="5" placeholder="Các link bản vẽ sẽ tự động xuất hiện ở đây sau khi upload..."></textarea>
+                    <button type="button" class="popup-upload-btn" data-target="drawingUrls">Upload Bản Vẽ</button>
                 </div>
-                <div class="form-group full-width">
+                <div class="form-group full-width form-group-with-button">
                     <label for="materialsUrls">Danh sách URL Vật tư</label>
-                    <textarea id="materialsUrls" name="materialsUrls" rows="5" placeholder="Dán danh sách link vật tư từ trang Upload vào đây..."></textarea>
+                    <textarea id="materialsUrls" name="materialsUrls" rows="5" placeholder="Các link vật tư sẽ tự động xuất hiện ở đây sau khi upload..."></textarea>
+                    <button type="button" class="popup-upload-btn" data-target="materialsUrls">Upload Vật Tư</button>
                 </div>
             </div>
             
@@ -132,75 +161,89 @@
     </div>
 
     <script>
-    // GHI CHÚ: Phần script này đã được cập nhật lên phiên bản đầy đủ và mạnh mẽ nhất,
-    // có khả năng xử lý tất cả các trường trong form và xử lý lỗi tốt hơn.
-    const form = document.getElementById('product-form'); 
-    form.addEventListener('submit', async function(event) {
-        event.preventDefault();
-        const submitButton = document.getElementById('submit-button');
-        const isEditing = form.id === 'edit-form'; // Luôn là false ở trang này
+        // GHI CHÚ: Toàn bộ phần script này đã được làm đầy đủ hơn.
+        // Bao gồm cả logic submit form và logic mở cửa sổ upload mới.
+        
+        // --- LOGIC 1: XỬ LÝ SUBMIT FORM ---
+        const form = document.getElementById('product-form'); 
+        form.addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const submitButton = document.getElementById('submit-button');
+            submitButton.disabled = true;
+            submitButton.textContent = 'Đang lưu...';
 
-        submitButton.disabled = true;
-        submitButton.textContent = 'Đang lưu...';
+            try {
+                const formData = new FormData(this);
+                const data = Object.fromEntries(formData.entries());
 
-        try {
-            // Bước 1: Thu thập tất cả dữ liệu từ form một cách tự động
-            const formData = new FormData(this);
-            const data = Object.fromEntries(formData.entries());
-
-            // Bước 2: Xử lý và kiểm tra Mã Sản Phẩm
-            const idSuffixInput = document.getElementById('product-id-suffix');
-            if (idSuffixInput.value.length !== 11) {
-                throw new Error("Mã sản phẩm phải có đúng 11 ký tự.");
-            }
-            data.id = 'KT' + idSuffixInput.value;
-            
-            // Hàm tiện ích để lấy tên file từ URL
-            function getFileNameFromUrl(url) {
-                try {
-                    const path = new URL(url).pathname;
-                    const filename = path.substring(path.lastIndexOf('/') + 1);
-                    return decodeURIComponent(filename);
-                } catch (e) {
-                    return url.split('/').pop() || 'File không tên';
+                const idSuffixInput = document.getElementById('product-id-suffix');
+                if (idSuffixInput.value.length !== 11) {
+                    throw new Error("Mã sản phẩm phải có đúng 11 ký tự.");
                 }
+                data.id = 'KT' + idSuffixInput.value;
+                
+                function getFileNameFromUrl(url) {
+                    try {
+                        const path = new URL(url).pathname;
+                        return decodeURIComponent(path.substring(path.lastIndexOf('/') + 1));
+                    } catch (e) {
+                        return url.split('/').pop() || 'File không tên';
+                    }
+                }
+
+                data.imageUrls = (data.imageUrls || '').split('\n').map(link => link.trim()).filter(Boolean);
+                data.drawingUrls = (data.drawingUrls || '').split('\n').map(link => link.trim()).filter(Boolean).map(link => ({ name: getFileNameFromUrl(link), url: link }));
+                data.materialsUrls = (data.materialsUrls || '').split('\n').map(link => link.trim()).filter(Boolean).map(link => ({ name: getFileNameFromUrl(link), url: link }));
+
+                const response = await fetch('/api/products', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data),
+                });
+
+                if (!response.ok) {
+                    let errorMessage = `Lỗi ${response.status}`;
+                    try {
+                        const errorResult = await response.json();
+                        errorMessage = errorResult.error || JSON.stringify(errorResult);
+                    } catch (e) {
+                        const textError = await response.text();
+                        if (textError) errorMessage = textError;
+                    }
+                    throw new Error(errorMessage);
+                }
+                
+                const result = await response.json();
+                alert(result.message || 'Thao tác thành công!');
+                window.location.href = `/success.html?id=${result.id}`;
+
+            } catch (error) {
+                alert('Có lỗi xảy ra: ' + error.message);
+                submitButton.disabled = false;
+                submitButton.textContent = 'Lưu và Xem lại';
             }
+        });
 
-            // Bước 3: Định dạng lại dữ liệu link từ các ô textarea
-            data.imageUrls = (data.imageUrls || '').split('\n').map(link => link.trim()).filter(Boolean);
-            data.drawingUrls = (data.drawingUrls || '').split('\n').map(link => link.trim()).filter(Boolean).map(link => ({ name: getFileNameFromUrl(link), url: link }));
-            data.materialsUrls = (data.materialsUrls || '').split('\n').map(link => link.trim()).filter(Boolean).map(link => ({ name: getFileNameFromUrl(link), url: link }));
+        // --- LOGIC 2: MỞ CỬA SỔ UPLOAD POPUP ---
+        document.querySelectorAll('.popup-upload-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                const targetId = button.dataset.target;
+                const url = `/upload.html?target=${targetId}`;
+                
+                // Các thông số cho cửa sổ popup
+                const popupWidth = 800;
+                const popupHeight = 700;
+                const left = (screen.width / 2) - (popupWidth / 2);
+                const top = (screen.height / 2) - (popupHeight / 2);
 
-            // Bước 4: Gửi dữ liệu đã xử lý lên server
-            const response = await fetch('/api/products', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data),
+                // Mở trang upload.html trong một cửa sổ popup nhỏ và canh giữa màn hình
+                window.open(
+                    url, 
+                    'uploadWindow', 
+                    `width=${popupWidth},height=${popupHeight},top=${top},left=${left},scrollbars=yes`
+                );
             });
-
-            // Bước 5: Xử lý kết quả trả về một cách chi tiết
-            if (!response.ok) {
-                let errorMessage = `Lỗi ${response.status}`;
-                try {
-                    const errorResult = await response.json();
-                    errorMessage = errorResult.error || JSON.stringify(errorResult);
-                } catch (e) {
-                    const textError = await response.text();
-                    if (textError) errorMessage = textError;
-                }
-                throw new Error(errorMessage);
-            }
-            
-            const result = await response.json();
-            alert(result.message || 'Thao tác thành công!');
-            window.location.href = `/success.html?id=${result.id}`;
-
-        } catch (error) {
-            alert('Có lỗi xảy ra: ' + error.message);
-            submitButton.disabled = false;
-            submitButton.textContent = 'Lưu và Xem lại';
-        }
-    });
+        });
     </script>
 </body>
 </html>

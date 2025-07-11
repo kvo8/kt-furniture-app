@@ -6,6 +6,8 @@
     <title>Công Cụ Upload File</title>
     <link rel="stylesheet" href="/css/style.css">
     <style>
+        /* Toàn bộ CSS của bạn được giữ nguyên, chỉ thêm một vài tinh chỉnh nhỏ */
+        body { background-color: #f0f2f5; }
         .container { max-width: 800px; position: relative; }
         .upload-section { margin-bottom: 30px; border: 1px solid #ddd; padding: 20px; border-radius: 8px; background-color: #fdfdfd; }
         .upload-section h3 { border-bottom: 2px solid #007bff; padding-bottom: 10px; margin-top: 0; }
@@ -21,253 +23,199 @@
         .file-status-list div { padding: 4px 0; }
         .file-status-list .success { color: #28a745; }
         .file-status-list .error { color: #dc3545; }
-        #auth-blocker {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(255, 255, 255, 0.95);
-            z-index: 100;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            border-radius: 8px;
-            padding: 20px;
-            border: 2px dashed #dc3545;
-            display: none; /* Mặc định ẩn đi */
+        #auth-blocker { display: none; /* Logic mới sẽ xử lý việc này */ }
+        #complete-btn {
+            background-color: #28a745;
+            font-size: 1.1em;
+            padding: 12px 25px;
+            font-weight: bold;
         }
-        #auth-blocker h2 { color: #dc3545; }
-        #auth-blocker a { font-weight: bold; }
+        #complete-btn:hover {
+             background-color: #218838;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <div id="auth-blocker">
-            <h2>Yêu Cầu Đăng Nhập</h2>
-            <p>Bạn phải đăng nhập để sử dụng chức năng này.</p>
-            <p>Vui lòng <a href="/index.html">đăng nhập</a> và quay lại trang này sau.</p>
-        </div>
-
         <header>
-            <h1>Công Cụ Upload File Lên Cloud Storage</h1>
-            <p>Sử dụng trang này để tải file lên và sao chép danh sách link để dán vào form sản phẩm.</p>
+            <h1>Công Cụ Upload File</h1>
+            <p>Chọn file, nhấn "Tải Lên". Bạn có thể tải nhiều lần (tối đa 5 file). Khi xong, nhấn "Hoàn Thành".</p>
         </header>
 
         <div class="upload-section">
-            <h3>1. Hình ảnh sản phẩm (Tối đa 5 file, mỗi file dưới 10MB)</h3>
+            <h3 id="upload-title">Tải File Lên</h3>
             <div class="upload-area">
-                <input type="file" id="image-input" accept="image/*" multiple style="display: none;">
-                <label for="image-input" class="upload-btn">Chọn Ảnh</label>
-                <div id="image-files-list" class="file-status-list"></div>
+                <input type="file" id="file-input" multiple style="display: none;">
+                <label for="file-input" class="upload-btn">Chọn File</label>
+                <div id="files-list" class="file-status-list"></div>
             </div>
-            <button class="upload-btn" id="upload-images-btn" disabled>Tải Ảnh Lên</button>
-            <div class="status-box" id="image-status" style="display: none;">
-                <p class="label">Danh sách URL ảnh (sao chép và dán vào form):</p>
-                <textarea id="image-urls" class="result-textarea" readonly></textarea>
-                <button class="copy-btn" data-target="image-urls">Sao chép</button>
-            </div>
+            <button class="upload-btn" id="upload-btn" disabled>Tải Lên</button>
         </div>
 
-        <div class="upload-section">
-            <h3>2. Bản vẽ (PDF, Tối đa 5 file, mỗi file dưới 10MB)</h3>
-            <div class="upload-area">
-                <input type="file" id="drawing-input" accept=".pdf" multiple style="display: none;">
-                <label for="drawing-input" class="upload-btn">Chọn File PDF</label>
-                <div id="drawing-files-list" class="file-status-list"></div>
-            </div>
-            <button class="upload-btn" id="upload-drawings-btn" disabled>Tải Bản Vẽ Lên</button>
-            <div class="status-box" id="drawing-status" style="display: none;">
-                <p class="label">Danh sách URL bản vẽ (sao chép và dán vào form):</p>
-                <textarea id="drawing-urls" class="result-textarea" readonly></textarea>
-                <button class="copy-btn" data-target="drawing-urls">Sao chép</button>
-            </div>
-        </div>
-
-        <div class="upload-section">
-            <h3>3. Vật tư (Word, Excel, PDF, Tối đa 5 file, mỗi file dưới 10MB)</h3>
-            <div class="upload-area">
-                <input type="file" id="materials-input" accept=".doc,.docx,.xls,.xlsx,.pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/pdf" multiple style="display: none;">
-                <label for="materials-input" class="upload-btn">Chọn File Vật Tư</label>
-                <div id="materials-files-list" class="file-status-list"></div>
-            </div>
-            <button class="upload-btn" id="upload-materials-btn" disabled>Tải Vật Tư Lên</button>
-            <div class="status-box" id="materials-status" style="display: none;">
-                <p class="label">Danh sách URL vật tư (sao chép và dán vào form):</p>
-                <textarea id="materials-urls" class="result-textarea" readonly></textarea>
-                <button class="copy-btn" data-target="materials-urls">Sao chép</button>
-            </div>
+        <div class="status-box" id="result-box" style="display: none;">
+            <p class="label">Các link đã tải lên thành công:</p>
+            <textarea id="result-urls" class="result-textarea" readonly></textarea>
         </div>
         
-        <div class="nav-link" style="margin-top: 30px;">
-            <a href="/dashboard.html">Quay về Dashboard</a>
+        <div class="nav-link" style="margin-top: 30px; text-align: center;">
+            <button id="complete-btn" class="upload-btn">Hoàn Thành & Quay Lại</button>
         </div>
     </div>
 
     <script>
     /**
-     * GHI CHÚ: Toàn bộ script này đã được viết lại theo Kế Hoạch Z.
-     * Logic chính đã thay đổi: thay vì lấy signedURL, trình duyệt sẽ gửi thẳng file
-     * đến server của chúng ta tại endpoint /api/upload-direct để né lỗi CORS.
+     * @file upload.html's script (popup version)
+     * @description Script này xử lý cửa sổ popup upload. Nó giao tiếp với cửa sổ cha
+     * (trang new-product.html) để gửi trả lại các URL đã upload thành công.
+     * Sử dụng phương pháp upload trực tiếp qua server để né lỗi CORS.
      */
     document.addEventListener('DOMContentLoaded', () => {
-        const authBlocker = document.getElementById('auth-blocker');
+        // --- KHỞI TẠO VÀ KIỂM TRA MÔI TRƯỜNG POPUP ---
+        const urlParams = new URLSearchParams(window.location.search);
+        const targetId = urlParams.get('target'); // Lấy ID của textarea mục tiêu từ URL
 
-        // 1. Kiểm tra trạng thái đăng nhập trước khi cho phép sử dụng trang.
-        fetch('/api/me')
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('User not authenticated');
-                }
-                // Nếu đã đăng nhập, khởi tạo các chức năng của trang
-                initializeUploadPage();
-            })
-            .catch(error => {
-                // Nếu chưa đăng nhập, khóa trang lại và yêu cầu đăng nhập
-                console.error(error.message);
-                authBlocker.style.display = 'flex';
-            });
-    });
-
-    /**
-     * Hàm này chỉ được gọi sau khi đã xác thực người dùng thành công.
-     */
-    function initializeUploadPage() {
-        /**
-         * Hàm thiết lập logic cho một khu vực upload.
-         */
-        function setupUploadSection(inputId, listId, uploadBtnId, statusBoxId, urlsTextareaId) {
-            const fileInput = document.getElementById(inputId);
-            const filesListDiv = document.getElementById(listId);
-            const uploadButton = document.getElementById(uploadBtnId);
-            const statusBox = document.getElementById(statusBoxId);
-            const urlsTextarea = document.getElementById(urlsTextareaId);
-
-            // Gắn sự kiện khi người dùng chọn file
-            fileInput.addEventListener('change', () => {
-                const maxFiles = 5;
-                const maxFileSizeMB = 10; // Giới hạn kích thước file là 10MB
-                const files = Array.from(fileInput.files);
-
-                if (files.length > maxFiles) {
-                    alert(`Bạn chỉ có thể chọn tối đa ${maxFiles} file.`);
-                    fileInput.value = '';
-                    return;
-                }
-
-                // Kiểm tra kích thước từng file
-                const oversizedFiles = files.filter(f => f.size > maxFileSizeMB * 1024 * 1024);
-                if (oversizedFiles.length > 0) {
-                    const fileNames = oversizedFiles.map(f => f.name).join(', ');
-                    alert(`Các file sau vượt quá giới hạn ${maxFileSizeMB}MB: ${fileNames}`);
-                    fileInput.value = '';
-                    return;
-                }
-                
-                // Hiển thị danh sách file đã chọn
-                if (files.length > 0) {
-                    filesListDiv.innerHTML = files.map(f => `<div>• ${f.name} (${(f.size / 1024).toFixed(1)} KB)</div>`).join('');
-                    uploadButton.disabled = false;
-                } else {
-                    filesListDiv.innerHTML = '';
-                    uploadButton.disabled = true;
-                }
-            });
-
-            // Gắn sự kiện khi nhấn nút upload
-            uploadButton.addEventListener('click', async () => {
-                const files = fileInput.files;
-                if (files.length === 0) return;
-
-                uploadButton.disabled = true;
-                uploadButton.textContent = 'Đang xử lý...';
-                statusBox.style.display = 'none';
-                urlsTextarea.value = '';
-
-                // Hiển thị trạng thái ban đầu cho tất cả file
-                filesListDiv.innerHTML = Array.from(files).map(f => `<div id="status-${f.name.replace(/[^a-zA-Z0-9]/g, '')}">${f.name}: ⏳ Đang chờ...</div>`).join('');
-
-                // Tải lên song song tất cả các file
-                const uploadPromises = Array.from(files).map(file => uploadFileDirectly(file, filesListDiv));
-                const results = await Promise.all(uploadPromises);
-                
-                const successfulUrls = results.filter(r => r.success).map(r => r.url);
-                
-                if (successfulUrls.length > 0) {
-                    urlsTextarea.value = successfulUrls.join('\n');
-                    statusBox.style.display = 'block';
-                }
-                
-                if (successfulUrls.length === files.length) {
-                    alert('Tất cả file đã được tải lên thành công!');
-                } else {
-                    alert('Có lỗi xảy ra trong quá trình tải lên. Vui lòng kiểm tra lại trạng thái từng file.');
-                }
-                
-                uploadButton.textContent = 'Tải Lên';
-            });
+        // Nếu trang này không được mở từ một trang khác (`window.opener` không tồn tại),
+        // hoặc không có `targetId`, nó sẽ hiển thị lỗi và dừng lại.
+        if (!targetId || !window.opener) {
+            document.body.innerHTML = '<h1>Lỗi: Trang này phải được mở từ trang Thêm/Sửa Sản Phẩm.</h1>';
+            return;
         }
+        
+        // Lấy tất cả các element cần thiết trên trang
+        const fileInput = document.getElementById('file-input');
+        const filesListDiv = document.getElementById('files-list');
+        const uploadButton = document.getElementById('upload-btn');
+        const resultBox = document.getElementById('result-box');
+        const urlsTextarea = document.getElementById('result-urls');
+        const completeButton = document.getElementById('complete-btn');
+        const uploadTitle = document.getElementById('upload-title');
+
+        // Mảng để lưu trữ các URL đã upload thành công trong phiên làm việc này
+        let successfulUrls = [];
+        const maxFiles = 5;
+
+        // --- CẬP NHẬT GIAO DIỆN DỰA TRÊN LOẠI FILE CẦN UPLOAD ---
+        if (targetId === 'imageUrls') {
+            uploadTitle.textContent = 'Upload Hình Ảnh Sản Phẩm';
+            fileInput.accept = 'image/*';
+        } else if (targetId === 'drawingUrls') {
+            uploadTitle.textContent = 'Upload Bản Vẽ (PDF)';
+            fileInput.accept = '.pdf';
+        } else if (targetId === 'materialsUrls') {
+            uploadTitle.textContent = 'Upload Vật Tư (Word, Excel, PDF)';
+            fileInput.accept = '.doc,.docx,.xls,.xlsx,.pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/pdf';
+        }
+
+        // --- GẮN CÁC SỰ KIỆN CHO CÁC NÚT BẤM ---
+
+        // Sự kiện khi người dùng chọn file từ máy tính
+        fileInput.addEventListener('change', () => {
+            const currentTotal = successfulUrls.length;
+            const newFiles = Array.from(fileInput.files);
+            
+            if ((currentTotal + newFiles.length) > maxFiles) {
+                alert(`Tổng số file không được vượt quá ${maxFiles}. Bạn đã tải lên ${currentTotal} file.`);
+                fileInput.value = ''; // Reset lựa chọn
+                return;
+            }
+
+            if (newFiles.length > 0) {
+                filesListDiv.innerHTML = newFiles.map(f => `<div>• ${f.name} (${(f.size / 1024).toFixed(1)} KB)</div>`).join('');
+                uploadButton.disabled = false;
+            } else {
+                uploadButton.disabled = true;
+                filesListDiv.innerHTML = '';
+            }
+        });
+
+        // Sự kiện khi nhấn nút "Tải Lên"
+        uploadButton.addEventListener('click', async () => {
+            const filesToUpload = fileInput.files;
+            if (filesToUpload.length === 0) return;
+
+            uploadButton.disabled = true;
+            uploadButton.textContent = 'Đang xử lý...';
+            
+            // Hiển thị trạng thái ban đầu cho tất cả file
+            filesListDiv.innerHTML = Array.from(filesToUpload).map(f => `<div id="status-${f.name.replace(/[^a-zA-Z0-9]/g, '')}${Date.now()}">${f.name}: ⏳ Đang chờ...</div>`).join('');
+            
+            const uploadPromises = Array.from(filesToUpload).map(file => uploadFileDirectly(file));
+            const results = await Promise.all(uploadPromises);
+            
+            // Gom các URL thành công vào mảng tổng
+            results.forEach(result => {
+                if (result.success) {
+                    successfulUrls.push(result.url);
+                }
+            });
+
+            // Cập nhật lại giao diện với kết quả mới
+            if (successfulUrls.length > 0) {
+                urlsTextarea.value = successfulUrls.join('\n');
+                resultBox.style.display = 'block';
+            }
+
+            alert('Tải lên hoàn tất! Bạn có thể chọn thêm file hoặc nhấn "Hoàn Thành".');
+            uploadButton.disabled = true;
+            uploadButton.textContent = 'Tải Lên';
+            fileInput.value = ''; // Xóa lựa chọn cũ
+            filesListDiv.innerHTML = '<p style="color: green;">Hãy chọn thêm file nếu muốn (nếu chưa đủ 5 file).</p>';
+        });
+
+        // Sự kiện khi nhấn nút "Hoàn Thành & Quay Lại"
+        completeButton.addEventListener('click', () => {
+            // `window.opener` là một tham chiếu đến cửa sổ cha đã mở ra cửa sổ này
+            const targetTextarea = window.opener.document.getElementById(targetId);
+            if (targetTextarea) {
+                // Gán giá trị từ popup vào ô textarea của trang gốc
+                targetTextarea.value = urlsTextarea.value;
+            } else {
+                alert("Lỗi: Không tìm thấy ô nhập liệu ở trang gốc!");
+            }
+            // Tự động đóng cửa sổ popup
+            window.close();
+        });
 
         /**
          * Hàm upload file theo Kế Hoạch Z: gửi thẳng đến server của chúng ta.
+         * @param {File} file - File cần tải lên.
+         * @returns {Promise<{success: boolean, url?: string, error?: string}>} - Kết quả upload
          */
-        async function uploadFileDirectly(file, statusContainer) {
-            // Tạo một ID duy nhất cho status element để tránh lỗi với các tên file giống nhau
-            const fileId = `status-${file.name.replace(/[^a-zA-Z0-9]/g, '')}-${Date.now()}`;
-            statusContainer.querySelector(`div[id^="status-${file.name.replace(/[^a-zA-Z0-9]/g, '')}"]`).id = fileId;
-            const statusElement = document.getElementById(fileId);
+        async function uploadFileDirectly(file) {
+            const statusId = `status-${file.name.replace(/[^a-zA-Z0-9]/g, '')}${Date.now()}`;
+            const statusElement = document.getElementById(statusId);
 
-            const updateStatus = (message) => {
-                if (statusElement) statusElement.innerHTML = `${file.name}: ${message}`;
+            const updateStatus = (message, isError = false) => {
+                const element = filesListDiv.querySelector(`div[id^="status-${file.name.replace(/[^a-zA-Z0-9]/g, '')}"]`);
+                if (element) {
+                    element.innerHTML = `${file.name}: ${message}`;
+                    element.className = isError ? 'error' : 'success';
+                }
             };
 
             try {
-                updateStatus('⬆️ Đang tải file lên server...');
+                updateStatus('⬆️ Đang tải lên server...');
                 
                 const formData = new FormData();
                 formData.append('file', file);
 
-                const response = await fetch('/api/upload-direct', {
-                    method: 'POST',
-                    body: formData, // Trình duyệt sẽ tự động đặt Content-Type là multipart/form-data
-                });
-
+                const response = await fetch('/api/upload-direct', { method: 'POST', body: formData });
                 const result = await response.json();
 
                 if (!response.ok) {
                     throw new Error(result.error || 'Lỗi không xác định từ server.');
                 }
                 
-                updateStatus('✔ Thành công');
-                statusElement.classList.add('success');
+                updateStatus('✔ Thành công!');
                 return { success: true, url: result.accessUrl };
 
             } catch (error) {
                 console.error(`Lỗi với file ${file.name}:`, error);
-                updateStatus(`❌ Thất bại: ${error.message}`);
-                statusElement.classList.add('error');
+                updateStatus(`❌ Thất bại: ${error.message}`, true);
                 return { success: false, error: error.message };
             }
         }
-
-        // Thiết lập cho cả 3 khu vực upload
-        setupUploadSection('image-input', 'image-files-list', 'upload-images-btn', 'image-status', 'image-urls');
-        setupUploadSection('drawing-input', 'drawing-files-list', 'upload-drawings-btn', 'drawing-status', 'drawing-urls');
-        setupUploadSection('materials-input', 'materials-files-list', 'upload-materials-btn', 'materials-status', 'materials-urls');
-
-        // Gắn sự kiện cho các nút sao chép
-        document.querySelectorAll('.copy-btn').forEach(button => {
-            button.addEventListener('click', (e) => {
-                const textarea = document.getElementById(e.target.dataset.target);
-                textarea.select();
-                navigator.clipboard.writeText(textarea.value)
-                    .then(() => alert('Đã sao chép danh sách URL!'))
-                    .catch(() => alert('Sao chép thất bại!'));
-            });
-        });
-    }
+    });
     </script>
 </body>
 </html>
