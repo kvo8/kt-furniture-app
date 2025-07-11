@@ -1,6 +1,6 @@
 // =================================================================
 // === FILE: index.js (PHIÊN BẢN HOÀN CHỈNH - KẾ HOẠCH Z)          ===
-// === Tích hợp API upload trực tiếp & xử lý đầy đủ các trường   ===
+// === Tích hợp API upload trực tiếp & xử lý đầy đủ các trường    ===
 // =================================================================
 
 // --- PHẦN 1: IMPORT CÁC THƯ VIỆN CẦN THIẾT ---
@@ -28,7 +28,7 @@ app.use(cors());
 app.use(express.json({ limit: '15mb' }));
 app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 app.use(express.static('public'));
-app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
+app.use('/uploads', express.static(path.join(__dirname, 'public/uploads'))); // Giữ lại để tương thích ngược
 console.log("Middleware configured successfully.");
 
 // --- 2.2. Cấu hình Google Cloud Storage ---
@@ -51,7 +51,7 @@ app.use(session({
 }));
 console.log("Session management configured successfully.");
 
-// --- 2.4. Cấu hình Multer ---
+// --- 2.4. Cấu hình Multer (Theo Kế Hoạch Z) ---
 // GHI CHÚ: Cấu hình Multer để xử lý file trong bộ nhớ tạm của server
 const multerMemory = multer({
   storage: multer.memoryStorage(),
@@ -59,9 +59,9 @@ const multerMemory = multer({
     fileSize: 15 * 1024 * 1024, // Giới hạn file upload là 15MB
   },
 });
-// Middleware này vẫn dùng cho các form không có file
+// Middleware này vẫn dùng cho các form chỉ có text như Thêm/Sửa sản phẩm
 const textOnlyUpload = multer().none();
-console.log("Multer configured for memory storage.");
+console.log("Multer configured for memory storage and text-only forms.");
 
 // --- 2.5. Middleware Tùy Chỉnh ---
 const isLoggedIn = (req, res, next) => {
@@ -75,7 +75,7 @@ const isLoggedIn = (req, res, next) => {
 // --- PHẦN 3: CÁC API ENDPOINTS ---
 console.log("Defining API endpoints...");
 
-// == A. CÁC API VỀ USER VÀ TRANG CHỦ (GIỮ NGUYÊN) ==
+// == A. CÁC API VỀ USER VÀ TRANG CHỦ (ĐẦY ĐỦ) ==
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
@@ -88,7 +88,8 @@ app.post("/api/users/register", async (req, res, next) => {
         }
         const hash = await bcrypt.hash(password, saltRounds);
         const sql = 'INSERT INTO users (ho_ten, ma_nhan_vien, password) VALUES ($1, $2, $3) RETURNING id, ho_ten, ma_nhan_vien';
-        const result = await db.query(sql, [ho_ten, ma_nhan_vien, hash]);
+        const params = [ho_ten, ma_nhan_vien, hash];
+        const result = await db.query(sql, params);
         const newUser = result.rows[0];
         req.session.user = { id: newUser.id, name: newUser.ho_ten, employeeId: newUser.ma_nhan_vien };
         res.status(201).json({ "message": "Đăng ký thành công và đã tự động đăng nhập." });
@@ -122,10 +123,7 @@ app.get("/api/me", isLoggedIn, (req, res) => {
     res.json(req.session.user);
 });
 
-// =======================================================================
-// === GHI CHÚ: API UPLOAD TRỰC TIẾP THEO KẾ HOẠCH Z                  ===
-// === API generate-upload-url cũ đã được xóa.                        ===
-// =======================================================================
+// == B. API UPLOAD MỚI (THEO KẾ HOẠCH Z) ==
 app.post('/api/upload-direct', isLoggedIn, multerMemory.single('file'), async (req, res, next) => {
     try {
         if (!req.file) {
@@ -143,7 +141,6 @@ app.post('/api/upload-direct', isLoggedIn, multerMemory.single('file'), async (r
         });
 
         blobStream.on('error', err => {
-            // Chuyển lỗi cho bộ xử lý lỗi tập trung
             next(err);
         });
 
@@ -152,7 +149,6 @@ app.post('/api/upload-direct', isLoggedIn, multerMemory.single('file'), async (r
             res.status(200).json({ accessUrl: publicUrl });
         });
 
-        // Bắt đầu stream file buffer từ memory lên GCS
         blobStream.end(req.file.buffer);
 
     } catch (error) {
@@ -160,9 +156,7 @@ app.post('/api/upload-direct', isLoggedIn, multerMemory.single('file'), async (r
     }
 });
 
-// == C. CÁC API VỀ SẢN PHẨM ==
-
-// READ ALL
+// == C. CÁC API VỀ SẢN PHẨM (ĐẦY ĐỦ) ==
 app.get("/api/products", isLoggedIn, async (req, res, next) => {
     try {
         const sql = "SELECT * FROM products ORDER BY created_at DESC";
@@ -173,7 +167,6 @@ app.get("/api/products", isLoggedIn, async (req, res, next) => {
     }
 });
 
-// READ ONE
 app.get("/api/products/:id", async (req, res, next) => {
     try {
         const sql = `SELECT * FROM products WHERE id = $1`;
@@ -195,7 +188,6 @@ app.get("/api/products/:id", async (req, res, next) => {
     }
 });
 
-// CREATE
 app.post("/api/products", isLoggedIn, textOnlyUpload, async (req, res, next) => {
     try {
         const data = req.body;
@@ -235,7 +227,6 @@ app.post("/api/products", isLoggedIn, textOnlyUpload, async (req, res, next) => 
     }
 });
 
-// UPDATE
 app.put("/api/products/:id", isLoggedIn, textOnlyUpload, async (req, res, next) => {
     try {
         const { id } = req.params;
@@ -275,7 +266,6 @@ app.put("/api/products/:id", isLoggedIn, textOnlyUpload, async (req, res, next) 
     }
 });
 
-// DELETE
 async function deleteFilesFromGCS(product) {
     console.log(`Bắt đầu quá trình xóa file GCS cho sản phẩm ID: ${product.id}`);
     const urlsToDelete = [];
@@ -378,7 +368,7 @@ app.use((err, req, res, next) => {
         });
     }
     if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
-        return res.status(413).json({ error: 'File quá lớn. Vui lòng chọn file dưới 10MB.' });
+        return res.status(413).json({ error: 'File quá lớn. Vui lòng chọn file dưới 15MB.' });
     }
     res.status(500).json({
         status: 'error',

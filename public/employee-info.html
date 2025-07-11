@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Quản Lý Nhân Viên</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        body { max-width: 1000px; }
+        .actions button { min-width: 60px; }
+        .delete-btn { background-color: #dc3545; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Quản Lý Nhân Viên</h1>
+        <div class="nav-links">
+            <a href="/dashboard.html">Về Dashboard</a>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Họ Tên</th>
+                    <th>Mã Nhân Viên</th>
+                    <th>Chức Vụ</th>
+                    <th>Hành động</th>
+                </tr>
+            </thead>
+            <tbody id="employee-table-body">
+                </tbody>
+        </table>
+    </div>
+
+    <script>
+        /**
+         * Tải và hiển thị danh sách nhân viên
+         */
+        async function loadEmployees() {
+            const tableBody = document.getElementById('employee-table-body');
+            try {
+                const response = await fetch('/api/users');
+                if (!response.ok) {
+                    // Nếu chưa đăng nhập, chuyển về trang chủ
+                    if(response.status === 401) window.location.href = '/index.html';
+                    throw new Error(`Lỗi server: ${response.status}`);
+                }
+                const data = await response.json();
+                
+                tableBody.innerHTML = ''; // Xóa dữ liệu cũ
+                if (data.users && data.users.length > 0) {
+                    data.users.forEach(user => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${user.id}</td>
+                            <td>${user.ho_ten}</td>
+                            <td>${user.ma_nhan_vien}</td>
+                            <td>${user.chuc_vu || 'N/A'}</td>
+                            <td class="actions">
+                                <button class="delete-btn" data-id="${user.id}" data-name="${user.ho_ten}">Xóa</button>
+                            </td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                } else {
+                    tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Không có nhân viên nào.</td></tr>';
+                }
+            } catch (error) {
+                console.error('Lỗi khi tải danh sách nhân viên:', error);
+                tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center; color: red;">Không thể tải dữ liệu.</td></tr>`;
+            }
+        }
+
+        /**
+         * Xử lý sự kiện click nút xóa
+         */
+        document.getElementById('employee-table-body').addEventListener('click', async (e) => {
+            if (e.target && e.target.classList.contains('delete-btn')) {
+                const userId = e.target.dataset.id;
+                const userName = e.target.dataset.name;
+
+                if (confirm(`Bạn có chắc chắn muốn xóa nhân viên "${userName}" (ID: ${userId}) không?`)) {
+                    try {
+                        const response = await fetch(`/api/users/${userId}`, { method: 'DELETE' });
+                        const result = await response.json();
+
+                        if (!response.ok) {
+                            throw new Error(result.error || 'Xóa thất bại.');
+                        }
+                        
+                        alert(result.message || 'Xóa thành công!');
+                        loadEmployees(); // Tải lại danh sách
+                    } catch (error) {
+                        alert(`Lỗi: ${error.message}`);
+                    }
+                }
+            }
+        });
+
+        // Tải dữ liệu khi trang được mở
+        document.addEventListener('DOMContentLoaded', loadEmployees);
+    </script>
+</body>
+</html>
