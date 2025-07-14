@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Tin Nhắn Nội Bộ</title>
+    </head>
+<body>
+    <div class="container">
+        <h1>Tin Nhắn Nội Bộ</h1>
+        <a href="/product-list.html">Quay về trang chủ</a>
+
+        <div class="messaging-layout">
+            <div class="compose-form">
+                <h2>Soạn tin nhắn mới</h2>
+                <form id="send-message-form">
+                    <label for="recipient">Gửi đến (Mã NV):</label>
+                    <input type="text" id="recipient" required>
+                    
+                    <label for="title">Tiêu đề:</label>
+                    <input type="text" id="title" required>
+                    
+                    <label for="body">Nội dung:</label>
+                    <textarea id="body" rows="5" required></textarea>
+                    
+                    <button type="submit">Gửi Tin Nhắn</button>
+                </form>
+            </div>
+
+            <div class="inbox">
+                <h2>Hộp thư đến</h2>
+                <ul id="inbox-list">
+                    </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // JS để lấy danh sách tin nhắn và gửi tin nhắn mới
+        const form = document.getElementById('send-message-form');
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const recipient = document.getElementById('recipient').value;
+            const title = document.getElementById('title').value;
+            const body = document.getElementById('body').value;
+            
+            const response = await fetch('/api/messages', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ recipient_employee_id: recipient, title, body })
+            });
+            const result = await response.json();
+            alert(result.message || result.error);
+            if(response.ok) form.reset();
+        });
+
+        async function loadReceivedMessages() {
+            // ... Viết code tương tự loadNotifications để fetch /api/messages và hiển thị ...
+        }
+        
+        document.addEventListener('DOMContentLoaded', loadReceivedMessages);
+    </script>
+</body>
+</html>

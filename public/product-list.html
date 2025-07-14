@@ -21,6 +21,7 @@
         .nav-links a { margin-right: 20px; font-size: 18px; color: #007bff; text-decoration: none; font-weight: 500; }
 
         /* === CSS CHO CÁC TÍNH NĂNG MỚI === */
+
         .reviews-btn { background-color: #6f42c1; } 
         .barcode-btn { background-color: #343a40; } 
 
@@ -49,35 +50,118 @@
         .review-rating { color: #f9ca24; }
         
         /* CSS cho mục Hoạt động gần đây (activity log) */
-        .activity-log {
-            margin-top: 30px; padding: 20px; background-color: #fff;
-            border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+       .notification-area {
+            position: relative;
+            display: inline-block;
         }
-        .activity-log h2 { margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 10px; }
-        .activity-list { list-style: none; padding: 0; max-height: 300px; overflow-y: auto; }
-        .activity-item { padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
-        .activity-item:last-child { border-bottom: none; }
-        .activity-item small { color: #6c757d; }
+        #notification-bell {
+            font-size: 24px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            position: relative;
+            padding: 5px;
+        }
+        #notification-badge {
+            position: absolute;
+            top: 0px;
+            right: 0px;
+            padding: 2px 5px;
+            border-radius: 50%;
+            background-color: #dc3545;
+            color: white;
+            font-size: 10px;
+            font-weight: bold;
+            display: none; /* Sẽ hiện lên bằng JS */
+        }
+        .notification-dropdown {
+            display: none; /* Sẽ hiện lên bằng JS */
+            position: absolute;
+            right: 0;
+            top: 120%; /* Đặt dropdown bên dưới chuông */
+            background-color: #ffffff;
+            min-width: 350px;
+            max-width: 400px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1001;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .notification-dropdown h4 {
+            padding: 10px 15px;
+            margin: 0;
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #ddd;
+            font-size: 1rem;
+            color: #495057;
+        }
+        .notification-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .notification-item {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .notification-item:hover {
+            background-color: #e9ecef;
+        }
+        .notification-item:last-child {
+            border-bottom: none;
+        }
+        .notification-item p, .notification-item small {
+            margin: 0;
+            line-height: 1.4;
+        }
+        .notification-item small {
+            font-size: 0.75rem;
+            color: #6c757d;
+        }
+        .no-notifications {
+            padding: 20px;
+            text-align: center;
+            color: #6c757d;
+            cursor: default;
+        }
     </style>
 </head>
 <body>
     <h1>Quản lý Sản phẩm</h1>
     <div class="nav-links">
-        <div>
+        <div class="nav-links-left">
             <a href="/dashboard.html">Về Dashboard</a>
             <a href="/new-product.html">Thêm Sản phẩm Mới</a>
             <a href="/employee-info.html">Quản Lý Nhân Viên</a>
+            <a href="/message.html">Tin Nhắn Nội Bộ</a>
         </div>
-        <input type="text" id="search-input" placeholder="Tìm kiếm..." style="padding: 10px; font-size: 16px; border-radius: 5px; border: 1px solid #ccc;">
+    
+     <div class="nav-links-right">
+            <input type="text" id="search-input" placeholder="Tìm kiếm..." style="padding: 10px; font-size: 16px; border-radius: 5px; border: 1px solid #ccc;">
+            
+            <div class="notification-area">
+                <button id="notification-bell">
+                    <span>🔔</span>
+                    <span id="notification-badge"></span>
+                </button>
+                <div id="notification-dropdown" class="notification-dropdown">
+                    <h4>Tin Nhắn Mới</h4>
+                    <ul id="message-list" class="notification-list">
+                        <li class="no-notifications">Không có tin nhắn mới.</li>
+                    </ul>
+                    <h4>Hoạt động gần đây</h4>
+                    <ul id="activity-list" class="notification-list">
+                        <li class="no-notifications">Đang tải...</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
     </div>
     
-    <div class="activity-log">
-        <h2>Hoạt động gần đây</h2>
-        <ul id="activity-list">
-            <li>Đang tải...</li>
-        </ul>
-    </div>
-
     <table>
         <thead><tr><th>STT</th><th>Mã SP</th><th>Tên Sản phẩm (VI)</th><th>Người tạo</th><th>Ngày tạo</th><th>Hành động / Actions</th></tr></thead>
         <tbody id="product-table-body"></tbody>
@@ -94,8 +178,9 @@
     </div>
     <script>
     /**
-     * @file product-list.html
-     * @description Script để tải, hiển thị, tìm kiếm, xóa sản phẩm, xem đánh giá và xem hoạt động.
+      * @file product-list.html
+     * @version 2.0
+     * @description Script đã được nâng cấp để tích hợp chuông thông báo đa chức năng.
      */
 
     // Biến toàn cục để lưu trữ danh sách sản phẩm
@@ -160,32 +245,77 @@
     /**
      * Tải và hiển thị nhật ký hoạt động
      */
-    async function loadActivityLog() {
-        const list = document.getElementById('activity-list');
-        try {
-            const response = await fetch('/api/activity-log');
-            if (!response.ok) throw new Error('Không thể tải dữ liệu hoạt động.');
-            
-            const data = await response.json();
-            list.innerHTML = ''; 
+    async function updateNotifications() {
+        const activityListEl = document.getElementById('activity-list');
+        const messageListEl = document.getElementById('message-list');
+        const badgeEl = document.getElementById('notification-badge');
 
-            if (data.activities && data.activities.length > 0) {
-                data.activities.forEach(act => {
-                    const item = document.createElement('li');
-                    item.className = 'activity-item';
-                    item.innerHTML = `
-                        <p>${act.details}</p>
-                        <small>Bởi: <strong>${act.user_name}</strong> - lúc ${new Date(act.created_at).toLocaleString('vi-VN')}</small>
-                    `;
-                    list.appendChild(item);
-                });
+        try {
+            // Dùng Promise.all để gọi 2 API cùng lúc cho hiệu suất cao hơn
+            const [activityResponse, messagesResponse] = await Promise.all([
+                fetch('/api/activity-log'),
+                fetch('/api/messages') 
+            ]);
+
+            // 1. Xử lý Hoạt động gần đây
+            if (activityResponse.ok) {
+                const activityData = await activityResponse.json();
+                activityListEl.innerHTML = ''; // Xóa list cũ trước khi render
+                if (activityData.activities && activityData.activities.length > 0) {
+                    activityData.activities.slice(0, 7).forEach(act => { // Chỉ hiển thị 7 hoạt động mới nhất
+                        const item = document.createElement('li');
+                        item.className = 'notification-item';
+                        item.style.cursor = 'default'; // Hoạt động không cần click
+                        item.innerHTML = `<p>${act.details}</p><small>Bởi: <strong>${act.user_name}</strong> - ${new Date(act.created_at).toLocaleString('vi-VN')}</small>`;
+                        activityListEl.appendChild(item);
+                    });
+                } else {
+                    activityListEl.innerHTML = '<li class="no-notifications">Không có hoạt động nào.</li>';
+                }
             } else {
-                list.innerHTML = '<li>Không có hoạt động nào gần đây.</li>';
+                 activityListEl.innerHTML = '<li class="no-notifications" style="color:red;">Lỗi tải hoạt động.</li>';
             }
+
+            // 2. Xử lý Tin nhắn mới
+            if (messagesResponse.ok) {
+                const messageData = await messagesResponse.json();
+                const unreadMessages = messageData.messages.filter(msg => !msg.is_read);
+                
+                messageListEl.innerHTML = ''; // Xóa list cũ
+                if (unreadMessages.length > 0) {
+                    unreadMessages.forEach(msg => {
+                        const item = document.createElement('li');
+                        item.className = 'notification-item';
+                        item.title = `Click để xem chi tiết và đánh dấu đã đọc`;
+                        // Gắn sự kiện để khi click vào sẽ đi đến trang tin nhắn và đánh dấu đã đọc
+                        item.onclick = () => {
+                            fetch(`/api/messages/${msg.id}/read`, { method: 'PUT' });
+                            window.location.href = '/message.html';
+                        };
+                        item.innerHTML = `<p><strong>Từ: ${msg.sender_name}</strong></p><p>${msg.title}</p><small>${new Date(msg.created_at).toLocaleString('vi-VN')}</small>`;
+                        messageListEl.appendChild(item);
+                    });
+                } else {
+                    messageListEl.innerHTML = '<li class="no-notifications">Không có tin nhắn mới.</li>';
+                }
+
+                // 3. Cập nhật số trên huy hiệu của chuông
+                if (unreadMessages.length > 0) {
+                    badgeEl.textContent = unreadMessages.length;
+                    badgeEl.style.display = 'block';
+                } else {
+                    badgeEl.style.display = 'none';
+                }
+            } else {
+                 messageListEl.innerHTML = '<li class="no-notifications" style="color:red;">Lỗi tải tin nhắn.</li>';
+            }
+
         } catch (error) {
-            list.innerHTML = `<li>Lỗi: ${error.message}</li>`;
+            console.error("Lỗi khi tải thông báo:", error);
+            activityListEl.innerHTML = '<li class="no-notifications" style="color:red;">Lỗi hệ thống khi tải thông báo.</li>';
         }
     }
+
 
     /**
      * Xử lý sự kiện tìm kiếm sản phẩm
@@ -283,6 +413,28 @@
             reviewsListDiv.innerHTML = '<p style="color: red;">Không thể tải danh sách đánh giá. Vui lòng thử lại.</p>';
         }
     }
+const notificationBell = document.getElementById('notification-bell');
+    const notificationDropdown = document.getElementById('notification-dropdown');
+
+    notificationBell.addEventListener('click', (event) => {
+        event.stopPropagation(); // Ngăn sự kiện click lan ra ngoài
+        
+        // Hiện hoặc ẩn dropdown
+        const isCurrentlyHidden = notificationDropdown.style.display === 'none';
+        notificationDropdown.style.display = isCurrentlyHidden ? 'block' : 'none';
+
+        // Nếu vừa mở dropdown, tải lại thông báo để đảm bảo dữ liệu mới nhất
+        if (isCurrentlyHidden) {
+            updateNotifications();
+        }
+    });
+
+    // Thêm sự kiện để tự động đóng dropdown khi người dùng click ra ngoài
+    window.addEventListener('click', (event) => {
+        if (!notificationBell.contains(event.target) && !notificationDropdown.contains(event.target)) {
+            notificationDropdown.style.display = 'none';
+        }
+    });
 
     /**
      * Hàm khởi tạo chính của trang
