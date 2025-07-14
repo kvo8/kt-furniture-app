@@ -80,7 +80,7 @@ const fileFilter = (req, file, cb) => {
 
 const multerMemory = multer({
     storage: multer.memoryStorage(),
-    limits: { fileSize: 15 * 1024 * 1024 }, // Giữ nguyên giới hạn 15MB của bạn
+    limits: { fileSize: 50 * 1024 * 1024 }, // Giữ nguyên giới hạn 15MB của bạn
     fileFilter: fileFilter                    // <-- ÁP DỤNG BỘ LỌC FILE MỚI
 });
 
