@@ -277,43 +277,42 @@
             }
 
             // 2. Xử lý Tin nhắn mới
-            if (messagesResponse.ok) {
-                const messageData = await messagesResponse.json();
-                const unreadMessages = messageData.messages.filter(msg => !msg.is_read);
-                
-                messageListEl.innerHTML = ''; // Xóa list cũ
-                if (unreadMessages.length > 0) {
-                    unreadMessages.forEach(msg => {
-                        const item = document.createElement('li');
-                        item.className = 'notification-item';
-                        item.title = `Click để xem chi tiết và đánh dấu đã đọc`;
-                        // Gắn sự kiện để khi click vào sẽ đi đến trang tin nhắn và đánh dấu đã đọc
-                        item.onclick = () => {
-                            fetch(`/api/messages/${msg.id}/read`, { method: 'PUT' });
-                            window.location.href = '/message.html';
-                        };
-                        item.innerHTML = `<p><strong>Từ: ${msg.sender_name}</strong></p><p>${msg.title}</p><small>${new Date(msg.created_at).toLocaleString('vi-VN')}</small>`;
-                        messageListEl.appendChild(item);
-                    });
+          if (messagesResponse.ok) {
+                    const messageData = await messagesResponse.json();
+                    const unreadMessages = messageData.messages.filter(msg => !msg.is_read);
+                    
+                    messageListEl.innerHTML = '';
+                    if (unreadMessages.length > 0) {
+                        unreadMessages.forEach(msg => {
+                            const item = document.createElement('li');
+                            item.className = 'notification-item';
+                            item.title = `Click để xem chi tiết và đánh dấu đã đọc`;
+                            item.onclick = () => {
+                                fetch(`/api/messages/${msg.id}/read`, { method: 'PUT' });
+                                window.location.href = '/message.html';
+                            };
+                            item.innerHTML = `<p><strong>Từ: ${msg.sender_name}</strong></p><p>${msg.title}</p><small>${new Date(msg.created_at).toLocaleString('vi-VN')}</small>`;
+                            messageListEl.appendChild(item);
+                        });
+                    } else {
+                        messageListEl.innerHTML = '<li class="no-notifications">Không có tin nhắn mới.</li>';
+                    }
+
+                    // Cập nhật huy hiệu
+                    if (unreadMessages.length > 0) {
+                        badgeEl.textContent = unreadMessages.length;
+                        badgeEl.style.display = 'block';
+                    } else {
+                        badgeEl.style.display = 'none';
+                    }
                 } else {
-                    messageListEl.innerHTML = '<li class="no-notifications">Không có tin nhắn mới.</li>';
+                     messageListEl.innerHTML = '<li class="no-notifications" style="color:red;">Lỗi tải tin nhắn.</li>';
                 }
 
-                // 3. Cập nhật số trên huy hiệu của chuông
-                if (unreadMessages.length > 0) {
-                    badgeEl.textContent = unreadMessages.length;
-                    badgeEl.style.display = 'block';
-                } else {
-                    badgeEl.style.display = 'none';
-                }
-            } else {
-                 messageListEl.innerHTML = '<li class="no-notifications" style="color:red;">Lỗi tải tin nhắn.</li>';
+            } catch (error) {
+                console.error("Lỗi khi tải thông báo:", error);
+                activityListEl.innerHTML = '<li class="no-notifications" style="color:red;">Lỗi hệ thống khi tải thông báo.</li>';
             }
-
-        } catch (error) {
-            console.error("Lỗi khi tải thông báo:", error);
-            activityListEl.innerHTML = '<li class="no-notifications" style="color:red;">Lỗi hệ thống khi tải thông báo.</li>';
-        }
     }
 
 

@@ -3,61 +3,324 @@
 <head>
     <meta charset="UTF-8">
     <title>Tin Nhắn Nội Bộ</title>
-    </head>
+    <style>
+        /* ======================================== */
+        /* === CSS CHO TRANG TIN NHẮN NỘI BỘ === */
+        /* ======================================== */
+        :root {
+            --primary-color: #007bff;
+            --light-gray: #f8f9fa;
+            --medium-gray: #dee2e6;
+            --dark-gray: #343a40;
+            --text-color: #212529;
+            --white-color: #ffffff;
+            --success-color: #28a745;
+            --unread-dot: #dc3545;
+        }
+
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            background-color: var(--light-gray);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1140px;
+            margin: 20px auto;
+            padding: 30px;
+            background-color: var(--white-color);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        h1, h2 { 
+            color: var(--dark-gray); 
+            border-bottom: 1px solid var(--medium-gray);
+            padding-bottom: 15px;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 25px;
+            text-decoration: none;
+            color: var(--primary-color);
+            font-weight: 500;
+            font-size: 1.1rem;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        .messaging-layout {
+            display: grid;
+            grid-template-columns: 1fr 2fr; /* Chia layout thành 2 cột */
+            gap: 40px;
+            margin-top: 20px;
+        }
+
+        /* --- Styling cho form soạn tin nhắn --- */
+        .compose-container h2, .inbox-container h2 {
+            margin-top: 0;
+            font-size: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .form-group input[type="text"],
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--medium-gray);
+            border-radius: 6px;
+            font-size: 1rem;
+            box-sizing: border-box; /* Quan trọng để padding không làm vỡ layout */
+            transition: border-color 0.2s;
+        }
+
+        .form-group input[type="text"]:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+        }
+
+        #send-message-form button {
+            width: 100%;
+            padding: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--white-color);
+            background-color: var(--primary-color);
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        #send-message-form button:hover {
+            background-color: #0056b3;
+        }
+
+        /* --- Styling cho hộp thư đến --- */
+        .inbox-container {
+            border-left: 1px solid var(--medium-gray);
+            padding-left: 40px;
+        }
+
+        #inbox-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        
+        .message-item {
+            padding: 15px;
+            border: 1px solid transparent;
+            border-bottom: 1px solid var(--medium-gray);
+            cursor: pointer;
+            transition: background-color 0.2s, border-left 0.2s;
+            position: relative;
+        }
+
+        .message-item:hover {
+            background-color: #f1f7ff;
+        }
+
+        .message-item.unread {
+            background-color: #e9ecef;
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .message-sender {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .message-time {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+
+        .message-title {
+            margin: 0 0 5px 0;
+            font-weight: 500;
+        }
+
+        .message-body-snippet {
+            color: #495057;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 95%;
+        }
+
+    </style>
+</head>
 <body>
     <div class="container">
         <h1>Tin Nhắn Nội Bộ</h1>
-        <a href="/product-list.html">Quay về trang chủ</a>
+        <a href="/product-list.html" class="back-link">← Quay về trang chủ</a>
 
         <div class="messaging-layout">
-            <div class="compose-form">
+            <div class="compose-container">
                 <h2>Soạn tin nhắn mới</h2>
                 <form id="send-message-form">
-                    <label for="recipient">Gửi đến (Mã NV):</label>
-                    <input type="text" id="recipient" required>
-                    
-                    <label for="title">Tiêu đề:</label>
-                    <input type="text" id="title" required>
-                    
-                    <label for="body">Nội dung:</label>
-                    <textarea id="body" rows="5" required></textarea>
-                    
+                    <div class="form-group">
+                        <label for="recipient">Gửi đến (Mã NV):</label>
+                        <input type="text" id="recipient" name="recipient" required placeholder="Ví dụ: KT01IT">
+                    </div>
+                    <div class="form-group">
+                        <label for="title">Tiêu đề:</label>
+                        <input type="text" id="title" name="title" required placeholder="Nhập tiêu đề tin nhắn">
+                    </div>
+                    <div class="form-group">
+                        <label for="body">Nội dung:</label>
+                        <textarea id="body" name="body" rows="8" required placeholder="Nhập nội dung..."></textarea>
+                    </div>
                     <button type="submit">Gửi Tin Nhắn</button>
                 </form>
             </div>
 
-            <div class="inbox">
+            <div class="inbox-container">
                 <h2>Hộp thư đến</h2>
                 <ul id="inbox-list">
-                    </ul>
+                    <li>Đang tải tin nhắn...</li>
+                </ul>
             </div>
         </div>
     </div>
 
     <script>
-        // JS để lấy danh sách tin nhắn và gửi tin nhắn mới
-        const form = document.getElementById('send-message-form');
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const recipient = document.getElementById('recipient').value;
-            const title = document.getElementById('title').value;
-            const body = document.getElementById('body').value;
+    /**
+     * @file message.html
+     * @description Script quản lý giao diện gửi và nhận tin nhắn nội bộ.
+     */
+
+    /**
+     * Tải danh sách tin nhắn đã nhận và hiển thị chúng trong hộp thư đến.
+     */
+    async function loadReceivedMessages() {
+        const inboxList = document.getElementById('inbox-list');
+        try {
+            const response = await fetch('/api/messages');
+            if (!response.ok) {
+                throw new Error(`Lỗi tải tin nhắn: ${response.status}`);
+            }
+            const data = await response.json();
+
+            inboxList.innerHTML = ''; // Xóa dòng "Đang tải..."
             
+            if (data.messages && data.messages.length > 0) {
+                data.messages.forEach(msg => {
+                    const item = document.createElement('li');
+                    item.className = 'message-item';
+                    
+                    // Thêm class 'unread' nếu tin nhắn chưa được đọc
+                    if (!msg.is_read) {
+                        item.classList.add('unread');
+                    }
+                    
+                    // Cắt ngắn nội dung để xem trước
+                    const snippet = msg.body.substring(0, 100) + (msg.body.length > 100 ? '...' : '');
+
+                    item.innerHTML = `
+                        <div class="message-header">
+                            <span class="message-sender">${msg.sender_name}</span>
+                            <span class="message-time">${new Date(msg.created_at).toLocaleString('vi-VN')}</span>
+                        </div>
+                        <p class="message-title">${msg.title}</p>
+                        <p class="message-body-snippet">${snippet}</p>
+                    `;
+
+                    // Gắn sự kiện để khi click vào sẽ đánh dấu đã đọc
+                    item.addEventListener('click', () => {
+                        // Mở rộng để xem chi tiết hoặc thực hiện hành động khác
+                        alert(`Từ: ${msg.sender_name}\nTiêu đề: ${msg.title}\n\nNội dung:\n${msg.body}`);
+                        
+                        // Nếu tin nhắn chưa đọc, gửi yêu cầu đánh dấu đã đọc và cập nhật UI
+                        if (!msg.is_read) {
+                            fetch(`/api/messages/${msg.id}/read`, { method: 'PUT' })
+                                .then(res => {
+                                    if(res.ok) {
+                                        item.classList.remove('unread');
+                                    }
+                                });
+                        }
+                    });
+
+                    inboxList.appendChild(item);
+                });
+            } else {
+                inboxList.innerHTML = '<li style="text-align:center; padding: 20px;">Hộp thư của bạn trống.</li>';
+            }
+        } catch (error) {
+            console.error("Lỗi khi tải hộp thư đến:", error);
+            inboxList.innerHTML = '<li style="text-align:center; padding: 20px; color: red;">Không thể tải tin nhắn.</li>';
+        }
+    }
+
+    /**
+     * Gắn sự kiện 'submit' cho form soạn tin nhắn.
+     */
+    document.getElementById('send-message-form').addEventListener('submit', async (e) => {
+        e.preventDefault(); // Ngăn form gửi theo cách truyền thống
+        
+        const form = e.target;
+        const recipient = form.elements.recipient.value;
+        const title = form.elements.title.value;
+        const body = form.elements.body.value;
+        const submitButton = form.querySelector('button');
+
+        submitButton.disabled = true;
+        submitButton.textContent = 'Đang gửi...';
+
+        try {
             const response = await fetch('/api/messages', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ recipient_employee_id: recipient, title, body })
             });
-            const result = await response.json();
-            alert(result.message || result.error);
-            if(response.ok) form.reset();
-        });
 
-        async function loadReceivedMessages() {
-            // ... Viết code tương tự loadNotifications để fetch /api/messages và hiển thị ...
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || 'Gửi tin nhắn thất bại.');
+            }
+            
+            alert(result.message);
+            form.reset(); // Xóa trắng form sau khi gửi thành công
+
+        } catch (error) {
+            alert(`Lỗi: ${error.message}`);
+        } finally {
+            submitButton.disabled = false;
+            submitButton.textContent = 'Gửi Tin Nhắn';
         }
-        
-        document.addEventListener('DOMContentLoaded', loadReceivedMessages);
+    });
+
+    /**
+     * Chạy hàm tải tin nhắn khi trang được mở.
+     */
+    document.addEventListener('DOMContentLoaded', loadReceivedMessages);
     </script>
 </body>
 </html>
