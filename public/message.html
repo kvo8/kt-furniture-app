@@ -165,14 +165,20 @@
             font-weight: 500;
         }
 
-        .message-body-snippet {
-            color: #495057;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 95%;
-        }
-
+       .message-body-snippet {
+    color: #495057;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 95%;
+    transition: all 0.3s ease; /* Thêm hiệu ứng chuyển động mượt mà */
+    max-height: 20px; /* Giới hạn chiều cao ban đầu */
+}
+.message-body-snippet.expanded {
+    white-space: normal;
+    overflow: visible;
+    max-height: 1000px; /* Chiều cao tối đa khi mở rộng */
+}
     </style>
 </head>
 <body>
@@ -218,66 +224,69 @@
     /**
      * Tải danh sách tin nhắn đã nhận và hiển thị chúng trong hộp thư đến.
      */
-    async function loadReceivedMessages() {
-        const inboxList = document.getElementById('inbox-list');
-        try {
-            const response = await fetch('/api/messages');
-            if (!response.ok) {
-                throw new Error(`Lỗi tải tin nhắn: ${response.status}`);
-            }
-            const data = await response.json();
-
-            inboxList.innerHTML = ''; // Xóa dòng "Đang tải..."
-            
-            if (data.messages && data.messages.length > 0) {
-                data.messages.forEach(msg => {
-                    const item = document.createElement('li');
-                    item.className = 'message-item';
-                    
-                    // Thêm class 'unread' nếu tin nhắn chưa được đọc
-                    if (!msg.is_read) {
-                        item.classList.add('unread');
-                    }
-                    
-                    // Cắt ngắn nội dung để xem trước
-                    const snippet = msg.body.substring(0, 100) + (msg.body.length > 100 ? '...' : '');
-
-                    item.innerHTML = `
-                        <div class="message-header">
-                            <span class="message-sender">${msg.sender_name}</span>
-                            <span class="message-time">${new Date(msg.created_at).toLocaleString('vi-VN')}</span>
-                        </div>
-                        <p class="message-title">${msg.title}</p>
-                        <p class="message-body-snippet">${snippet}</p>
-                    `;
-
-                    // Gắn sự kiện để khi click vào sẽ đánh dấu đã đọc
-                    item.addEventListener('click', () => {
-                        // Mở rộng để xem chi tiết hoặc thực hiện hành động khác
-                        alert(`Từ: ${msg.sender_name}\nTiêu đề: ${msg.title}\n\nNội dung:\n${msg.body}`);
-                        
-                        // Nếu tin nhắn chưa đọc, gửi yêu cầu đánh dấu đã đọc và cập nhật UI
-                        if (!msg.is_read) {
-                            fetch(`/api/messages/${msg.id}/read`, { method: 'PUT' })
-                                .then(res => {
-                                    if(res.ok) {
-                                        item.classList.remove('unread');
-                                    }
-                                });
-                        }
-                    });
-
-                    inboxList.appendChild(item);
-                });
-            } else {
-                inboxList.innerHTML = '<li style="text-align:center; padding: 20px;">Hộp thư của bạn trống.</li>';
-            }
-        } catch (error) {
-            console.error("Lỗi khi tải hộp thư đến:", error);
-            inboxList.innerHTML = '<li style="text-align:center; padding: 20px; color: red;">Không thể tải tin nhắn.</li>';
+    /**
+ * Tải danh sách tin nhắn đã nhận và hiển thị chúng trong hộp thư đến.
+ * PHIÊN BẢN CẢI TIẾN: Click để mở rộng xem nội dung thay vì dùng alert().
+ */
+async function loadReceivedMessages() {
+    const inboxList = document.getElementById('inbox-list');
+    try {
+        const response = await fetch('/api/messages');
+        if (!response.ok) {
+            throw new Error(`Lỗi tải tin nhắn: ${response.status}`);
         }
-    }
+        const data = await response.json();
 
+        inboxList.innerHTML = ''; // Xóa dòng "Đang tải..."
+        
+        if (data.messages && data.messages.length > 0) {
+            data.messages.forEach(msg => {
+                const item = document.createElement('li');
+                item.className = 'message-item';
+                
+                if (!msg.is_read) {
+                    item.classList.add('unread');
+                }
+                
+                // Hiển thị nội dung đầy đủ nhưng sẽ được CSS ẩn đi
+                const fullBody = msg.body.replace(/\n/g, '<br>'); // Giữ nguyên các dấu xuống dòng
+
+                item.innerHTML = `
+                    <div class="message-header">
+                        <span class="message-sender">${msg.sender_name}</span>
+                        <span class="message-time">${new Date(msg.created_at).toLocaleString('vi-VN')}</span>
+                    </div>
+                    <p class="message-title">${msg.title}</p>
+                    <p class="message-body-snippet">${fullBody}</p>
+                `;
+
+                // Gắn sự kiện để khi click vào sẽ mở rộng và đánh dấu đã đọc
+                item.addEventListener('click', () => {
+                    const bodySnippet = item.querySelector('.message-body-snippet');
+                    // Mở rộng hoặc thu gọn nội dung
+                    bodySnippet.classList.toggle('expanded');
+                    
+                    // Nếu tin nhắn chưa đọc, gửi yêu cầu đánh dấu đã đọc và cập nhật UI
+                    if (item.classList.contains('unread')) {
+                        fetch(`/api/messages/${msg.id}/read`, { method: 'PUT' })
+                            .then(res => {
+                                if(res.ok) {
+                                    item.classList.remove('unread');
+                                }
+                            });
+                    }
+                });
+
+                inboxList.appendChild(item);
+            });
+        } else {
+            inboxList.innerHTML = '<li style="text-align:center; padding: 20px;">Hộp thư của bạn trống.</li>';
+        }
+    } catch (error) {
+        console.error("Lỗi khi tải hộp thư đến:", error);
+        inboxList.innerHTML = '<li style="text-align:center; padding: 20px; color: red;">Không thể tải tin nhắn.</li>';
+    }
+}
     /**
      * Gắn sự kiện 'submit' cho form soạn tin nhắn.
      */

@@ -85,7 +85,8 @@ const multerMemory = multer({
 });
 
 const textOnlyUpload = multer().none();
-console.log("Multer configured with explicit file filter and size limits."); // Log đã được cập nhật
+console.log("Multer configured with explicit file filter and size limits (50MB).");
+
 
 // =======================================================================
 // === KẾT THÚC KHỐI CODE CẦN THAY THẾ ===
@@ -410,6 +411,99 @@ app.get("/api/products/:id/reviews", async (req, res, next) => {
         const sql = "SELECT * FROM reviews WHERE product_id = $1 ORDER BY created_at DESC";
         const { rows } = await db.query(sql, [req.params.id]);
         res.json({ reviews: rows });
+    } catch (err) {
+        next(err);
+    }
+});
+// === THAY THẾ API GỬI TIN NHẮN CŨ BẰNG PHIÊN BẢN NÀY ===
+/**
+ * @route   POST /api/messages
+ * @desc    Gửi một tin nhắn mới đến một nhân viên khác.
+ * @access  Private (yêu cầu đăng nhập)
+ * @body    { recipient_employee_id: string, title: string, body: string }
+ */
+app.post("/api/messages", isLoggedIn, async (req, res, next) => {
+    console.log("--- Bắt đầu xử lý yêu cầu GỬI TIN NHẮN MỚI ---");
+    try {
+        const { recipient_employee_id, title, body } = req.body;
+        const sender = req.session.user;
+
+        // 1. Kiểm tra dữ liệu đầu vào có đầy đủ không
+        if (!recipient_employee_id || !title || !body) {
+            console.log("Validation Failed: Thiếu trường dữ liệu.");
+            return res.status(400).json({ error: "Vui lòng điền đầy đủ Mã nhân viên người nhận, tiêu đề và nội dung." });
+        }
+        
+        // --- CẢI TIẾN 1: Ngăn người dùng tự gửi tin nhắn cho chính mình ---
+        if (sender.employeeId === recipient_employee_id) {
+            console.log("Validation Failed: Người dùng tự gửi tin nhắn cho chính mình.");
+            return res.status(400).json({ error: "Bạn không thể gửi tin nhắn cho chính mình." });
+        }
+
+        // 2. Tìm thông tin người nhận trong CSDL để lấy ID nội bộ
+        console.log(`Tìm kiếm người nhận có mã NV: ${recipient_employee_id}`);
+        const recipientResult = await db.query('SELECT id, ho_ten FROM users WHERE ma_nhan_vien = $1', [recipient_employee_id]);
+        
+        if (recipientResult.rowCount === 0) {
+            console.log(`Không tìm thấy người nhận với mã NV: ${recipient_employee_id}`);
+            return res.status(404).json({ error: `Không tìm thấy nhân viên với mã '${recipient_employee_id}'.` });
+        }
+        const recipient = recipientResult.rows[0];
+        console.log(`Đã tìm thấy người nhận: ${recipient.ho_ten} (ID: ${recipient.id})`);
+
+        // 3. Chèn tin nhắn mới vào bảng 'messages'
+        const sql = 'INSERT INTO messages (sender_id, sender_name, recipient_id, title, body) VALUES ($1, $2, $3, $4, $5)';
+        const params = [sender.id, sender.name, recipient.id, title, body];
+        await db.query(sql, params);
+        console.log("Đã lưu tin nhắn vào CSDL thành công.");
+
+        // 4. Ghi lại hoạt động này vào nhật ký hệ thống
+        await logActivity('NEW_MESSAGE', `Người dùng '${sender.name}' đã gửi tin nhắn đến '${recipient.ho_ten}'`, sender.name);
+        
+        // 5. Trả về thông báo thành công cho client
+        res.status(201).json({ message: "Gửi tin nhắn thành công!" });
+
+    } catch (err) {
+        console.error("Lỗi trong quá trình gửi tin nhắn:", err);
+        next(err); // Chuyển lỗi đến middleware xử lý lỗi tập trung
+    }
+});
+
+// === API ĐỂ LẤY TẤT CẢ TIN NHẮN ĐÃ NHẬN CỦA NGƯỜI DÙNG HIỆN TẠI ===
+// Yêu cầu: người dùng phải đăng nhập
+app.get("/api/messages", isLoggedIn, async (req, res, next) => {
+    console.log(`Fetching messages for user ID: ${req.session.user.id}`);
+    try {
+        const currentUserId = req.session.user.id;
+        const sql = "SELECT * FROM messages WHERE recipient_id = $1 ORDER BY created_at DESC";
+        const { rows } = await db.query(sql, [currentUserId]);
+        console.log(`Found ${rows.length} messages.`);
+        res.json({ messages: rows });
+    } catch (err) {
+        next(err);
+    }
+});
+
+// === API ĐỂ ĐÁNH DẤU MỘT TIN NHẮN LÀ ĐÃ ĐỌC ===
+// Yêu cầu: người dùng phải đăng nhập
+// Input: :id (ID của tin nhắn) trong URL
+app.put("/api/messages/:id/read", isLoggedIn, async (req, res, next) => {
+    const messageId = req.params.id;
+    const currentUserId = req.session.user.id;
+    console.log(`Request to mark message ID ${messageId} as read for user ID ${currentUserId}`);
+    try {
+        // Cập nhật trạng thái is_read, đảm bảo chỉ chủ nhân tin nhắn mới có quyền thực hiện
+        const sql = 'UPDATE messages SET is_read = TRUE WHERE id = $1 AND recipient_id = $2';
+        const result = await db.query(sql, [messageId, currentUserId]);
+
+        // Nếu không có dòng nào được cập nhật, nghĩa là tin nhắn không tồn tại hoặc không thuộc về người này
+        if (result.rowCount === 0) {
+            console.log("Message not found or user unauthorized to mark as read.");
+            return res.status(404).json({ error: "Không tìm thấy tin nhắn hoặc bạn không có quyền thực hiện." });
+        }
+        
+        console.log(`Message ID ${messageId} marked as read.`);
+        res.status(200).json({ message: "Đã đánh dấu là đã đọc." });
     } catch (err) {
         next(err);
     }
