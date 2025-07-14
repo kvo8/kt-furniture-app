@@ -3,39 +3,107 @@
 <head>
     <meta charset="UTF-8">
     <title>Quản Lý Nhân Viên</title>
-    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/style.css"> 
     <style>
-        /* Giữ nguyên các style cũ của bạn */
-        body { max-width: 1000px; }
-        .actions button { min-width: 60px; }
+        /* ======================================== */
+        /* === CSS CẢI THIỆN GIAO DIỆN BẢNG === */
+        /* ======================================== */
+
+        /* Sử dụng lại các style cơ bản từ các trang khác */
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            background-color: #f8f9fa; /* Màu nền trang nhã hơn */
+            color: #212529;
+        }
+
+        .container {
+            max-width: 1140px; /* Làm cho container rộng hơn */
+            margin: 30px auto;
+            padding: 30px;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        h1 { 
+            color: #343a40; 
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .nav-links {
+            margin-bottom: 25px;
+            display: flex;
+            gap: 20px; /* Tạo khoảng cách giữa các link */
+        }
+        
+        .nav-links a {
+            text-decoration: none;
+            color: #007bff;
+            font-weight: 500;
+            font-size: 1.1rem;
+            padding: 8px 12px;
+            border-radius: 6px;
+            transition: background-color 0.2s, color 0.2s;
+        }
+
+        .nav-links a:hover {
+            background-color: #e9ecef;
+            color: #0056b3;
+        }
+
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-top: 20px;
+        }
+
+        th, td { 
+            padding: 16px; /* Tăng padding cho thoáng */
+            text-align: left; 
+            border-bottom: 1px solid #dee2e6;
+            vertical-align: middle;
+        }
+
+        thead th { 
+            background-color: #343a40; /* Màu header tối, sang trọng */
+            color: white; 
+            font-weight: 600;
+            font-size: 1rem;
+            text-transform: uppercase; /* Viết hoa chữ đầu */
+            letter-spacing: 0.5px;
+        }
+
+        tbody tr:nth-child(even) { background-color: #f8f9fa; }
+
+        tbody tr:hover { background-color: #e9ecef; }
+
+        .actions button { 
+            min-width: 80px;
+            cursor: pointer;
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            border: none;
+            transition: all 0.2s ease-in-out;
+        }
+
         .delete-btn { 
             background-color: #dc3545; 
             color: white;
-            border: none;
-            cursor: pointer;
-            padding: 6px 12px;
-            border-radius: 4px;
-            font-size: 14px;
-            transition: background-color 0.2s;
-        }
-        .delete-btn:hover {
-            background-color: #c82333;
         }
 
-        /* GHI CHÚ: Thêm style để làm bảng đẹp hơn */
-        table {
-            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
-            border-radius: 8px;
-            overflow: hidden; /* Bo tròn các góc của table */
+        .delete-btn:hover {
+            background-color: #c82333;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
-        thead th {
-            background-color: #007bff;
-            color: white;
-            font-weight: 600; /* Chữ đậm hơn */
-            font-size: 1rem;
-        }
-        td {
-            vertical-align: middle;
+        
+        .delete-btn:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
         }
     </style>
 </head>
@@ -49,7 +117,7 @@
         <table>
             <thead>
                 <tr>
-                    <th>ID</th>
+                    <th>STT</th>
                     <th>Họ Tên</th>
                     <th>Mã Nhân Viên</th>
                     <th>Chức Vụ</th>
@@ -70,7 +138,38 @@
     /**
      * @file employee-info.html
      * @description Script quản lý việc hiển thị và xóa nhân viên.
+     * @version 2.0 (Đã sửa lỗi chức vụ và cải thiện giao diện/logic)
      */
+
+    /**
+     * =====================================================================
+     * === SỬA LỖI LOGIC: Hàm mới để suy ra chức vụ từ Mã Nhân Viên ===
+     * =====================================================================
+     * @param {string} employeeId - Mã nhân viên, ví dụ: "KT01KT", "GD01GD"
+     * @returns {string} Tên chức vụ đầy đủ.
+     */
+    function getRoleFromEmployeeId(employeeId) {
+        if (!employeeId || employeeId.length < 2) {
+            return 'Chưa xác định';
+        }
+        
+        // Lấy 2 ký tự cuối và chuyển thành chữ hoa để so sánh
+        const roleCode = employeeId.slice(-2).toUpperCase();
+        
+        // Dùng một đối tượng để map code với tên chức vụ
+        const roleMap = {
+            'KT': 'Kỹ thuật',
+            'IT': 'IT',
+            'NS': 'Nhân sự',
+            'GD': 'Giám đốc',
+            'KD': 'Kinh doanh',
+            'MK': 'Marketing'
+            // Thêm các chức vụ khác vào đây nếu cần
+        };
+
+        // Trả về tên chức vụ tương ứng, hoặc 'Chưa xác định' nếu không tìm thấy
+        return roleMap[roleCode] || 'Chưa xác định';
+    }
 
     /**
      * Tải và hiển thị danh sách nhân viên từ API.
@@ -81,7 +180,6 @@
         try {
             const response = await fetch('/api/users');
             if (!response.ok) {
-                // Nếu chưa đăng nhập (lỗi 401), chuyển hướng về trang chủ
                 if(response.status === 401) {
                     alert("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
                     window.location.href = '/index.html';
@@ -90,16 +188,21 @@
             }
             const data = await response.json();
             
-            tableBody.innerHTML = ''; // Xóa dòng "Đang tải..."
+            tableBody.innerHTML = ''; 
             
             if (data.users && data.users.length > 0) {
-                data.users.forEach(user => {
+                data.users.forEach((user, index) => {
                     const row = document.createElement('tr');
+                    
+                    // Lấy chức vụ từ hàm mới
+                    const position = getRoleFromEmployeeId(user.ma_nhan_vien);
+
+                    // Hiển thị dữ liệu lên bảng
                     row.innerHTML = `
-                        <td>${user.id}</td>
+                        <td>${index + 1}</td>
                         <td>${user.ho_ten || 'N/A'}</td>
                         <td>${user.ma_nhan_vien || 'N/A'}</td>
-                        <td>${user.chuc_vu || 'Chưa xác định'}</td>
+                        <td>${position}</td> 
                         <td class="actions">
                             <button class="delete-btn" data-id="${user.id}" data-name="${user.ho_ten}">Xóa</button>
                         </td>
@@ -117,26 +220,31 @@
 
     /**
      * Gắn sự kiện click cho toàn bộ tbody để xử lý các nút xóa (event delegation).
+     * Logic đã được làm cho an toàn hơn.
      */
     document.getElementById('employee-table-body').addEventListener('click', async (e) => {
-        // Chỉ thực hiện hành động nếu phần tử được click là nút xóa
         if (e.target && e.target.classList.contains('delete-btn')) {
             const userId = e.target.dataset.id;
             const userName = e.target.dataset.name;
 
             if (confirm(`Bạn có chắc chắn muốn xóa nhân viên "${userName}" (ID: ${userId}) không? Hành động này không thể hoàn tác.`)) {
+                e.target.disabled = true;
+                e.target.textContent = 'Đang xóa...';
+
                 try {
-                    e.target.disabled = true; // Vô hiệu hóa nút trong khi chờ
-                    e.target.textContent = 'Đang xóa...';
-
                     const response = await fetch(`/api/users/${userId}`, { method: 'DELETE' });
-                    const result = await response.json();
-
+                    
+                    // Kiểm tra xem server có trả về lỗi không
                     if (!response.ok) {
-                        throw new Error(result.error || 'Xóa thất bại.');
+                        // Thử đọc lỗi từ server, nếu có
+                        const errorResult = await response.json().catch(() => ({}));
+                        throw new Error(errorResult.error || `Xóa thất bại. Server báo lỗi ${response.status}`);
                     }
                     
+                    // Thử đọc thông báo thành công từ server, nếu có
+                    const result = await response.json().catch(() => ({}));
                     alert(result.message || 'Xóa thành công!');
+                    
                     loadEmployees(); // Tải lại danh sách để cập nhật
                 } catch (error) {
                     alert(`Lỗi: ${error.message}`);
@@ -150,10 +258,7 @@
     /**
      * Sự kiện chính khi tài liệu HTML được tải xong.
      */
-    document.addEventListener('DOMContentLoaded', () => {
-        // Bắt đầu tải danh sách nhân viên
-        loadEmployees();
-    });
+    document.addEventListener('DOMContentLoaded', loadEmployees);
     </script>
 </body>
 </html>
