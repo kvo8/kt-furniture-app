@@ -5,52 +5,65 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chỉnh Sửa Sản Phẩm</title>
     <link rel="stylesheet" href="/css/style.css">
-    <style>
-        button[type="submit"]:disabled {
-            background-color: #5a6268;
-            cursor: not-allowed;
-            opacity: 0.7;
+    
+    <style> 
+        :root {
+            --bg-color: #f8f9fa; --card-bg-color: #ffffff; --text-color: #212529;
+            --text-muted-color: #6c757d; --border-color: #dee2e6; --primary-color: #007bff;
+            --input-bg: #fff; --input-readonly-bg: #e9ecef; --button-disabled-bg: #5a6268;
         }
-        .file-info img { max-width: 100px; max-height: 100px; border-radius: 5px; vertical-align: middle; margin-left: 10px; border: 1px solid #ddd; }
-        .file-info a { text-decoration: none; font-weight: bold; }
-        .file-info { margin-top: 8px; font-style: italic; color: #555; }
-        .upload-status { margin-top: 15px; padding: 10px; background-color: #e9f7fe; border-left: 4px solid #007bff; font-style: italic; color: #333; display: none; }
-        .loading-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(255, 255, 255, 0.8);
-            display: flex; justify-content: center; align-items: center;
-            font-size: 1.5em; color: #333; z-index: 1000;
+        body.dark-mode {
+            --bg-color: #121212; --card-bg-color: #1e1e1e; --text-color: #e0e0e0;
+            --text-muted-color: #888; --border-color: #444; --primary-color: #0d6efd;
+            --input-bg: #2b2b2b; --input-readonly-bg: #343a40; --button-disabled-bg: #495057;
         }
-        
-        /* GHI CHÚ: Bổ sung style cho nút Upload popup */
-        .form-group-with-button {
-            position: relative;
-        }
-        .form-group-with-button textarea {
-            padding-right: 110px !important;
-        }
-        .popup-upload-btn {
-            position: absolute;
-            top: 50%;
-            right: 10px;
-            transform: translateY(-25%); 
-            padding: 8px 12px;
-            background-color: #17a2b8;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: background-color 0.2s;
-        }
-        .popup-upload-btn:hover {
-             background-color: #138496;
-        }
+        body { background-color: var(--bg-color); color: var(--text-color); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; transition: background-color 0.3s, color 0.3s;}
+        .container { background-color: var(--card-bg-color); }
+        h1, h2 { color: var(--text-color); border-bottom-color: var(--border-color); }
+        p, .nav-link a { color: var(--text-muted-color); }
+        .form-group label { color: var(--text-muted-color); }
+        .form-group input, .form-group textarea, .form-group select { background-color: var(--input-bg); color: var(--text-color); border: 1px solid var(--border-color); }
+        input[readonly] { background-color: var(--input-readonly-bg) !important; cursor: not-allowed; }
+        .form-section { border-top: 1px solid var(--border-color); }
+        button[type="submit"]:disabled { background-color: var(--button-disabled-bg); cursor: not-allowed; opacity: 0.7; }
+        .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-color); display: flex; justify-content: center; align-items: center; font-size: 1.5em; color: var(--text-color); z-index: 1000; }
+        .form-group-with-button { position: relative; }
+        .form-group-with-button textarea { padding-right: 120px !important; }
+        .popup-upload-btn { position: absolute; top: 50%; right: 10px; transform: translateY(-50%); padding: 8px 12px; background-color: #17a2b8; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: background-color 0.2s; }
+        .popup-upload-btn:hover { background-color: #138496; }
+        .theme-switcher { position: absolute; top: 20px; right: 20px; display: flex; align-items: center; gap: 8px; }
+        .theme-switcher span { font-size: 1.2rem; }
+        .switch { position: relative; display: inline-block; width: 50px; height: 26px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 26px; }
+        .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--primary-color); }
+        input:checked + .slider:before { transform: translateX(24px); }
     </style>
+    
+    <script>
+      (function() {
+        try {
+            const theme = localStorage.getItem('theme');
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark-mode');
+            }
+        } catch(e) {}
+      })();
+    </script>
 </head>
 <body>
     <div id="loading" class="loading-overlay">
         <p>Đang tải dữ liệu sản phẩm...</p>
+    </div>
+    
+    <div class="theme-switcher">
+        <span>☀️</span>
+        <label class="switch">
+            <input type="checkbox" id="theme-toggle">
+            <span class="slider round"></span>
+        </label>
+        <span>🌙</span>
     </div>
 
     <div class="container">
@@ -58,10 +71,11 @@
         <p>Thay đổi thông tin và nhấn "Lưu Thay Đổi" để cập nhật.</p>
 
         <form id="edit-form" style="display: none;">
+            
             <div class="form-section">
                 <h2>Thông Tin Chung</h2>
                 <div class="form-grid">
-                    <div class="form-group full-width"><label>Mã Sản Phẩm / Product ID (Không thể sửa)</label><input type="text" name="id" readonly style="background-color: #e9ecef;"></div>
+                    <div class="form-group full-width"><label>Mã Sản Phẩm / Product ID (Không thể sửa)</label><input type="text" name="id" readonly></div>
                     <div class="form-group"><label>Tên Sản Phẩm (VI)</label><input type="text" name="name_vi" required></div>
                     <div class="form-group"><label>Product Name (EN)</label><input type="text" name="name_en" required></div>
                     <div class="form-group"><label>Bộ Sưu Tập (VI)</label><input type="text" name="collection_vi"></div>
@@ -101,31 +115,29 @@
             <div class="form-section">
                 <h2>Thông Tin Thương Mại & Kỹ Thuật</h2>
                 <div class="form-grid">
-                     <div class="form-group"><label>Công ty</label><input type="text" name="company"></div>
-                     <div class="form-group"><label>Khách hàng</label><input type="text" name="customer"></div>
-                     <div class="form-group"><label>Nhà cung cấp</label><input type="text" name="supplier"></div>
-                     <div class="form-group full-width"><label>Thông số</label><input type="text" name="specification"></div>
+                    <div class="form-group"><label>Công ty</label><input type="text" name="company"></div>
+                    <div class="form-group"><label>Khách hàng</label><input type="text" name="customer"></div>
+                    <div class="form-group"><label>Nhà cung cấp</label><input type="text" name="supplier"></div>
+                    <div class="form-group full-width"><label>Thông số</label><input type="text" name="specification"></div>
                 </div>
             </div>
 
             <div class="form-section">
                 <h2>Tệp Đính Kèm</h2>
-                <p style="font-style: italic; margin-bottom: 15px;">
-                    Chỉnh sửa danh sách link dưới đây. Nhấn "Upload" để mở công cụ và thêm link mới.
-                </p>
+                <p style="font-style: italic; margin-bottom: 15px;">Chỉnh sửa danh sách link dưới đây. Nhấn "Upload" để mở công cụ và thêm link mới.</p>
                 <div class="form-group full-width form-group-with-button">
                     <label for="imageUrls">Danh sách URL Hình ảnh sản phẩm</label>
-                    <textarea id="imageUrls" name="imageUrls" rows="5" placeholder="Các link ảnh sẽ tự động xuất hiện ở đây..."></textarea>
+                    <textarea id="imageUrls" name="imageUrls" rows="5" placeholder="Mỗi URL trên một dòng..."></textarea>
                     <button type="button" class="popup-upload-btn" data-target="imageUrls">Upload Ảnh</button>
                 </div>
                 <div class="form-group full-width form-group-with-button">
                     <label for="drawingUrls">Danh sách URL Bản vẽ (PDF)</label>
-                    <textarea id="drawingUrls" name="drawingUrls" rows="5" placeholder="Các link bản vẽ sẽ tự động xuất hiện ở đây..."></textarea>
+                    <textarea id="drawingUrls" name="drawingUrls" rows="5" placeholder="Mỗi URL trên một dòng..."></textarea>
                     <button type="button" class="popup-upload-btn" data-target="drawingUrls">Upload Bản Vẽ</button>
                 </div>
                 <div class="form-group full-width form-group-with-button">
                     <label for="materialsUrls">Danh sách URL Vật tư</label>
-                    <textarea id="materialsUrls" name="materialsUrls" rows="5" placeholder="Các link vật tư sẽ tự động xuất hiện ở đây..."></textarea>
+                    <textarea id="materialsUrls" name="materialsUrls" rows="5" placeholder="Mỗi URL trên một dòng..."></textarea>
                     <button type="button" class="popup-upload-btn" data-target="materialsUrls">Upload Vật Tư</button>
                 </div>
             </div>
@@ -137,112 +149,7 @@
         <div class="nav-link"><a href="/product-list.html">Quay về danh sách</a></div>
     </div>
 
-    <script>
-    const form = document.getElementById('edit-form');
-    const submitButton = document.getElementById('submit-button');
-    const loadingOverlay = document.getElementById('loading');
-    
-    // --- NHIỆM VỤ 1: TẢI VÀ ĐIỀN DỮ LIỆU VÀO FORM ---
-    document.addEventListener('DOMContentLoaded', async () => {
-        const urlParams = new URLSearchParams(window.location.search);
-        const productId = urlParams.get('id');
-
-        if (!productId) {
-            loadingOverlay.innerHTML = '<p style="color: red;">Lỗi: Không tìm thấy ID sản phẩm.</p>';
-            return;
-        }
-
-        try {
-            const response = await fetch(`/api/products/${productId}`);
-            if (!response.ok) {
-                throw new Error(`Lỗi server: ${response.status}`);
-            }
-            const product = await response.json();
-
-            // Vòng lặp này sẽ tự động điền dữ liệu cho tất cả các trường, kể cả các trường mới
-            for (const key in product) {
-                if (form.elements[key]) {
-                    const field = form.elements[key];
-                    const value = product[key];
-                    if (['imageUrls', 'drawingUrls', 'materialsUrls'].includes(key) && Array.isArray(value)) {
-                        const urlString = value.map(item => (typeof item === 'object' ? item.url : item)).join('\n');
-                        field.value = urlString;
-                    } else {
-                        field.value = value || '';
-                    }
-                }
-            }
-            
-            loadingOverlay.style.display = 'none';
-            form.style.display = 'block';
-
-        } catch (error) {
-            loadingOverlay.innerHTML = `<p style="color: red;">Lỗi khi tải dữ liệu: ${error.message}</p>`;
-        }
-    });
-
-
-    // --- NHIỆM VỤ 2: XỬ LÝ VIỆC SUBMIT FORM ---
-    form.addEventListener('submit', async function(event) {
-        event.preventDefault();
-        submitButton.disabled = true;
-        submitButton.textContent = 'Đang lưu...';
-
-        try {
-            const formData = new FormData(this);
-            const data = Object.fromEntries(formData.entries());
-            
-            function getFileNameFromUrl(url) {
-                try {
-                    const path = new URL(url).pathname;
-                    return decodeURIComponent(path.substring(path.lastIndexOf('/') + 1));
-                } catch (e) {
-                    return url.split('/').pop() || 'File';
-                }
-            }
-
-            data.imageUrls = (data.imageUrls || '').split('\n').map(link => link.trim()).filter(Boolean);
-            data.drawingUrls = (data.drawingUrls || '').split('\n').map(link => link.trim()).filter(Boolean).map(link => ({ name: getFileNameFromUrl(link), url: link }));
-            data.materialsUrls = (data.materialsUrls || '').split('\n').map(link => link.trim()).filter(Boolean).map(link => ({ name: getFileNameFromUrl(link), url: link }));
-
-            const response = await fetch(`/api/products/${data.id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data),
-            });
-            
-            if (!response.ok) {
-                let errorMessage = `Lỗi ${response.status}`;
-                try {
-                    errorMessage = (await response.json()).error || errorMessage;
-                } catch (e) { /* Bỏ qua */ }
-                throw new Error(errorMessage);
-            }
-
-            const result = await response.json();
-            alert(result.message || 'Cập nhật thành công!');
-            window.location.href = '/product-list.html';
-
-        } catch (error) {
-            alert('Có lỗi xảy ra: ' + error.message);
-            submitButton.disabled = false;
-            submitButton.textContent = 'Lưu Thay Đổi';
-        }
-    });
-
-    // --- NHIỆM VỤ 3: MỞ CỬA SỔ UPLOAD POPUP ---
-    document.querySelectorAll('.popup-upload-btn').forEach(button => {
-        button.addEventListener('click', () => {
-            const targetId = button.dataset.target;
-            const url = `/upload.html?target=${targetId}`;
-            const popupWidth = 800;
-            const popupHeight = 700;
-            const left = (screen.width / 2) - (popupWidth / 2);
-            const top = (screen.height / 2) - (popupHeight / 2);
-
-            window.open(url, 'uploadWindow', `width=${popupWidth},height=${popupHeight},top=${top},left=${left},scrollbars=yes`);
-        });
-    });
-    </script>
+    <script src="/js/theme-manager.js"></script>
+    <script src="/js/edit-product-logic.js"></script>
 </body>
 </html>

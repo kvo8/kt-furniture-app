@@ -157,6 +157,14 @@
                     <ul id="activity-list" class="notification-list">
                         <li class="no-notifications">Đang tải...</li>
                     </ul>
+               <div class="theme-switcher">
+    <span>☀️</span>
+    <label class="switch">
+        <input type="checkbox" id="theme-toggle">
+        <span class="slider round"></span>
+    </label>
+    <span>🌙</span>
+</div>
                 </div>
             </div>
         </div>
@@ -178,17 +186,25 @@
     </div>
     <script>
     /**
-      * @file product-list.html
-     * @version 2.0
-     * @description Script đã được nâng cấp để tích hợp chuông thông báo đa chức năng.
+     * @file product-list.html
+     * @version 3.0
+     * @description Script hoàn chỉnh để quản lý sản phẩm, tích hợp chuông thông báo
+     * và chế độ Sáng/Tối (Day/Night mode) theo từng người dùng.
      */
 
-    // Biến toàn cục để lưu trữ danh sách sản phẩm
-    let allProducts = [];
+    // =======================================================
+    // === KHAI BÁO BIẾN TOÀN CỤC
+    // =======================================================
+    let allProducts = [];    // Lưu trữ toàn bộ danh sách sản phẩm để tìm kiếm
+    let currentUser = null;  // Lưu thông tin người dùng đang đăng nhập, bao gồm cả theme
+
+    // =======================================================
+    // === CÁC HÀM RENDER GIAO DIỆN (UI)
+    // =======================================================
 
     /**
-     * Render danh sách sản phẩm ra bảng
-     * @param {Array<Object>} products - Mảng các đối tượng sản phẩm cần hiển thị
+     * Render danh sách sản phẩm ra bảng.
+     * @param {Array<Object>} products - Mảng các đối tượng sản phẩm cần hiển thị.
      */
     function renderProducts(products) {
         const tableBody = document.getElementById('product-table-body');
@@ -196,8 +212,6 @@
         if (products && products.length > 0) {
             products.forEach((product, index) => {
                 const row = document.createElement('tr');
-                
-                // GHI CHÚ: Thêm nút "Xem Barcode" vào cột hành động
                 row.innerHTML = `
                     <td>${index + 1}</td>
                     <td>${product.id || 'N/A'}</td>
@@ -213,7 +227,6 @@
                         <button class="delete-btn" data-id="${product.id}">Xóa</button>
                     </td>
                 `;
-
                 tableBody.appendChild(row);
             });
         } else {
@@ -222,172 +235,22 @@
     }
 
     /**
-     * Tải danh sách sản phẩm từ API server
+     * Hiển thị modal chứa các đánh giá của một sản phẩm.
+     * @param {string} productId - ID của sản phẩm.
+     * @param {string} productName - Tên của sản phẩm.
      */
-    function loadProducts() {
-        fetch('/api/products')
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`Lỗi khi tải dữ liệu: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                allProducts = data.products || data || [];
-                renderProducts(allProducts);
-            })
-            .catch(error => {
-                console.error('Chi tiết lỗi tải sản phẩm:', error);
-                document.getElementById('product-table-body').innerHTML = `<tr><td colspan="6" style="text-align:center; color: red;">Không thể tải danh sách sản phẩm.</td></tr>`;
-            });
-    }
-
-    /**
-     * Tải và hiển thị nhật ký hoạt động
-     */
-    async function updateNotifications() {
-        const activityListEl = document.getElementById('activity-list');
-        const messageListEl = document.getElementById('message-list');
-        const badgeEl = document.getElementById('notification-badge');
-
-        try {
-            // Dùng Promise.all để gọi 2 API cùng lúc cho hiệu suất cao hơn
-            const [activityResponse, messagesResponse] = await Promise.all([
-                fetch('/api/activity-log'),
-                fetch('/api/messages') 
-            ]);
-
-            // 1. Xử lý Hoạt động gần đây
-            if (activityResponse.ok) {
-                const activityData = await activityResponse.json();
-                activityListEl.innerHTML = ''; // Xóa list cũ trước khi render
-                if (activityData.activities && activityData.activities.length > 0) {
-                    activityData.activities.slice(0, 7).forEach(act => { // Chỉ hiển thị 7 hoạt động mới nhất
-                        const item = document.createElement('li');
-                        item.className = 'notification-item';
-                        item.style.cursor = 'default'; // Hoạt động không cần click
-                        item.innerHTML = `<p>${act.details}</p><small>Bởi: <strong>${act.user_name}</strong> - ${new Date(act.created_at).toLocaleString('vi-VN')}</small>`;
-                        activityListEl.appendChild(item);
-                    });
-                } else {
-                    activityListEl.innerHTML = '<li class="no-notifications">Không có hoạt động nào.</li>';
-                }
-            } else {
-                 activityListEl.innerHTML = '<li class="no-notifications" style="color:red;">Lỗi tải hoạt động.</li>';
-            }
-
-            // 2. Xử lý Tin nhắn mới
-          if (messagesResponse.ok) {
-                    const messageData = await messagesResponse.json();
-                    const unreadMessages = messageData.messages.filter(msg => !msg.is_read);
-                    
-                    messageListEl.innerHTML = '';
-                    if (unreadMessages.length > 0) {
-                        unreadMessages.forEach(msg => {
-                            const item = document.createElement('li');
-                            item.className = 'notification-item';
-                            item.title = `Click để xem chi tiết và đánh dấu đã đọc`;
-                            item.onclick = () => {
-                                fetch(`/api/messages/${msg.id}/read`, { method: 'PUT' });
-                                window.location.href = '/message.html';
-                            };
-                            item.innerHTML = `<p><strong>Từ: ${msg.sender_name}</strong></p><p>${msg.title}</p><small>${new Date(msg.created_at).toLocaleString('vi-VN')}</small>`;
-                            messageListEl.appendChild(item);
-                        });
-                    } else {
-                        messageListEl.innerHTML = '<li class="no-notifications">Không có tin nhắn mới.</li>';
-                    }
-
-                    // Cập nhật huy hiệu
-                    if (unreadMessages.length > 0) {
-                        badgeEl.textContent = unreadMessages.length;
-                        badgeEl.style.display = 'block';
-                    } else {
-                        badgeEl.style.display = 'none';
-                    }
-                } else {
-                     messageListEl.innerHTML = '<li class="no-notifications" style="color:red;">Lỗi tải tin nhắn.</li>';
-                }
-
-            } catch (error) {
-                console.error("Lỗi khi tải thông báo:", error);
-                activityListEl.innerHTML = '<li class="no-notifications" style="color:red;">Lỗi hệ thống khi tải thông báo.</li>';
-            }
-    }
-
-
-    /**
-     * Xử lý sự kiện tìm kiếm sản phẩm
-     */
-    document.getElementById('search-input').addEventListener('input', e => {
-        const searchTerm = e.target.value.toLowerCase();
-        const filtered = allProducts.filter(p => 
-            (p.id && p.id.toLowerCase().includes(searchTerm)) || 
-            (p.name_vi && p.name_vi.toLowerCase().includes(searchTerm)) || 
-            (p.created_by_name && p.created_by_name.toLowerCase().includes(searchTerm))
-        );
-        renderProducts(filtered);
-    });
-
-    /**
-     * Xử lý các sự kiện click trên bảng (xóa, xem đánh giá)
-     */
-    document.getElementById('product-table-body').addEventListener('click', e => {
-        const target = e.target;
-
-        if (target && target.classList.contains('delete-btn')) {
-            const productId = target.dataset.id;
-            if (confirm(`Bạn có chắc chắn muốn xóa sản phẩm có mã "${productId}" không?`)) {
-                fetch(`/api/products/${productId}`, { method: 'DELETE' })
-                .then(response => {
-                    if (response.ok) {
-                        alert('Xóa thành công!');
-                        loadProducts();
-                    } else {
-                        alert(`Xóa thất bại! Server báo lỗi: ${response.status}.`);
-                    }
-                })
-                .catch(error => {
-                    alert('Lỗi mạng! Không thể gửi yêu cầu xóa.');
-                });
-            }
-        }
-
-        if (target && target.classList.contains('reviews-btn')) {
-            const productId = target.dataset.id;
-            const productName = target.dataset.name;
-            showReviews(productId, productName);
-        }
-    });
-
-    // --- CÁC HÀM XỬ LÝ MODAL ĐÁNH GIÁ ---
-
-    const modal = document.getElementById('reviewsModal');
-    const closeButton = document.querySelector('.close-button');
-    const reviewsListDiv = document.getElementById('reviewsList');
-    const modalProductName = document.getElementById('modalProductName');
-
-    function closeModal() {
-        modal.style.display = 'none';
-    }
-    
-    closeButton.onclick = closeModal;
-    window.onclick = (event) => {
-        if (event.target == modal) {
-            closeModal();
-        }
-    };
-
     async function showReviews(productId, productName) {
+        const modal = document.getElementById('reviewsModal');
+        const modalProductName = document.getElementById('modalProductName');
+        const reviewsListDiv = document.getElementById('reviewsList');
+
         modalProductName.textContent = productName; 
         reviewsListDiv.innerHTML = '<p>Đang tải đánh giá...</p>';
         modal.style.display = 'block';
 
         try {
             const response = await fetch(`/api/products/${productId}/reviews`);
-            if (!response.ok) {
-                throw new Error(`Lỗi server: ${response.status}`);
-            }
+            if (!response.ok) throw new Error(`Lỗi server: ${response.status}`);
             const data = await response.json();
 
             if (data.reviews && data.reviews.length > 0) {
@@ -409,40 +272,246 @@
             }
         } catch (error) {
             console.error('Lỗi khi tải đánh giá:', error);
-            reviewsListDiv.innerHTML = '<p style="color: red;">Không thể tải danh sách đánh giá. Vui lòng thử lại.</p>';
+            reviewsListDiv.innerHTML = '<p style="color: red;">Không thể tải danh sách đánh giá.</p>';
         }
     }
-const notificationBell = document.getElementById('notification-bell');
+
+    // =======================================================
+    // === CÁC HÀM QUẢN LÝ THEME (DAY/NIGHT MODE)
+    // =======================================================
+    
+    /**
+     * Áp dụng theme (light/dark) vào trang và cập nhật trạng thái nút gạt.
+     * @param {string} theme - Tên theme ('light' hoặc 'dark').
+     */
+    function applyTheme(theme) {
+        const toggle = document.getElementById('theme-toggle');
+        if (theme === 'dark') {
+            document.body.classList.add('dark-mode');
+            if (toggle) toggle.checked = true;
+        } else {
+            document.body.classList.remove('dark-mode');
+            if (toggle) toggle.checked = false;
+        }
+    }
+
+    /**
+     * Gửi yêu cầu lên server để lưu lựa chọn theme mới vào CSDL cho người dùng.
+     * @param {string} theme - Tên theme mới ('light' hoặc 'dark').
+     */
+    async function saveThemePreference(theme) {
+        // Chỉ gửi yêu cầu nếu người dùng đã đăng nhập
+        if (!currentUser) return;
+
+        try {
+            await fetch('/api/user/theme', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ theme: theme })
+            });
+            // Cập nhật lại theme trong biến currentUser để đồng bộ
+            currentUser.theme = theme;
+            console.log(`Lưu theme '${theme}' cho người dùng thành công.`);
+        } catch (error) {
+            console.error("Lỗi khi lưu theme:", error);
+        }
+    }
+
+    // =======================================================
+    // === CÁC HÀM TẢI DỮ LIỆU TỪ SERVER
+    // =======================================================
+
+    /**
+     * Tải danh sách sản phẩm từ API và render ra bảng.
+     */
+    function loadProducts() {
+        fetch('/api/products')
+            .then(response => {
+                if (!response.ok) throw new Error(`Lỗi khi tải dữ liệu sản phẩm: ${response.status}`);
+                return response.json();
+            })
+            .then(data => {
+                allProducts = data.products || data || [];
+                renderProducts(allProducts);
+            })
+            .catch(error => {
+                console.error('Chi tiết lỗi tải sản phẩm:', error);
+                document.getElementById('product-table-body').innerHTML = `<tr><td colspan="6" style="text-align:center; color: red;">Không thể tải danh sách sản phẩm.</td></tr>`;
+            });
+    }
+
+    /**
+     * Tải đồng thời cả hoạt động và tin nhắn chưa đọc, sau đó cập nhật chuông thông báo.
+     */
+    async function updateNotifications() {
+        const activityListEl = document.getElementById('activity-list');
+        const messageListEl = document.getElementById('message-list');
+        const badgeEl = document.getElementById('notification-badge');
+
+        try {
+            const [activityResponse, messagesResponse] = await Promise.all([
+                fetch('/api/activity-log'),
+                fetch('/api/messages') 
+            ]);
+
+            // Xử lý Hoạt động gần đây
+            if (activityResponse.ok) {
+                const activityData = await activityResponse.json();
+                activityListEl.innerHTML = '';
+                if (activityData.activities && activityData.activities.length > 0) {
+                    activityData.activities.slice(0, 7).forEach(act => {
+                        const item = document.createElement('li');
+                        item.className = 'notification-item';
+                        item.style.cursor = 'default';
+                        item.innerHTML = `<p>${act.details}</p><small>Bởi: <strong>${act.user_name}</strong> - ${new Date(act.created_at).toLocaleString('vi-VN')}</small>`;
+                        activityListEl.appendChild(item);
+                    });
+                } else {
+                    activityListEl.innerHTML = '<li class="no-notifications">Không có hoạt động nào.</li>';
+                }
+            } else {
+                 activityListEl.innerHTML = '<li class="no-notifications" style="color:red;">Lỗi tải hoạt động.</li>';
+            }
+
+            // Xử lý Tin nhắn mới
+            if (messagesResponse.ok) {
+                const messageData = await messagesResponse.json();
+                const unreadMessages = messageData.messages.filter(msg => !msg.is_read);
+                
+                messageListEl.innerHTML = '';
+                if (unreadMessages.length > 0) {
+                    unreadMessages.forEach(msg => {
+                        const item = document.createElement('li');
+                        item.className = 'notification-item';
+                        item.title = `Click để xem chi tiết và đánh dấu đã đọc`;
+                        item.onclick = () => {
+                            fetch(`/api/messages/${msg.id}/read`, { method: 'PUT' });
+                            window.location.href = '/message.html';
+                        };
+                        item.innerHTML = `<p><strong>Từ: ${msg.sender_name}</strong></p><p>${msg.title}</p><small>${new Date(msg.created_at).toLocaleString('vi-VN')}</small>`;
+                        messageListEl.appendChild(item);
+                    });
+                } else {
+                    messageListEl.innerHTML = '<li class="no-notifications">Không có tin nhắn mới.</li>';
+                }
+
+                // Cập nhật số trên huy hiệu của chuông
+                if (unreadMessages.length > 0) {
+                    badgeEl.textContent = unreadMessages.length;
+                    badgeEl.style.display = 'block';
+                } else {
+                    badgeEl.style.display = 'none';
+                }
+            } else {
+                 messageListEl.innerHTML = '<li class="no-notifications" style="color:red;">Lỗi tải tin nhắn.</li>';
+            }
+
+        } catch (error) {
+            console.error("Lỗi khi tải thông báo:", error);
+            activityListEl.innerHTML = '<li class="no-notifications" style="color:red;">Lỗi hệ thống khi tải thông báo.</li>';
+        }
+    }
+
+    // =======================================================
+    // === GẮN CÁC SỰ KIỆN VÀ KHỞI TẠO TRANG
+    // =======================================================
+
+    /**
+     * Hàm khởi tạo chính của trang, chạy khi DOM đã được tải hoàn toàn.
+     */
+    async function initializePage() {
+        try {
+            // Lấy thông tin người dùng hiện tại, bao gồm cả theme đã lưu
+            const response = await fetch('/api/me');
+            if (!response.ok) {
+                // Nếu không lấy được thông tin (chưa đăng nhập), chuyển về trang login
+                console.log("Người dùng chưa đăng nhập, chuyển hướng...");
+                window.location.href = '/login.html';
+                return;
+            }
+            currentUser = await response.json();
+            
+            // 1. Áp dụng theme của user ngay lập tức
+            applyTheme(currentUser.theme);
+
+            // 2. Tải các dữ liệu khác cho trang
+            loadProducts();
+            updateNotifications();
+
+        } catch (error) {
+            console.error("Lỗi khởi tạo trang:", error);
+            // Có thể chuyển về trang login nếu có lỗi nghiêm trọng
+            window.location.href = '/login.html';
+        }
+    }
+
+    // Gắn sự kiện chính khi trang được tải xong
+    document.addEventListener('DOMContentLoaded', initializePage);
+
+    // Gắn sự kiện cho nút gạt theme
+    const themeToggle = document.getElementById('theme-toggle');
+    if (themeToggle) {
+        themeToggle.addEventListener('change', () => {
+            const newTheme = themeToggle.checked ? 'dark' : 'light';
+            applyTheme(newTheme); // Áp dụng ngay lập tức để người dùng thấy thay đổi
+            saveThemePreference(newTheme); // Gửi lên server để lưu lại cho lần đăng nhập sau
+        });
+    }
+
+    // Gắn sự kiện cho ô tìm kiếm
+    document.getElementById('search-input').addEventListener('input', e => {
+        const searchTerm = e.target.value.toLowerCase();
+        const filtered = allProducts.filter(p => 
+            (p.id && p.id.toLowerCase().includes(searchTerm)) || 
+            (p.name_vi && p.name_vi.toLowerCase().includes(searchTerm)) || 
+            (p.created_by_name && p.created_by_name.toLowerCase().includes(searchTerm))
+        );
+        renderProducts(filtered);
+    });
+
+    // Gắn sự kiện click cho bảng sản phẩm (Xóa, Xem đánh giá)
+    document.getElementById('product-table-body').addEventListener('click', e => {
+        const target = e.target;
+        if (target && target.classList.contains('delete-btn')) {
+            const productId = target.dataset.id;
+            if (confirm(`Bạn có chắc chắn muốn xóa sản phẩm có mã "${productId}" không?`)) {
+                fetch(`/api/products/${productId}`, { method: 'DELETE' })
+                .then(response => {
+                    if (response.ok) {
+                        alert('Xóa thành công!');
+                        loadProducts(); // Tải lại danh sách sản phẩm
+                        updateNotifications(); // Cập nhật lại hoạt động gần đây
+                    } else {
+                        alert(`Xóa thất bại! Server báo lỗi: ${response.status}.`);
+                    }
+                })
+                .catch(error => alert('Lỗi mạng! Không thể gửi yêu cầu xóa.'));
+            }
+        }
+        if (target && target.classList.contains('reviews-btn')) {
+            showReviews(target.dataset.id, target.dataset.name);
+        }
+    });
+    
+    // Gắn sự kiện cho chuông thông báo
+    const notificationBell = document.getElementById('notification-bell');
     const notificationDropdown = document.getElementById('notification-dropdown');
-
     notificationBell.addEventListener('click', (event) => {
-        event.stopPropagation(); // Ngăn sự kiện click lan ra ngoài
-        
-        // Hiện hoặc ẩn dropdown
-        const isCurrentlyHidden = notificationDropdown.style.display === 'none';
-        notificationDropdown.style.display = isCurrentlyHidden ? 'block' : 'none';
-
-        // Nếu vừa mở dropdown, tải lại thông báo để đảm bảo dữ liệu mới nhất
-        if (isCurrentlyHidden) {
+        event.stopPropagation();
+        const isHidden = notificationDropdown.style.display === 'none';
+        notificationDropdown.style.display = isHidden ? 'block' : 'none';
+        if (isHidden) {
             updateNotifications();
         }
     });
 
-    // Thêm sự kiện để tự động đóng dropdown khi người dùng click ra ngoài
+    // Gắn sự kiện để đóng dropdown khi click ra ngoài
     window.addEventListener('click', (event) => {
         if (!notificationBell.contains(event.target) && !notificationDropdown.contains(event.target)) {
             notificationDropdown.style.display = 'none';
         }
     });
 
-    /**
-     * Hàm khởi tạo chính của trang
-     */
-    document.addEventListener('DOMContentLoaded', () => {
-        loadProducts();
-        loadActivityLog();
-    });
-
-    </script>
+</script>
 </body>
 </html>
