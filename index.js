@@ -1,6 +1,6 @@
 // =================================================================
-// === FILE: index.js (PHIÊN BẢN HOÀN CHỈNH - FULL CHỨC NĂNG)      ===
-// === Tích hợp Upload, Quản lý Sản phẩm, và Quản lý Nhân viên    ===
+// === FILE: index.js (PHIÊN BẢN HOÀN CHỈNH - FULL CHỨC NĂNG)     ===
+// === Tích hợp Upload, Quản lý Sản phẩm, và Quản lý Nhân viên     ===
 // =================================================================
 
 // --- PHẦN 1: IMPORT CÁC THƯ VIỆN CẦN THIẾT ---
@@ -49,13 +49,48 @@ app.use(session({
 }));
 console.log("Session management configured successfully.");
 
-// --- 2.4. Cấu hình Multer ---
+
+// =======================================================================
+// === BẮT ĐẦU KHỐI CODE CẦN THAY THẾ ===
+// =======================================================================
+// --- 2.4. Cấu hình Multer (ĐÃ CẢI TIẾN) ---
+// Bổ sung bộ lọc file để chỉ định rõ các định dạng được phép
+
+const fileFilter = (req, file, cb) => {
+    // Danh sách các loại file (MIME types) mà chúng ta cho phép
+    const allowedTypes = [
+        'image/jpeg',
+        'image/png',
+        'image/gif',
+        'application/pdf',
+        'application/msword', // cho file .doc
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // cho file .docx
+        'application/vnd.ms-excel', // cho file .xls
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' // cho file .xlsx
+    ];
+
+    if (allowedTypes.includes(file.mimetype)) {
+        // Nếu loại file hợp lệ, cho phép upload
+        cb(null, true);
+    } else {
+        // Nếu loại file không hợp lệ, từ chối và báo lỗi
+        cb(new Error('Định dạng file không được hỗ trợ! Chỉ chấp nhận Word, Excel, PDF, và ảnh.'), false);
+    }
+};
+
 const multerMemory = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 15 * 1024 * 1024 },
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 15 * 1024 * 1024 }, // Giữ nguyên giới hạn 15MB của bạn
+    fileFilter: fileFilter                    // <-- ÁP DỤNG BỘ LỌC FILE MỚI
 });
+
 const textOnlyUpload = multer().none();
-console.log("Multer configured for memory storage and text-only forms.");
+console.log("Multer configured with explicit file filter and size limits."); // Log đã được cập nhật
+
+// =======================================================================
+// === KẾT THÚC KHỐI CODE CẦN THAY THẾ ===
+// =======================================================================
+
 
 // --- 2.5. Middleware Tùy Chỉnh ---
 const isLoggedIn = (req, res, next) => {
@@ -415,6 +450,10 @@ app.use((err, req, res, next) => {
     }
     if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
         return res.status(413).json({ error: 'File quá lớn. Vui lòng chọn file dưới 15MB.' });
+    }
+    // GHI CHÚ: Xử lý lỗi từ fileFilter của Multer
+    if (err.message === 'Định dạng file không được hỗ trợ! Chỉ chấp nhận Word, Excel, PDF, và ảnh.') {
+        return res.status(415).json({ error: err.message });
     }
     res.status(500).json({
         status: 'error',
