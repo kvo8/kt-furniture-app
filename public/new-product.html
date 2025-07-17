@@ -5,59 +5,53 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Thêm Sản Phẩm Mới</title>
     <link rel="stylesheet" href="/css/style.css">
-    
     <style>
-        :root {
-            --bg-color: #f8f9fa; --card-bg-color: #ffffff; --text-color: #212529;
-            --text-muted-color: #6c757d; --border-color: #dee2e6; --primary-color: #007bff;
-            --input-bg: #fff; --input-readonly-bg: #e9ecef; --button-disabled-bg: #5a6268;
+        button[type="submit"]:disabled {
+            background-color: #5a6268;
+            border-color: #5a6268;
+            cursor: not-allowed;
+            opacity: 0.65;
         }
-        body.dark-mode {
-            --bg-color: #121212; --card-bg-color: #1e1e1e; --text-color: #e0e0e0;
-            --text-muted-color: #888; --border-color: #444; --primary-color: #0d6efd;
-            --input-bg: #2b2b2b; --input-readonly-bg: #343a40; --button-disabled-bg: #495057;
+        .upload-status {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #e9f7fe;
+            border-left: 4px solid #007bff;
+            font-style: italic;
+            color: #333;
+            display: none;
+            text-align: left;
         }
-        body { background-color: var(--bg-color); color: var(--text-color); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-        .container { background-color: var(--card-bg-color); }
-        header p, .form-group label, .form-section > p, .nav-link a { color: var(--text-muted-color); }
-        h1, h2 { color: var(--text-color); border-bottom-color: var(--border-color); }
-        .form-group input, .form-group textarea, .form-group select { background-color: var(--input-bg); color: var(--text-color); border: 1px solid var(--border-color); }
-        .form-section { border-top: 1px solid var(--border-color); }
-        button[type="submit"]:disabled { background-color: var(--button-disabled-bg); border-color: var(--button-disabled-bg); cursor: not-allowed; opacity: 0.65; }
-        .id-prefix span { background-color: var(--input-readonly-bg); border-color: var(--border-color); }
-        .form-group-with-button { position: relative; }
-        .form-group-with-button textarea { padding-right: 120px !important; }
-        .popup-upload-btn { position: absolute; top: 50%; right: 10px; transform: translateY(-50%); padding: 8px 12px; background-color: #17a2b8; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: background-color 0.2s; }
-        .popup-upload-btn:hover { background-color: #138496; }
-        .theme-switcher { position: absolute; top: 20px; right: 20px; display: flex; align-items: center; gap: 8px; }
-        .theme-switcher span { font-size: 1.2rem; }
-        .switch { position: relative; display: inline-block; width: 50px; height: 26px; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 26px; }
-        .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
-        input:checked + .slider { background-color: var(--primary-color); }
-        input:checked + .slider:before { transform: translateX(24px); }
+        
+        /* GHI CHÚ: Bổ sung style cho các nút upload mới */
+        .form-group-with-button {
+            position: relative;
+        }
+        .form-group-with-button textarea {
+            /* Tạo không gian bên phải trong ô textarea để đặt nút bấm */
+            padding-right: 110px !important;
+        }
+        .popup-upload-btn {
+            position: absolute;
+            top: 50%;
+            right: 10px;
+            /* Dịch chuyển nút lên trên một chút để nó nằm giữa label và textarea */
+            transform: translateY(-25%); 
+            padding: 8px 12px;
+            background-color: #17a2b8; /* Đổi màu cho khác biệt */
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+        .popup-upload-btn:hover {
+             background-color: #138496;
+        }
     </style>
-    
-    <script>
-      (function() {
-        try {
-            const theme = localStorage.getItem('theme');
-            if (theme === 'dark') document.documentElement.classList.add('dark-mode');
-        } catch(e) {}
-      })();
-    </script>
 </head>
-<body class="dark-mode">
-    <div class="theme-switcher">
-        <span>☀️</span>
-        <label class="switch">
-            <input type="checkbox" id="theme-toggle">
-            <span class="slider round"></span>
-        </label>
-        <span>🌙</span>
-    </div>
-
+<body>
     <div class="container">
         <header>
             <h1>Thêm Sản Phẩm Mới / Add New Product</h1>
@@ -65,6 +59,7 @@
         </header>
 
         <form id="product-form">
+            
             <div class="form-section">
                 <h2>Thông Tin Chung</h2>
                 <div class="form-grid">
@@ -97,10 +92,17 @@
                     <div class="form-group"><label for="material_en">Material (EN)</label><input type="text" id="material_en" name="material_en"></div>
                     <div class="form-group"><label for="supplier">Nhà cung cấp</label><input type="text" id="supplier" name="supplier"></div>
                     <div class="form-group full-width"><label for="aluminum_profile">Biên dạng nhôm</label><input type="text" id="aluminum_profile" name="aluminum_profile"></div>
-                    <div class="form-group"><label for="production_place">Nơi sản xuất</label><select id="production_place" name="production_place"><option value="KT">KT</option><option value="Minh Tien">Minh Tiến</option><option value="Other">Khác</option></select></div>
+                    <div class="form-group">
+                        <label for="production_place">Nơi sản xuất</label>
+                        <select id="production_place" name="production_place">
+                            <option value="KT">KT</option>
+                            <option value="Minh Tien">Minh Tiến</option>
+                            <option value="Other">Khác</option>
+                        </select>
+                    </div>
                 </div>
             </div>
-            
+
             <div class="form-section">
                 <h2>Thông Tin Thương Mại & Kỹ Thuật</h2>
                 <div class="form-grid">
@@ -119,16 +121,33 @@
                     <div class="form-group"><label>Chiều dài đóng gói (cm)</label><input type="number" step="0.01" name="packed_length"></div>
                     <div class="form-group"><label>Chiều rộng đóng gói (cm)</label><input type="number" step="0.01" name="packed_width"></div>
                     <div class="form-group"><label>Chiều cao đóng gói (cm)</label><input type="number" step="0.01" name="packed_height"></div>
-                    <div class="form-group full-width"><label>Các chi tiết khác</label><textarea name="other_details" rows="4" placeholder="Ghi chú thêm về sản phẩm..."></textarea></div>
+                    <div class="form-group full-width">
+                        <label>Các chi tiết khác</label>
+                        <textarea name="other_details" rows="4" placeholder="Ghi chú thêm về sản phẩm..."></textarea>
+                    </div>
                 </div>
             </div>
 
             <div class="form-section">
                 <h2>Tệp Đính Kèm</h2>
-                <p style="font-style: italic; margin-bottom: 15px;">Nhấn nút "Upload" bên cạnh mỗi ô để mở công cụ tải file. Các link sẽ tự động được điền vào.</p>
-                <div class="form-group full-width form-group-with-button"><label for="imageUrls">Danh sách URL Hình ảnh sản phẩm</label><textarea id="imageUrls" name="imageUrls" rows="5" placeholder="Các link ảnh sẽ tự động xuất hiện ở đây sau khi upload..."></textarea><button type="button" class="popup-upload-btn" data-target="imageUrls">Upload Ảnh</button></div>
-                <div class="form-group full-width form-group-with-button"><label for="drawingUrls">Danh sách URL Bản vẽ (PDF)</label><textarea id="drawingUrls" name="drawingUrls" rows="5" placeholder="Các link bản vẽ sẽ tự động xuất hiện ở đây sau khi upload..."></textarea><button type="button" class="popup-upload-btn" data-target="drawingUrls">Upload Bản Vẽ</button></div>
-                <div class="form-group full-width form-group-with-button"><label for="materialsUrls">Danh sách URL Vật tư</label><textarea id="materialsUrls" name="materialsUrls" rows="5" placeholder="Các link vật tư sẽ tự động xuất hiện ở đây sau khi upload..."></textarea><button type="button" class="popup-upload-btn" data-target="materialsUrls">Upload Vật Tư</button></div>
+                <p style="font-style: italic; margin-bottom: 15px;">
+                    Nhấn nút "Upload" bên cạnh mỗi ô để mở công cụ tải file. Các link sẽ tự động được điền vào.
+                </p>
+                <div class="form-group full-width form-group-with-button">
+                    <label for="imageUrls">Danh sách URL Hình ảnh sản phẩm</label>
+                    <textarea id="imageUrls" name="imageUrls" rows="5" placeholder="Các link ảnh sẽ tự động xuất hiện ở đây sau khi upload..."></textarea>
+                    <button type="button" class="popup-upload-btn" data-target="imageUrls">Upload Ảnh</button>
+                </div>
+                <div class="form-group full-width form-group-with-button">
+                    <label for="drawingUrls">Danh sách URL Bản vẽ (PDF)</label>
+                    <textarea id="drawingUrls" name="drawingUrls" rows="5" placeholder="Các link bản vẽ sẽ tự động xuất hiện ở đây sau khi upload..."></textarea>
+                    <button type="button" class="popup-upload-btn" data-target="drawingUrls">Upload Bản Vẽ</button>
+                </div>
+                <div class="form-group full-width form-group-with-button">
+                    <label for="materialsUrls">Danh sách URL Vật tư</label>
+                    <textarea id="materialsUrls" name="materialsUrls" rows="5" placeholder="Các link vật tư sẽ tự động xuất hiện ở đây sau khi upload..."></textarea>
+                    <button type="button" class="popup-upload-btn" data-target="materialsUrls">Upload Vật Tư</button>
+                </div>
             </div>
             
             <div class="form-actions">
@@ -141,7 +160,90 @@
         </div>
     </div>
 
-    <script src="/js/theme-manager.js"></script>
-    <script src="/js/new-product-logic.js"></script>
+    <script>
+        // GHI CHÚ: Toàn bộ phần script này đã được làm đầy đủ hơn.
+        // Bao gồm cả logic submit form và logic mở cửa sổ upload mới.
+        
+        // --- LOGIC 1: XỬ LÝ SUBMIT FORM ---
+        const form = document.getElementById('product-form'); 
+        form.addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const submitButton = document.getElementById('submit-button');
+            submitButton.disabled = true;
+            submitButton.textContent = 'Đang lưu...';
+
+            try {
+                const formData = new FormData(this);
+                const data = Object.fromEntries(formData.entries());
+
+                const idSuffixInput = document.getElementById('product-id-suffix');
+                if (idSuffixInput.value.length !== 11) {
+                    throw new Error("Mã sản phẩm phải có đúng 11 ký tự.");
+                }
+                data.id = 'KT' + idSuffixInput.value;
+                
+                function getFileNameFromUrl(url) {
+                    try {
+                        const path = new URL(url).pathname;
+                        return decodeURIComponent(path.substring(path.lastIndexOf('/') + 1));
+                    } catch (e) {
+                        return url.split('/').pop() || 'File không tên';
+                    }
+                }
+
+                data.imageUrls = (data.imageUrls || '').split('\n').map(link => link.trim()).filter(Boolean);
+                data.drawingUrls = (data.drawingUrls || '').split('\n').map(link => link.trim()).filter(Boolean).map(link => ({ name: getFileNameFromUrl(link), url: link }));
+                data.materialsUrls = (data.materialsUrls || '').split('\n').map(link => link.trim()).filter(Boolean).map(link => ({ name: getFileNameFromUrl(link), url: link }));
+
+                const response = await fetch('/api/products', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data),
+                });
+
+                if (!response.ok) {
+                    let errorMessage = `Lỗi ${response.status}`;
+                    try {
+                        const errorResult = await response.json();
+                        errorMessage = errorResult.error || JSON.stringify(errorResult);
+                    } catch (e) {
+                        const textError = await response.text();
+                        if (textError) errorMessage = textError;
+                    }
+                    throw new Error(errorMessage);
+                }
+                
+                const result = await response.json();
+                alert(result.message || 'Thao tác thành công!');
+                window.location.href = `/success.html?id=${result.id}`;
+
+            } catch (error) {
+                alert('Có lỗi xảy ra: ' + error.message);
+                submitButton.disabled = false;
+                submitButton.textContent = 'Lưu và Xem lại';
+            }
+        });
+
+        // --- LOGIC 2: MỞ CỬA SỔ UPLOAD POPUP ---
+        document.querySelectorAll('.popup-upload-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                const targetId = button.dataset.target;
+                const url = `/upload.html?target=${targetId}`;
+                
+                // Các thông số cho cửa sổ popup
+                const popupWidth = 800;
+                const popupHeight = 700;
+                const left = (screen.width / 2) - (popupWidth / 2);
+                const top = (screen.height / 2) - (popupHeight / 2);
+
+                // Mở trang upload.html trong một cửa sổ popup nhỏ và canh giữa màn hình
+                window.open(
+                    url, 
+                    'uploadWindow', 
+                    `width=${popupWidth},height=${popupHeight},top=${top},left=${left},scrollbars=yes`
+                );
+            });
+        });
+    </script>
 </body>
 </html>
