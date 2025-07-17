@@ -130,16 +130,49 @@
             other_details: "Chi tiết khác", created_by_name: "Người tạo",
             parent_id: "Mã Sản Phẩm Gốc", imageUrls: "Danh sách URL Hình ảnh",
             drawingUrls: "Danh sách URL Bản vẽ", materialsUrls: "Danh sách URL Vật tư",
-            dimensions: "Kích thước (D x R x C)", packed_dimensions: "KT đóng gói (D x R x C)"
+            dimensions: "Kích thước (D x R x C)", packed_dimensions: "KT đóng gói (D x R x C)",
+            box_quantity: "Số lượng/hộp",
+            origin_country: "Nơi sản xuất",
+            cost_price: "Giá vốn (USD)",
+            hardware: "Hardware",
+            cushion_details: "Chi tiết nệm",
+            pillow_details: "Chi tiết gối",
+            aluminum_weight: "Định lượng nhôm (Kg)",
+            wicker_weight: "Định lượng Wicker (Kg)",
+            stone_weight: "Định lượng mặt đá (Kg)",
+            weaving_rope_weight: "Cân nặng dây đan (Kg)",
+            lining_rope_weight: "Cân nặng dây lót (Kg)",
+            product_weight: "Tổng cân nặng sản phẩm (Kg)",
+            packed_weight_total: "Tổng cân nặng đóng thùng (Kg)",
+            aluminum_supplier: "Nhà cung cấp nhôm",
+            wicker_supplier: "Nhà cung cấp wicker",
+            stone_supplier: "Nhà cung cấp mặt đá"
         };
         
-        const displayOrder = [
-            'name_vi', 'name_en', 'collection_vi', 'collection_en', 'dimensions',
-            'packed_dimensions', 'color_vi', 'color_en', 'material_vi', 'material_en', 
-            'fabric_vi', 'fabric_en', 'wicker_vi', 'wicker_en', 'specification', 'aluminum_profile', 
-            'supplier', 'production_place', 'company', 'customer', 'other_details', 
-            'created_by_name', 'parent_id', 'imageUrls', 'drawingUrls', 'materialsUrls'
-        ];
+     const displayOrder = [
+    // Nhóm thông tin chung
+    'name_vi', 'name_en', 'collection_vi', 'collection_en', 
+    'parent_id', 'company', 'customer', 
+    
+    // Nhóm kích thước và đóng gói
+    'dimensions', 'packed_dimensions', 'box_quantity', 'origin_country', 
+    
+    // Nhóm vật liệu
+    'material_vi', 'material_en', 'color_vi', 'color_en', 
+    'fabric_vi', 'fabric_en', 'wicker_vi', 'wicker_en', 
+    'aluminum_profile', 'hardware', 'cushion_details', 'pillow_details',
+
+    // Nhóm nhà cung cấp
+    'supplier', 'aluminum_supplier', 'wicker_supplier', 'stone_supplier',
+
+    // Nhóm cân nặng & giá (nội bộ)
+    'cost_price', 'aluminum_weight', 'wicker_weight', 'stone_weight',
+    'weaving_rope_weight', 'lining_rope_weight', 'product_weight', 'packed_weight_total',
+    
+    // Nhóm chi tiết khác và file
+    'specification', 'other_details', 'imageUrls', 'drawingUrls', 'materialsUrls',
+    'created_by_name'
+];
         
         function formatDimensions(length, width, height) {
             const dims = [length, width, height].filter(d => d != null && d !== '').join(' x ');
