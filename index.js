@@ -168,7 +168,8 @@ app.post("/api/users/login", async (req, res, next) => {
         }
         const isMatch = await bcrypt.compare(password, user.password);
         if (isMatch) {
-            req.session.user = { id: user.id, name: user.ho_ten, employeeId: user.ma_nhan_vien, position: user.chuc_vu };
+            // THAY THẾ BẰNG DÒNG NÀY
+req.session.user = { id: user.id, name: user.ho_ten, employeeId: user.ma_nhan_vien, position: user.chuc_vu, theme: user.theme };
             res.json({ "message": "Đăng nhập thành công" });
         } else {
             res.status(401).json({ "error": "Mã nhân viên hoặc mật khẩu không đúng." });
@@ -178,8 +179,19 @@ app.post("/api/users/login", async (req, res, next) => {
     }
 });
 
+// THAY THẾ BẰNG KHỐI NÀY
 app.get("/api/me", isLoggedIn, (req, res) => {
-    res.json(req.session.user);
+    // Lấy thông tin theme mới nhất từ CSDL phòng trường hợp nó được đổi ở tab khác
+    const sql = 'SELECT theme FROM users WHERE id = $1';
+    db.query(sql, [req.session.user.id], (err, result) => {
+        if (err || result.rowCount === 0) {
+            // Nếu có lỗi, vẫn trả về thông tin user trong session
+            return res.json(req.session.user);
+        }
+        // Cập nhật session và trả về thông tin mới nhất
+        req.session.user.theme = result.rows[0].theme;
+        res.json(req.session.user);
+    });
 });
 
 // GHI CHÚ: API mới để lấy danh sách tất cả nhân viên
@@ -508,7 +520,29 @@ app.put("/api/messages/:id/read", isLoggedIn, async (req, res, next) => {
         next(err);
     }
 });
+// === BỔ SUNG: API ĐỂ CẬP NHẬT THEME CHO USER ===
+app.put("/api/user/theme", isLoggedIn, (req, res) => {
+    const { theme } = req.body;
+    const userId = req.session.user.id;
 
+    // Chỉ chấp nhận giá trị 'light' hoặc 'dark'
+    if (theme !== 'light' && theme !== 'dark') {
+        return res.status(400).json({ error: "Giá trị theme không hợp lệ." });
+    }
+
+    const sql = 'UPDATE users SET theme = $1 WHERE id = $2';
+    db.query(sql, [theme, userId], (err, result) => {
+        if (err) {
+            console.error("Lỗi cập nhật theme:", err);
+            return res.status(500).json({ error: "Lỗi server khi cập nhật theme." });
+        }
+
+        // Cập nhật theme trong session ngay lập tức
+        req.session.user.theme = theme;
+
+        res.json({ message: "Cập nhật theme thành công." });
+    });
+});
 // == E. API NHẬT KÝ HOẠT ĐỘNG ==
 app.get("/api/activity-log", isLoggedIn, async (req, res, next) => {
     try {
