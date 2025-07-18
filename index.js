@@ -4,6 +4,7 @@
 // =================================================================
 
 // --- PHẦN 1: IMPORT CÁC THƯ VIỆN CẦN THIẾT ---
+// Ghi log ra console để theo dõi quá trình khởi tạo server
 console.log("Initializing required libraries...");
 const express = require('express');
 const cors = require('cors');
@@ -18,92 +19,83 @@ console.log("Libraries initialized successfully.");
 // --- PHẦN 2: KHỞI TẠO VÀ CẤU HÌNH EXPRESS APP ---
 console.log("Configuring Express application...");
 const app = express();
-const saltRounds = 10;
+const saltRounds = 10; // Số vòng lặp để mã hóa mật khẩu, tăng tính bảo mật
 const port = process.env.PORT || 3000;
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 
 // --- 2.1. Cấu hình Middleware Cơ Bản ---
-app.use(cors());
-app.use(express.json({ limit: '15mb' }));
-app.use(express.urlencoded({ extended: true, limit: '15mb' }));
-app.use(express.static('public'));
-app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
+// Middleware là các hàm chạy ở giữa request và response để xử lý các tác vụ chung
+app.use(cors()); // Cho phép các request từ domain khác (cần thiết cho API)
+app.use(express.json({ limit: '15mb' })); // Cho phép server đọc dữ liệu JSON gửi lên, giới hạn 15MB
+app.use(express.urlencoded({ extended: true, limit: '15mb' })); // Cho phép server đọc dữ liệu từ form, giới hạn 15MB
+app.use(express.static('public')); // Phục vụ các file tĩnh (HTML, CSS, JS) từ thư mục 'public'
+app.use('/uploads', express.static(path.join(__dirname, 'public/uploads'))); // Tạo một đường dẫn ảo cho thư mục uploads
 console.log("Middleware configured successfully.");
 
 // --- 2.2. Cấu hình Google Cloud Storage ---
+// Khởi tạo đối tượng để tương tác với dịch vụ lưu trữ của Google Cloud
 const storageGCS = new Storage();
+// Lấy tên bucket từ biến môi trường, nếu không có thì dùng tên mặc định
 const bucketName = process.env.GCS_BUCKET_NAME || 'kt-cms-file-storage-20250710';
 console.log(`GCS Bucket configured: ${bucketName}`);
 
 // --- 2.3. Cấu hình Session ---
+// Session dùng để lưu trữ thông tin đăng nhập của người dùng
 console.log("Configuring user session management...");
 app.use(session({
-    secret: process.env.SESSION_SECRET || 'a-very-strong-secret-key-for-development',
-    resave: false,
-    saveUninitialized: true,
+    secret: process.env.SESSION_SECRET || 'a-very-strong-secret-key-for-development', // Chuỗi bí mật để mã hóa session
+    resave: false, // Không lưu lại session nếu không có gì thay đổi
+    saveUninitialized: true, // Lưu session mới ngay cả khi chưa có dữ liệu
     cookie: {
-        secure: IS_PRODUCTION,
-        httpOnly: true,
-        maxAge: 24 * 60 * 60 * 1000
+        secure: IS_PRODUCTION, // Chỉ gửi cookie qua HTTPS ở môi trường production
+        httpOnly: true, // Ngăn JavaScript phía client truy cập vào cookie
+        maxAge: 24 * 60 * 60 * 1000 // Thời gian sống của cookie (24 giờ)
     }
 }));
 console.log("Session management configured successfully.");
 
-
-// =======================================================================
-// === BẮT ĐẦU KHỐI CODE CẦN THAY THẾ ===
-// =======================================================================
-// --- 2.4. Cấu hình Multer (ĐÃ CẢI TIẾN) ---
+// --- 2.4. Cấu hình Multer (Thư viện xử lý upload file) ---
 // Bổ sung bộ lọc file để chỉ định rõ các định dạng được phép
-
 const fileFilter = (req, file, cb) => {
     // Danh sách các loại file (MIME types) mà chúng ta cho phép
     const allowedTypes = [
-        'image/jpeg',
-        'image/png',
-        'image/gif',
+        'image/jpeg', 'image/png', 'image/gif',
         'application/pdf',
         'application/msword', // cho file .doc
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // cho file .docx
         'application/vnd.ms-excel', // cho file .xls
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' // cho file .xlsx
     ];
-
     if (allowedTypes.includes(file.mimetype)) {
-        // Nếu loại file hợp lệ, cho phép upload
-        cb(null, true);
+        cb(null, true); // Nếu loại file hợp lệ, cho phép upload
     } else {
         // Nếu loại file không hợp lệ, từ chối và báo lỗi
         cb(new Error('Định dạng file không được hỗ trợ! Chỉ chấp nhận Word, Excel, PDF, và ảnh.'), false);
     }
 };
-
+// Cấu hình Multer để lưu file vào bộ nhớ tạm thời của server
 const multerMemory = multer({
     storage: multer.memoryStorage(),
-    limits: { fileSize: 50 * 1024 * 1024 }, // Giữ nguyên giới hạn 15MB của bạn
-    fileFilter: fileFilter                    // <-- ÁP DỤNG BỘ LỌC FILE MỚI
+    limits: { fileSize: 50 * 1024 * 1024 }, // Giới hạn kích thước file là 50MB
+    fileFilter: fileFilter // Áp dụng bộ lọc file đã định nghĩa ở trên
 });
-
+// Cấu hình Multer cho các request chỉ chứa dữ liệu text (không có file)
 const textOnlyUpload = multer().none();
 console.log("Multer configured with explicit file filter and size limits (50MB).");
 
-
-// =======================================================================
-// === KẾT THÚC KHỐI CODE CẦN THAY THẾ ===
-// =======================================================================
-
-
 // --- 2.5. Middleware Tùy Chỉnh ---
+// Middleware để kiểm tra xem người dùng đã đăng nhập hay chưa
 const isLoggedIn = (req, res, next) => {
     if (req.session && req.session.user) {
-        next();
+        next(); // Nếu đã đăng nhập, cho phép đi tiếp
     } else {
+        // Nếu chưa đăng nhập, trả về lỗi 401 Unauthorized
         res.status(401).json({ error: "Unauthorized. Vui lòng đăng nhập lại." });
     }
 };
 
 /**
- * Ghi lại một hành động vào bảng activity_log
+ * Ghi lại một hành động vào bảng activity_log trong database
  * @param {string} activityType - Loại hành động (vd: 'CREATE_PRODUCT')
  * @param {string} details - Mô tả chi tiết hành động
  * @param {string} userName - Tên người thực hiện
@@ -118,8 +110,8 @@ async function logActivity(activityType, details, userName) {
     }
 }
 
-
 // --- PHẦN 3: CÁC API ENDPOINTS ---
+// Đây là nơi định nghĩa các đường dẫn API mà frontend sẽ gọi đến
 console.log("Defining API endpoints...");
 
 // == A. CÁC API VỀ USER VÀ TRANG CHỦ ==
@@ -127,29 +119,22 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// GHI CHÚ: API Đăng ký đã được cập nhật để tự động thêm chức vụ
+// API Đăng ký tài khoản mới
 app.post("/api/users/register", async (req, res, next) => {
     try {
         const { ho_ten, ma_nhan_vien, password } = req.body;
         if (!ho_ten || !ma_nhan_vien || !password || ma_nhan_vien.length < 2) {
             return res.status(400).json({ "error": "Vui lòng điền đầy đủ và chính xác thông tin." });
         }
-
-        const positionMap = {
-            'GD': 'Giám Đốc', 'IT': 'IT', 'KT': 'Kỹ Thuật',
-            'VT': 'Vật Tư', 'SX': 'Sản Xuất', 'NS': 'Nhân Sự', 'KD': 'Kinh Doanh'
-        };
+        const positionMap = { 'GD': 'Giám Đốc', 'IT': 'IT', 'KT': 'Kỹ Thuật', 'VT': 'Vật Tư', 'SX': 'Sản Xuất', 'NS': 'Nhân Sự', 'KD': 'Kinh Doanh' };
         const positionCode = ma_nhan_vien.slice(-2).toUpperCase();
         const chuc_vu = positionMap[positionCode] || 'Nhân Viên';
-
         const hash = await bcrypt.hash(password, saltRounds);
         const sql = 'INSERT INTO users (ho_ten, ma_nhan_vien, password, chuc_vu) VALUES ($1, $2, $3, $4) RETURNING id, ho_ten, ma_nhan_vien';
         const params = [ho_ten, ma_nhan_vien, hash, chuc_vu];
-        
         const result = await db.query(sql, params);
         const newUser = result.rows[0];
         req.session.user = { id: newUser.id, name: newUser.ho_ten, employeeId: newUser.ma_nhan_vien };
-
         await logActivity('NEW_USER', `Nhân viên mới '${ho_ten}' đã được tạo.`, 'Hệ thống');
         res.status(201).json({ "message": "Đăng ký thành công và đã tự động đăng nhập." });
     } catch (err) {
@@ -157,6 +142,7 @@ app.post("/api/users/register", async (req, res, next) => {
     }
 });
 
+// API Đăng nhập
 app.post("/api/users/login", async (req, res, next) => {
     try {
         const { ma_nhan_vien, password } = req.body;
@@ -178,11 +164,12 @@ app.post("/api/users/login", async (req, res, next) => {
     }
 });
 
+// API Lấy thông tin người dùng đang đăng nhập
 app.get("/api/me", isLoggedIn, (req, res) => {
     res.json(req.session.user);
 });
 
-// GHI CHÚ: API mới để lấy danh sách tất cả nhân viên
+// API Lấy danh sách tất cả nhân viên
 app.get("/api/users", isLoggedIn, async (req, res, next) => {
     try {
         const sql = "SELECT id, ho_ten, ma_nhan_vien, chuc_vu FROM users ORDER BY id ASC";
@@ -193,7 +180,7 @@ app.get("/api/users", isLoggedIn, async (req, res, next) => {
     }
 });
 
-// GHI CHÚ: API mới để xóa một nhân viên
+// API Xóa một nhân viên
 app.delete("/api/users/:id", isLoggedIn, async (req, res, next) => {
     try {
         if (req.session.user && req.session.user.id == req.params.id) {
@@ -212,8 +199,8 @@ app.delete("/api/users/:id", isLoggedIn, async (req, res, next) => {
     }
 });
 
-
 // == B. API UPLOAD ==
+// API xử lý việc upload file trực tiếp lên Google Cloud Storage
 app.post('/api/upload-direct', isLoggedIn, multerMemory.single('file'), async (req, res, next) => {
     try {
         if (!req.file) {
@@ -223,7 +210,6 @@ app.post('/api/upload-direct', isLoggedIn, multerMemory.single('file'), async (r
         const originalName = req.file.originalname.replace(/\s/g, '_');
         const blobName = `product-files/${Date.now()}-${originalName}`;
         const blob = bucket.file(blobName);
-        
         const blobStream = blob.createWriteStream({ resumable: false, contentType: req.file.mimetype });
         blobStream.on('error', err => next(err));
         blobStream.on('finish', () => {
@@ -237,6 +223,7 @@ app.post('/api/upload-direct', isLoggedIn, multerMemory.single('file'), async (r
 });
 
 // == C. CÁC API VỀ SẢN PHẨM ==
+// API Lấy danh sách tất cả sản phẩm
 app.get("/api/products", isLoggedIn, async (req, res, next) => {
     try {
         const sql = "SELECT * FROM products ORDER BY created_at DESC";
@@ -247,6 +234,7 @@ app.get("/api/products", isLoggedIn, async (req, res, next) => {
     }
 });
 
+// API Lấy thông tin chi tiết của một sản phẩm
 app.get("/api/products/:id", async (req, res, next) => {
     try {
         const sql = `SELECT * FROM products WHERE id = $1`;
@@ -255,6 +243,7 @@ app.get("/api/products/:id", async (req, res, next) => {
             return res.status(404).json({ error: "Sản phẩm không tồn tại" });
         }
         const product = rows[0];
+        // Chuyển đổi các trường JSON từ text về lại dạng mảng
         ['imageUrls', 'drawingUrls', 'materialsUrls'].forEach(field => {
             try {
                 if (product[field] && typeof product[field] === 'string') {
@@ -268,63 +257,89 @@ app.get("/api/products/:id", async (req, res, next) => {
     }
 });
 
+// =======================================================================
+// === BẮT ĐẦU KHỐI CODE ĐÃ SỬA LỖI VÀ TỐI ƯU ===
+// =======================================================================
+
+/**
+ * @route   POST /api/products
+ * @desc    Tạo một sản phẩm mới (PHIÊN BẢN CẢI TIẾN - TỰ ĐỘNG)
+ * @access  Private (yêu cầu đăng nhập)
+ * @notes   Hàm này tự động xử lý tất cả các trường được gửi từ form,
+ * giúp loại bỏ hoàn toàn lỗi sai thứ tự và dễ dàng bảo trì sau này.
+ */
 app.post("/api/products", isLoggedIn, textOnlyUpload, async (req, res, next) => {
+    console.log("--- Bắt đầu xử lý API: THÊM SẢN PHẨM MỚI (PHIÊN BẢN TỰ ĐỘNG) ---");
+    console.log("Dữ liệu thô nhận được từ req.body:", req.body);
     try {
         const data = req.body;
         const user = req.session.user;
         if (!data.id || !data.name_vi) {
-             return res.status(400).json({ error: "Mã sản phẩm và Tên sản phẩm (VI) là bắt buộc." });
+            return res.status(400).json({ error: "Mã sản phẩm và Tên sản phẩm (VI) là bắt buộc." });
         }
-        const sql = `
-            INSERT INTO products (id, name_vi, name_en, collection_vi, collection_en, color_vi, color_en, fabric_vi, fabric_en, wicker_vi, wicker_en, production_place, company, customer, specification, material_vi, material_en, aluminum_profile, supplier, "imageUrls", "drawingUrls", "materialsUrls", other_details, created_by_name, created_by_id, parent_id, height, width, length, packed_height, packed_width, packed_length) 
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32)`;
-        const params = [
-            data.id, data.name_vi, data.name_en, data.collection_vi, data.collection_en,
-            data.color_vi, data.color_en, data.fabric_vi, data.fabric_en, data.wicker_vi, data.wicker_en,
-            data.production_place, data.company, data.customer, data.specification,
-            data.material_vi, data.material_en, data.aluminum_profile, 
-            data.supplier || null, JSON.stringify(data.imageUrls || []), JSON.stringify(data.drawingUrls || []),
-            JSON.stringify(data.materialsUrls || []), data.other_details || null, 
-            user.name, user.id, data.parent_id || null,
-            data.height || null, data.width || null, data.length || null,
-            data.packed_height || null, data.packed_width || null, data.packed_length || null
-        ];
-        await db.query(sql, params);
+        const productData = {
+            ...data,
+            created_by_name: user.name,
+            created_by_id: user.id,
+            created_at: new Date()
+        };
+        ['imageUrls', 'drawingUrls', 'materialsUrls'].forEach(field => {
+            if (productData[field] && Array.isArray(productData[field])) {
+                productData[field] = JSON.stringify(productData[field]);
+            }
+        });
+        for (const key in productData) {
+            if (productData[key] === '') {
+                productData[key] = null;
+            }
+        }
+        const fields = Object.keys(productData).map(key => `"${key}"`).join(', ');
+        const placeholders = Object.keys(productData).map((_, i) => `$${i + 1}`).join(', ');
+        const values = Object.values(productData);
+        const sql = `INSERT INTO products (${fields}) VALUES (${placeholders})`;
+        await db.query(sql, values);
         await logActivity('CREATE_PRODUCT', `Sản phẩm '${data.name_vi}' (ID: ${data.id}) đã được tạo.`, user.name);
+        console.log(`--- Sản phẩm ${data.id} đã được tạo và lưu vào database thành công. ---`);
         res.status(201).json({ message: "Lưu sản phẩm thành công!", id: data.id });
     } catch (err) {
+        console.error("!!! LỖI NGHIÊM TRỌNG KHI THÊM SẢN PHẨM !!!");
+        console.error("Chi tiết lỗi:", err);
         next(err);
     }
 });
 
+/**
+ * @route   PUT /api/products/:id
+ * @desc    Cập nhật một sản phẩm đã có (PHIÊN BẢN CẢI TIẾN - TỰ ĐỘNG)
+ * @access  Private (yêu cầu đăng nhập)
+ */
 app.put("/api/products/:id", isLoggedIn, textOnlyUpload, async (req, res, next) => {
+    console.log(`--- Bắt đầu xử lý API: CẬP NHẬT SẢN PHẨM ID: ${req.params.id} ---`);
     try {
         const { id } = req.params;
         const data = req.body;
-        const fields = [];
-        const values = [];
-        let paramIndex = 1;
-        const addField = (fieldName, value) => {
-            const finalValue = (typeof value === 'object' && value !== null) ? JSON.stringify(value) : value;
-            fields.push(`"${fieldName}" = $${paramIndex++}`);
-            values.push(finalValue === '' ? null : finalValue);
-        };
-        const updatableFields = [
-            'name_vi', 'name_en', 'collection_vi', 'collection_en', 'color_vi', 'color_en', 'fabric_vi', 'fabric_en', 
-            'wicker_vi', 'wicker_en', 'production_place', 'company', 'customer', 'specification', 'material_vi', 'material_en', 
-            'aluminum_profile', 'supplier', 'other_details', 'imageUrls', 'drawingUrls', 'materialsUrls',
-            'height', 'width', 'length', 'packed_height', 'packed_width', 'packed_length'
-        ];
-        updatableFields.forEach(field => {
-            if (data[field] !== undefined) {
-                addField(field, data[field]);
+        delete data.id;
+        delete data.created_at;
+        delete data.created_by_id;
+        delete data.created_by_name;
+        ['imageUrls', 'drawingUrls', 'materialsUrls'].forEach(field => {
+            if (data[field] && Array.isArray(data[field])) {
+                data[field] = JSON.stringify(data[field]);
             }
         });
-        if (fields.length === 0) {
+        for (const key in data) {
+            if (data[key] === '') {
+                data[key] = null;
+            }
+        }
+        const fieldsToUpdate = Object.keys(data);
+        if (fieldsToUpdate.length === 0) {
             return res.status(400).json({ message: "Không có dữ liệu nào được gửi để cập nhật." });
         }
+        const setString = fieldsToUpdate.map((key, i) => `"${key}" = $${i + 1}`).join(', ');
+        const values = fieldsToUpdate.map(key => data[key]);
         values.push(id);
-        const sql = `UPDATE products SET ${fields.join(', ')} WHERE id = $${paramIndex}`;
+        const sql = `UPDATE products SET ${setString} WHERE id = $${fieldsToUpdate.length + 1}`;
         const result = await db.query(sql, values);
         if (result.rowCount === 0) {
             return res.status(404).json({ error: "Không tìm thấy sản phẩm để cập nhật." });
@@ -332,10 +347,16 @@ app.put("/api/products/:id", isLoggedIn, textOnlyUpload, async (req, res, next) 
         await logActivity('EDIT_PRODUCT', `Sản phẩm ID: ${id} đã được cập nhật.`, req.session.user.name);
         res.status(200).json({ message: "Cập nhật sản phẩm thành công!" });
     } catch (err) {
+        console.error(`!!! LỖI NGHIÊM TRỌNG KHI CẬP NHẬT SẢN PHẨM ${req.params.id}:`, err);
         next(err);
     }
 });
 
+// =======================================================================
+// === KẾT THÚC KHỐI CODE ĐÃ SỬA LỖI VÀ TỐI ƯU ===
+// =======================================================================
+
+// Hàm xóa file trên Google Cloud Storage khi xóa sản phẩm
 async function deleteFilesFromGCS(product) {
     console.log(`Bắt đầu quá trình xóa file GCS cho sản phẩm ID: ${product.id}`);
     const urlsToDelete = [];
@@ -365,7 +386,7 @@ async function deleteFilesFromGCS(product) {
                 console.log(`SUCCESS: Đã xóa file ${fileName}`);
             }
         } catch (error) {
-            if (error.code !== 404) {
+            if (error.code !== 404) { // Bỏ qua lỗi "không tìm thấy file"
                 console.error(`ERROR: Lỗi khi xóa file tại URL ${url}:`, error.message);
             }
         }
@@ -373,6 +394,8 @@ async function deleteFilesFromGCS(product) {
     await Promise.all(deletionPromises);
     console.log(`Hoàn tất quá trình xóa file cho sản phẩm ${product.id}.`);
 }
+
+// API Xóa một sản phẩm
 app.delete("/api/products/:id", isLoggedIn, async (req, res, next) => {
     const { id } = req.params;
     try {
@@ -391,6 +414,7 @@ app.delete("/api/products/:id", isLoggedIn, async (req, res, next) => {
 });
 
 // == D. CÁC API VỀ REVIEWS ==
+// API Thêm một đánh giá mới
 app.post("/api/reviews", async (req, res, next) => {
     try {
         const { productId, rating, comment, author_name } = req.body;
@@ -406,6 +430,7 @@ app.post("/api/reviews", async (req, res, next) => {
     }
 });
 
+// API Lấy tất cả đánh giá của một sản phẩm
 app.get("/api/products/:id/reviews", async (req, res, next) => {
     try {
         const sql = "SELECT * FROM reviews WHERE product_id = $1 ORDER BY created_at DESC";
@@ -415,101 +440,64 @@ app.get("/api/products/:id/reviews", async (req, res, next) => {
         next(err);
     }
 });
-// === THAY THẾ API GỬI TIN NHẮN CŨ BẰNG PHIÊN BẢN NÀY ===
-/**
- * @route   POST /api/messages
- * @desc    Gửi một tin nhắn mới đến một nhân viên khác.
- * @access  Private (yêu cầu đăng nhập)
- * @body    { recipient_employee_id: string, title: string, body: string }
- */
+
+// == E. CÁC API VỀ TIN NHẮN NỘI BỘ ==
+// API Gửi tin nhắn mới
 app.post("/api/messages", isLoggedIn, async (req, res, next) => {
     console.log("--- Bắt đầu xử lý yêu cầu GỬI TIN NHẮN MỚI ---");
     try {
         const { recipient_employee_id, title, body } = req.body;
         const sender = req.session.user;
-
-        // 1. Kiểm tra dữ liệu đầu vào có đầy đủ không
         if (!recipient_employee_id || !title || !body) {
-            console.log("Validation Failed: Thiếu trường dữ liệu.");
             return res.status(400).json({ error: "Vui lòng điền đầy đủ Mã nhân viên người nhận, tiêu đề và nội dung." });
         }
-        
-        // --- CẢI TIẾN 1: Ngăn người dùng tự gửi tin nhắn cho chính mình ---
         if (sender.employeeId === recipient_employee_id) {
-            console.log("Validation Failed: Người dùng tự gửi tin nhắn cho chính mình.");
             return res.status(400).json({ error: "Bạn không thể gửi tin nhắn cho chính mình." });
         }
-
-        // 2. Tìm thông tin người nhận trong CSDL để lấy ID nội bộ
-        console.log(`Tìm kiếm người nhận có mã NV: ${recipient_employee_id}`);
         const recipientResult = await db.query('SELECT id, ho_ten FROM users WHERE ma_nhan_vien = $1', [recipient_employee_id]);
-        
         if (recipientResult.rowCount === 0) {
-            console.log(`Không tìm thấy người nhận với mã NV: ${recipient_employee_id}`);
             return res.status(404).json({ error: `Không tìm thấy nhân viên với mã '${recipient_employee_id}'.` });
         }
         const recipient = recipientResult.rows[0];
-        console.log(`Đã tìm thấy người nhận: ${recipient.ho_ten} (ID: ${recipient.id})`);
-
-        // 3. Chèn tin nhắn mới vào bảng 'messages'
         const sql = 'INSERT INTO messages (sender_id, sender_name, recipient_id, title, body) VALUES ($1, $2, $3, $4, $5)';
         const params = [sender.id, sender.name, recipient.id, title, body];
         await db.query(sql, params);
-        console.log("Đã lưu tin nhắn vào CSDL thành công.");
-
-        // 4. Ghi lại hoạt động này vào nhật ký hệ thống
         await logActivity('NEW_MESSAGE', `Người dùng '${sender.name}' đã gửi tin nhắn đến '${recipient.ho_ten}'`, sender.name);
-        
-        // 5. Trả về thông báo thành công cho client
         res.status(201).json({ message: "Gửi tin nhắn thành công!" });
-
     } catch (err) {
-        console.error("Lỗi trong quá trình gửi tin nhắn:", err);
-        next(err); // Chuyển lỗi đến middleware xử lý lỗi tập trung
+        next(err);
     }
 });
 
-// === API ĐỂ LẤY TẤT CẢ TIN NHẮN ĐÃ NHẬN CỦA NGƯỜI DÙNG HIỆN TẠI ===
-// Yêu cầu: người dùng phải đăng nhập
+// API Lấy tin nhắn đã nhận
 app.get("/api/messages", isLoggedIn, async (req, res, next) => {
-    console.log(`Fetching messages for user ID: ${req.session.user.id}`);
     try {
         const currentUserId = req.session.user.id;
         const sql = "SELECT * FROM messages WHERE recipient_id = $1 ORDER BY created_at DESC";
         const { rows } = await db.query(sql, [currentUserId]);
-        console.log(`Found ${rows.length} messages.`);
         res.json({ messages: rows });
     } catch (err) {
         next(err);
     }
 });
 
-// === API ĐỂ ĐÁNH DẤU MỘT TIN NHẮN LÀ ĐÃ ĐỌC ===
-// Yêu cầu: người dùng phải đăng nhập
-// Input: :id (ID của tin nhắn) trong URL
+// API Đánh dấu tin nhắn là đã đọc
 app.put("/api/messages/:id/read", isLoggedIn, async (req, res, next) => {
     const messageId = req.params.id;
     const currentUserId = req.session.user.id;
-    console.log(`Request to mark message ID ${messageId} as read for user ID ${currentUserId}`);
     try {
-        // Cập nhật trạng thái is_read, đảm bảo chỉ chủ nhân tin nhắn mới có quyền thực hiện
         const sql = 'UPDATE messages SET is_read = TRUE WHERE id = $1 AND recipient_id = $2';
         const result = await db.query(sql, [messageId, currentUserId]);
-
-        // Nếu không có dòng nào được cập nhật, nghĩa là tin nhắn không tồn tại hoặc không thuộc về người này
         if (result.rowCount === 0) {
-            console.log("Message not found or user unauthorized to mark as read.");
             return res.status(404).json({ error: "Không tìm thấy tin nhắn hoặc bạn không có quyền thực hiện." });
         }
-        
-        console.log(`Message ID ${messageId} marked as read.`);
         res.status(200).json({ message: "Đã đánh dấu là đã đọc." });
     } catch (err) {
         next(err);
     }
 });
 
-// == E. API NHẬT KÝ HOẠT ĐỘNG ==
+// == F. API NHẬT KÝ HOẠT ĐỘNG ==
 app.get("/api/activity-log", isLoggedIn, async (req, res, next) => {
     try {
         const sql = "SELECT * FROM activity_log ORDER BY created_at DESC LIMIT 20";
@@ -520,21 +508,23 @@ app.get("/api/activity-log", isLoggedIn, async (req, res, next) => {
     }
 });
 
-// == F. ENDPOINT CHẨN ĐOÁN ==
-const APP_VERSION = "17.0_FULL_FEATURES";
+// == G. ENDPOINT CHẨN ĐOÁN ==
+const APP_VERSION = "18.0_FIXED_PRODUCT_SAVE";
 app.get("/api/version", (req, res) => {
     res.status(200).json({
         status: "OK",
         version: APP_VERSION,
-        note: "This version includes direct upload, full product fields, and activity logging.",
+        note: "This version includes the automated product creation and update logic.",
         server_time: new Date().toISOString()
     });
 });
 
 // --- PHẦN 4: MIDDLEWARE XỬ LÝ LỖI TẬP TRUNG ---
+// Đây là nơi tất cả các lỗi từ các hàm async sẽ được chuyển đến
 app.use((err, req, res, next) => {
     console.error("💥 MỘT LỖI NGHIÊM TRỌNG ĐÃ XẢY RA 💥");
-    console.error(err.stack);
+    console.error(err.stack); // In ra toàn bộ dấu vết lỗi để debug
+    // Xử lý lỗi trùng lặp dữ liệu từ database (unique constraint)
     if (err.code === '23505') {
         return res.status(409).json({
             status: 'error',
@@ -542,13 +532,15 @@ app.use((err, req, res, next) => {
             details: err.detail
         });
     }
+    // Xử lý lỗi file quá lớn từ Multer
     if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
-        return res.status(413).json({ error: 'File quá lớn. Vui lòng chọn file dưới 15MB.' });
+        return res.status(413).json({ error: 'File quá lớn. Vui lòng chọn file dưới 50MB.' });
     }
-    // GHI CHÚ: Xử lý lỗi từ fileFilter của Multer
-    if (err.message === 'Định dạng file không được hỗ trợ! Chỉ chấp nhận Word, Excel, PDF, và ảnh.') {
+    // Xử lý lỗi định dạng file không hợp lệ từ Multer
+    if (err.message.includes('Định dạng file không được hỗ trợ')) {
         return res.status(415).json({ error: err.message });
     }
+    // Xử lý tất cả các lỗi 500 khác
     res.status(500).json({
         status: 'error',
         message: 'Một lỗi không mong muốn đã xảy ra trên server.',

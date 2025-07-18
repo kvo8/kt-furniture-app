@@ -180,6 +180,7 @@
             aluminum_supplier: "Nhà cung cấp nhôm",
             wicker_supplier: "Nhà cung cấp wicker",
             stone_supplier: "Nhà cung cấp mặt đá",
+            powder_coating_supplier: "Nhà cung cấp sơn tĩnh điện",
             drawing: 'Bản vẽ',
             materials: 'Vật tư',
             fabric: 'Vải', wicker: 'Dây', productionPlace: 'Nơi sản xuất', otherDetails: 'Chi tiết khác',
@@ -210,6 +211,7 @@
             aluminum_supplier: "Aluminum Supplier",
             wicker_supplier: "Wicker Supplier",
             stone_supplier: "Stone Supplier",
+            powder_coating_supplier: "Powder Coating Supplier",
             drawing: 'Drawing(s)',
             materials: 'Material(s)',
             fabric: 'Fabric', wicker: 'Wicker', productionPlace: 'Production Place', otherDetails: 'Other Details',
@@ -343,6 +345,8 @@
                 <p><strong>${l.aluminum_supplier}:</strong> ${formatValue(fullProductData.aluminum_supplier)}</p>
                 <p><strong>${l.wicker_supplier}:</strong> ${formatValue(fullProductData.wicker_supplier)}</p>
                 <p><strong>${l.stone_supplier}:</strong> ${formatValue(fullProductData.stone_supplier)}</p>
+                // Thêm dòng này vào trong hàm showInternalInfo(), trong phần Nhà Cung Cấp
+<p><strong>${l.powder_coating_supplier}:</strong> ${formatValue(fullProductData.powder_coating_supplier)}</p>
             </div>
         `;
         
