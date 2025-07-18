@@ -11,46 +11,157 @@
     <link rel="stylesheet" href="/css/style.css">
 
     <style>
+        /* --- Cài đặt chung cho toàn trang --- */
         body { 
             background-color: #f4f7f6; 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             margin: 0;
             padding: 20px;
+            color: #333;
         }
         .container {
             max-width: 900px;
             margin: auto;
             background-color: #fff;
-            padding: 20px 30px;
+            padding: 25px 40px;
             border-radius: 12px;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.09);
         }
-        .success-header { text-align: center; margin-bottom: 25px; }
-        .success-header h1 { color: #28a745; font-size: 2.2em; margin-bottom: 10px; }
-        .success-header p { color: #555; font-size: 1.1em; }
 
-        #product-review h2 { text-align: center; color: #333; border-bottom: 2px solid #eee; padding-bottom: 15px; margin-top: 0; }
-        
-        .details-section { margin-top: 30px; border-top: 1px solid #e9ecef; padding-top: 20px; }
-        .details-section h3 { color: #007bff; font-size: 1.3em; margin-bottom: 15px; border-left: 4px solid #007bff; padding-left: 10px; }
-        
-        .product-details-grid { display: grid; grid-template-columns: 1fr; gap: 15px; text-align: left; }
-        @media (min-width: 768px) { .product-details-grid { grid-template-columns: 1fr 1fr; } }
-        
-        .detail-item { padding: 12px; background-color: #f8f9fa; border-left: 4px solid #17a2b8; border-radius: 5px; word-wrap: break-word; }
-        .detail-item strong { display: block; margin-bottom: 6px; color: #343a40; font-size: 0.95em; }
-        .detail-item span { color: #495057; font-size: 1em; }
-        .detail-item ul { list-style: none; padding-left: 0; margin: 5px 0 0 0; }
-        .detail-item ul li a { word-break: break-all; color: #0056b3; text-decoration: none; }
-        .detail-item ul li a:hover { text-decoration: underline; }
+        /* --- Phần tiêu đề thông báo thành công --- */
+        .success-header { 
+            text-align: center; 
+            margin-bottom: 30px;
+        }
+        .success-header h1 { 
+            color: #28a745; 
+            font-size: 2.3em;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        .success-header p {
+            color: #555;
+            font-size: 1.15em;
+        }
 
-        .code-display-area { display: flex; justify-content: space-around; align-items: center; flex-wrap: wrap; gap: 20px; margin-top: 30px; text-align: center; padding-top: 20px; border-top: 1px solid #eee; }
-        .code-display-area h4 { margin: 0 0 10px 0; color: #333; }
-        #qrcode-container img { border: 1px solid #ccc; padding: 10px; display: inline-block; background-color: #fff; }
+        /* --- Khu vực xem lại thông tin sản phẩm --- */
+        #product-review h2 { 
+            text-align: center; 
+            color: #333; 
+            border-bottom: 2px solid #eee; 
+            padding-bottom: 15px; 
+            margin-top: 0;
+            font-size: 1.8em;
+        }
         
-        .action-buttons { margin-top: 40px; display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; }
-        .action-buttons a { text-decoration: none; display: inline-block; padding: 12px 25px; color: white; border-radius: 5px; font-size: 16px; font-weight: bold; transition: transform 0.2s, box-shadow 0.2s; }
-        .action-buttons a:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
+        /* --- Bố cục cho từng nhóm chi tiết --- */
+        .details-section { 
+            margin-top: 35px; 
+            border-top: 1px solid #e9ecef; 
+            padding-top: 25px; 
+        }
+        .details-section h3 { 
+            color: #007bff; 
+            font-size: 1.4em; 
+            margin-top: 0;
+            margin-bottom: 20px; 
+            border-left: 4px solid #007bff; 
+            padding-left: 12px; 
+        }
+        
+        .product-details-grid { 
+            display: grid; 
+            grid-template-columns: 1fr; /* Mặc định 1 cột cho mobile */
+            gap: 18px; 
+            text-align: left; 
+        }
+        /* Chuyển sang 2 cột cho màn hình lớn hơn (desktop) */
+        @media (min-width: 768px) { 
+            .product-details-grid { 
+                grid-template-columns: 1fr 1fr; 
+            } 
+        }
+        
+        /* --- Định dạng cho từng mục thông tin chi tiết --- */
+        .detail-item { 
+            padding: 15px; 
+            background-color: #f8f9fa; 
+            border-left: 4px solid #17a2b8; 
+            border-radius: 6px; 
+            word-wrap: break-word; /* Đảm bảo chữ dài tự xuống dòng */
+        }
+        .detail-item strong { 
+            display: block; 
+            margin-bottom: 8px; 
+            color: #343a40; 
+            font-size: 0.95em; 
+            font-weight: 600;
+        }
+        .detail-item span { 
+            color: #495057; 
+            font-size: 1em; 
+        }
+        .detail-item ul { 
+            list-style: none; 
+            padding-left: 0; 
+            margin: 8px 0 0 0; 
+        }
+        .detail-item ul li { margin-bottom: 5px; }
+        .detail-item ul li a { 
+            word-break: break-all; 
+            color: #0056b3; 
+            text-decoration: none; 
+        }
+        .detail-item ul li a:hover { 
+            text-decoration: underline; 
+        }
+
+        /* --- Khu vực hiển thị mã QR và Barcode --- */
+        .code-display-area { 
+            display: flex; 
+            justify-content: space-around; 
+            align-items: center; 
+            flex-wrap: wrap; 
+            gap: 20px; 
+            margin-top: 35px; 
+            text-align: center; 
+            padding-top: 25px; 
+            border-top: 1px solid #eee; 
+        }
+        .code-display-area h4 { 
+            margin: 0 0 10px 0; 
+            color: #333; 
+            font-size: 1.2em;
+        }
+        #qrcode-container img { 
+            border: 1px solid #ccc; 
+            padding: 10px; 
+            display: inline-block; 
+            background-color: #fff; 
+        }
+        
+        /* --- Khu vực các nút hành động (call-to-action) --- */
+        .action-buttons { 
+            margin-top: 40px; 
+            display: flex; 
+            justify-content: center; 
+            gap: 15px; 
+            flex-wrap: wrap; 
+        }
+        .action-buttons a { 
+            text-decoration: none; 
+            display: inline-block; 
+            padding: 12px 25px; 
+            color: white; 
+            border-radius: 5px; 
+            font-size: 16px; 
+            font-weight: bold; 
+            transition: transform 0.2s, box-shadow 0.2s; 
+        }
+        .action-buttons a:hover { 
+            transform: translateY(-2px); 
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15); 
+        }
         .add-more-btn { background-color: #007bff; }
         .view-list-btn { background-color: #6c757d; }
         .view-public-btn { background-color: #17a2b8; }
@@ -59,17 +170,17 @@
 </head>
 <body>
     <div class="container">
-        <div class="success-header">
+        <header class="success-header">
             <h1 id="status-message">⏳ Đang tải thông tin sản phẩm...</h1>
             <p>Sản phẩm đã được thêm vào hệ thống. Bạn có thể xem lại toàn bộ thông tin dưới đây.</p>
-        </div>
+        </header>
         
-        <div id="product-review" style="display: none;">
+        <main id="product-review" style="display: none;">
             <h2>Xem lại thông tin sản phẩm vừa tạo</h2>
             
             <div id="details-wrapper"></div>
             
-            <div class="code-display-area">
+            <footer class="code-display-area">
                 <div>
                     <h4>Mã QR Code</h4>
                     <div id="qrcode-container"></div>
@@ -82,36 +193,50 @@
                     </div>
                     <p><i>(Dùng cho quản lý nội bộ)</i></p>
                 </div>
-            </div>
-        </div>
+            </footer>
+        </main>
 
-        <div class="action-buttons">
+        <nav class="action-buttons">
             <a href="/new-product.html" class="add-more-btn">Thêm sản phẩm khác</a>
             <a href="/product-list.html" class="view-list-btn">Xem danh sách sản phẩm</a>
-        </div>
+        </nav>
     </div>
 
     <script>
+    /**
+     * =================================================================
+     * SCRIPT CHO TRANG SUCCESS.HTML - PHIÊN BẢN HOÀN THIỆN
+     * =================================================================
+     * Chức năng:
+     * 1. Lấy Product ID từ URL của trình duyệt.
+     * 2. Gọi API đến server để lấy lại toàn bộ dữ liệu của sản phẩm vừa tạo.
+     * 3. Hiển thị tất cả thông tin một cách có tổ chức, chia theo nhóm logic.
+     * 4. Luôn hiển thị tất cả các mục, nếu dữ liệu trống sẽ hiển thị "N/A".
+     * 5. Tạo mã QR Code và Barcode cho sản phẩm.
+     * 6. Cung cấp các nút điều hướng tiện lợi cho người dùng.
+     */
     document.addEventListener('DOMContentLoaded', () => {
-        // --- KHỞI TẠO BIẾN ---
+        // --- BƯỚC 1: KHỞI TẠO BIẾN VÀ LẤY CÁC PHẦN TỬ DOM CẦN THIẾT ---
         const urlParams = new URLSearchParams(window.location.search);
         const productId = urlParams.get('id');
         const statusMessage = document.getElementById('status-message');
         const productReviewDiv = document.getElementById('product-review');
         const detailsWrapper = document.getElementById('details-wrapper'); // Wrapper cho nội dung chi tiết
         
-        // --- KIỂM TRA PRODUCT ID ---
+        // --- BƯỚC 2: KIỂM TRA SỰ TỒN TẠI CỦA PRODUCT ID ---
         if (!productId) {
             statusMessage.textContent = '❌ Lỗi: Không tìm thấy ID sản phẩm trong URL.';
             statusMessage.style.color = '#dc3545';
-            return;
+            return; // Dừng thực thi nếu không có ID
         }
 
-        // --- CẬP NHẬT GIAO DIỆN BAN ĐẦU ---
+        // --- BƯỚC 3: CẬP NHẬT GIAO DIỆN BAN ĐẦU ---
         statusMessage.textContent = `🎉 Thêm sản phẩm ${productId} thành công!`;
         productReviewDiv.style.display = 'block';
 
-        // --- ĐỊNH NGHĨA NHÃN VÀ THỨ TỰ HIỂN THỊ ---
+        // --- BƯỚC 4: ĐỊNH NGHĨA NHÃN VÀ CẤU TRÚC DỮ LIỆU ---
+        
+        // `fieldLabels`: Một "từ điển" để chuyển các key trong dữ liệu (ví dụ: 'name_vi') thành nhãn thân thiện với người dùng.
         const fieldLabels = {
             name_vi: "Tên Sản Phẩm (VI)", name_en: "Product Name (EN)", collection_vi: "Bộ Sưu Tập (VI)", collection_en: "Collection (EN)", parent_id: "Mã Sản Phẩm Gốc",
             company: "Công ty", customer: "Khách hàng", dimensions: "Kích thước (D x R x C)", packed_dimensions: "KT đóng gói (D x R x C)",
@@ -126,6 +251,7 @@
             stone_supplier: "Nhà cung cấp mặt đá"
         };
         
+        // `displayGroups`: Định nghĩa cấu trúc các nhóm và thứ tự các trường sẽ được hiển thị.
         const displayGroups = {
             "Thông tin chung & Khách hàng": ['name_vi', 'name_en', 'collection_vi', 'collection_en', 'parent_id', 'company', 'customer'],
             "Thông số kỹ thuật & Vật liệu": ['dimensions', 'packed_dimensions', 'material_vi', 'material_en', 'color_vi', 'color_en', 'fabric_vi', 'fabric_en', 'wicker_vi', 'wicker_en', 'aluminum_profile', 'hardware', 'cushion_details', 'pillow_details', 'specification'],
@@ -136,50 +262,59 @@
             "Thông tin hệ thống": ['created_by_name']
         };
 
-        // --- CÁC HÀM TIỆN ÍCH ---
+        // --- BƯỚC 5: KHAI BÁO CÁC HÀM TIỆN ÍCH ---
+
+        /** Hàm định dạng kích thước */
         const formatDimensions = (length, width, height) => {
             const dims = [length, width, height].filter(d => d != null && d !== '').join(' x ');
             return dims ? `${dims} cm` : 'N/A';
         };
 
+        /** Hàm tạo Barcode */
         const generateBarcode = (pId) => {
-            if (pId) JsBarcode("#barcode-display", pId, { format: "CODE128", width: 2, height: 80, displayValue: true });
+            if (pId) JsBarcode("#barcode-display", pId, { format: "CODE128", width: 2, height: 80, displayValue: true, margin: 10 });
         };
 
+        /** Hàm tạo QR Code */
         const generateQRCode = (pId) => {
             const publicUrl = `${window.location.origin}/product-view.html?id=${pId}`;
-            const qr = qrcode(0, 'H');
+            const qr = qrcode(0, 'H'); // Mức độ sửa lỗi cao
             qr.addData(publicUrl);
             qr.make();
             document.getElementById('qrcode-container').innerHTML = qr.createImgTag(8, 10);
         };
 
+        /** * Hàm render một nhóm thông tin ra giao diện.
+         * Đây là hàm cốt lõi, nó sẽ tạo ra các khối HTML cho mỗi nhóm.
+         */
         const renderDetailsSection = (title, fields, data) => {
             const gridDiv = document.createElement('div');
             gridDiv.className = 'product-details-grid';
             
             fields.forEach(key => {
+                const label = fieldLabels[key] || key;
                 let value = (key === 'dimensions') ? formatDimensions(data.length, data.width, data.height)
                           : (key === 'packed_dimensions') ? formatDimensions(data.packed_length, data.packed_width, data.packed_height)
                           : data[key];
 
-                if (value != null && value !== '' && (!Array.isArray(value) || value.length > 0)) {
-                    const itemDiv = document.createElement('div');
-                    itemDiv.className = 'detail-item';
-                    
-                    let contentHTML = `<strong>${fieldLabels[key] || key}:</strong>`;
-                    if (Array.isArray(value)) {
-                        contentHTML += `<ul>${value.map(item => {
-                            const url = (typeof item === 'object' && item.url) ? item.url : item;
-                            const name = (typeof item === 'object' && item.name) ? item.name : url.split('/').pop();
-                            return `<li><a href="${url}" target="_blank" rel="noopener noreferrer">${name}</a></li>`;
-                        }).join('')}</ul>`;
-                    } else {
-                        contentHTML += `<span>${value}</span>`;
-                    }
-                    itemDiv.innerHTML = contentHTML;
-                    gridDiv.appendChild(itemDiv);
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'detail-item';
+                
+                let contentHTML = `<strong>${label}:</strong>`;
+                if (Array.isArray(value)) { // Xử lý cho các trường là danh sách (ví dụ: URL file)
+                    contentHTML += (value.length > 0)
+                        ? `<ul>${value.map(item => {
+                              const url = (typeof item === 'object' && item.url) ? item.url : item;
+                              const name = (typeof item === 'object' && item.name) ? item.name : url.split('/').pop();
+                              return `<li><a href="${url}" target="_blank" rel="noopener noreferrer">${name}</a></li>`;
+                          }).join('')}</ul>`
+                        : `<span>N/A</span>`;
+                } else { // Xử lý cho các trường giá trị đơn
+                    contentHTML += (value != null && value !== '') ? `<span>${value}</span>` : `<span>N/A</span>`;
                 }
+                
+                itemDiv.innerHTML = contentHTML;
+                gridDiv.appendChild(itemDiv);
             });
             
             if (gridDiv.hasChildNodes()) {
@@ -192,16 +327,18 @@
             return null;
         };
         
-        // --- HÀM CHÍNH: GỌI API VÀ HIỂN THỊ DỮ LIỆU ---
+        // --- BƯỚC 6: HÀM CHÍNH - GỌI API VÀ KHỞI TẠO TOÀN BỘ TRANG ---
         const fetchAndDisplayProduct = async () => {
             try {
+                // Gọi API để lấy dữ liệu sản phẩm
                 const response = await fetch(`/api/products/${productId}`);
                 if (!response.ok) throw new Error(`Lỗi từ server: ${response.status}`);
                 
                 const product = await response.json();
                 if (product.error) throw new Error(product.error);
 
-                detailsWrapper.innerHTML = ''; // Xóa nội dung cũ (nếu có)
+                // Xóa nội dung cũ trong wrapper và bắt đầu render
+                detailsWrapper.innerHTML = ''; 
                 for (const groupTitle in displayGroups) {
                     const sectionElement = renderDetailsSection(groupTitle, displayGroups[groupTitle], product);
                     if (sectionElement) {
@@ -209,9 +346,11 @@
                     }
                 }
                 
+                // Tạo mã QR và Barcode
                 generateQRCode(productId);
                 generateBarcode(productId);
                 
+                // Thêm các nút hành động (Xem trang công khai, In mã vạch)
                 const actionButtons = document.querySelector('.action-buttons');
                 const publicUrl = `${window.location.origin}/product-view.html?id=${productId}`;
                 if (!actionButtons.querySelector('.view-public-btn')) {
@@ -232,13 +371,13 @@
                 }
 
             } catch (error) {
+                // Xử lý lỗi nếu không tải được dữ liệu
                 console.error('Lỗi khi tải chi tiết sản phẩm:', error);
-                // Ghi lỗi vào một khu vực riêng biệt, không xóa toàn bộ #product-review
-                detailsWrapper.innerHTML = `<h3 style="color: #dc3545;">Lỗi khi tải dữ liệu xem trước</h3><p>${error.message}</p>`;
+                detailsWrapper.innerHTML = `<h3 style="color: #dc3545;">Lỗi khi tải dữ liệu xem trước</h3><p>Chi tiết: ${error.message}</p>`;
             }
         };
         
-        // --- CHẠY HÀM CHÍNH ---
+        // --- BƯỚC 7: GỌI HÀM CHÍNH ĐỂ BẮT ĐẦU ---
         fetchAndDisplayProduct();
     });
     </script>
