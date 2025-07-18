@@ -3,12 +3,18 @@
 <head>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/qrcode-generator/qrcode.js"></script>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
     <title>Thông Tin Chi Tiết Sản Phẩm</title>
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/qrcode-generator/qrcode.js"></script>
+    
     <style>
+        /* --- Cài đặt cơ bản cho trang --- */
         body { 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
             max-width: 900px; 
@@ -23,14 +29,15 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.1); 
             margin-bottom: 25px; 
         }
-        /* GHI CHÚ: CSS mới cho thư viện ảnh Swiper */
+
+        /* --- CSS cho Thư viện ảnh Swiper --- */
         .swiper {
             width: 100%;
-            max-width: 600px;
-            height: 450px;
-            margin: 20px auto;
+            max-width: 600px; /* Giới hạn chiều rộng tối đa của slider */
+            height: 450px;    /* Chiều cao cố định cho slider */
+            margin: 20px auto; /* Canh giữa slider */
             border-radius: 8px;
-            background: #f1f1f1;
+            background: #f1f1f1; /* Màu nền cho khu vực slider */
         }
         .swiper-slide {
             text-align: center;
@@ -44,24 +51,35 @@
             display: block;
             width: 100%;
             height: 100%;
-            object-fit: contain;
+            object-fit: contain; /* Đảm bảo ảnh vừa vặn, không bị méo */
         }
         .swiper-button-next, .swiper-button-prev {
-            color: #007bff;
+            color: #007bff; /* Màu cho nút điều hướng slider */
         }
+        
+        /* --- CSS cho danh sách tệp đính kèm nội bộ --- */
         .internal-file-list { list-style-type: none; padding-left: 0; margin-top: 10px; }
         .internal-file-list li { background-color: #f8f9fa; border: 1px solid #dee2e6; padding: 12px 15px; margin-bottom: 8px; border-radius: 5px; }
         .internal-file-list a { font-weight: 500; text-decoration: none; color: #007bff; word-break: break-all; }
         .internal-file-list a:hover { text-decoration: underline; }
+        
+        /* --- CSS cho các tiêu đề và bố cục chung --- */
         h1, h2 { color: #333; border-bottom: 2px solid #eee; padding-bottom: 10px; }
         h4 { margin-top: 20px; margin-bottom: 5px; color: #444; }
         .header-container { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
+        
+        /* --- CSS cho lưới hiển thị chi tiết --- */
         .details-grid { display: grid; grid-template-columns: 1fr; gap: 15px; }
+        /* Trên màn hình lớn hơn, chia thành 2 cột */
         @media (min-width: 768px) { .details-grid { grid-template-columns: 1fr 1fr; gap: 15px 25px; } }
         .details-grid p { font-size: 17px; line-height: 1.6; color: #555; border-bottom: 1px solid #f0f0f0; padding-bottom: 8px; margin: 0; word-break: break-word; }
-        strong { color: #000; min-width: 150px; display: inline-block; }
+        .details-grid p strong { color: #000; min-width: 150px; display: inline-block; }
+        
+        /* --- CSS cho Mã QR và Barcode --- */
         #qrcode-container { text-align: center; padding: 20px; }
         #qrcode-image { border: 1px solid #ccc; padding: 10px; display: inline-block; }
+        
+        /* --- CSS cho phần Đánh giá (Reviews) --- */
         .review { border-top: 1px solid #eee; padding: 15px 0; }
         .review-author { font-weight: bold; }
         .review-rating span { color: #ffc107; font-size: 20px; }
@@ -69,9 +87,13 @@
         .review-form input, .review-form textarea, .review-form select, .review-form button { padding: 12px; font-size: 16px; border: 1px solid #ccc; border-radius: 5px; }
         .review-form button { background-color: #007bff; color: white; cursor: pointer; font-weight: bold; }
         .review-form button:disabled { background-color: #6c757d; cursor: not-allowed; }
+        
+        /* --- CSS cho nút chuyển đổi ngôn ngữ --- */
         .lang-switcher { text-align: right; }
         .lang-switcher button { padding: 8px 12px; border: 1px solid #333; background-color: white; cursor: pointer; border-radius: 5px; margin-left: 5px; }
         .lang-switcher button.active { background-color: #333; color: white; }
+        
+        /* --- CSS cho phần Nội bộ và Modal Đăng nhập --- */
         #internal-details-section { display: none; border-top: 2px dashed #007bff; margin-top: 20px; padding-top: 20px; }
         #view-internal-btn { font-size: 16px; padding: 12px 20px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; display: block; margin: 20px auto; }
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 1000; }
@@ -84,7 +106,9 @@
 </head>
 <body>
     <div id="main-content" style="visibility: hidden;">
+        
         <div id="product-details" class="container"></div>
+        
         <div id="internal-details-container" class="container">
             <div id="view-internal-btn-container"><button id="view-internal-btn">Đăng Nhập để Xem Chi Tiết Nội Bộ</button></div>
             <div id="internal-details-section">
@@ -92,17 +116,19 @@
                 <div id="internal-content"></div>
             </div>
         </div>
+        
         <div id="qr-code-section" class="container">
             <h2 id="qr-title">Mã QR của sản phẩm</h2>
             <div id="qrcode-container"></div>
         </div>
         
-    <div id="barcode-section" class="container">
-        <h2>Mã Vạch (Barcode)</h2>
-        <div style="text-align: center;">
-            <svg id="barcode-display"></svg>
+        <div id="barcode-section" class="container">
+            <h2>Mã Vạch (Barcode)</h2>
+            <div style="text-align: center;">
+                <svg id="barcode-display"></svg>
+            </div>
         </div>
-    </div>
+        
         <div id="reviews-section" class="container">
             <h2 id="reviews-title">Đánh giá của khách hàng</h2>
             <div id="review-list"></div>
@@ -123,33 +149,39 @@
     <div id="login-modal" class="modal-overlay"><div class="modal-content"><h2>Đăng Nhập</h2><form id="internal-login-form"><input type="text" name="ma_nhan_vien" placeholder="Mã Nhân Viên / Employee ID" required><input type="password" name="password" placeholder="Mật khẩu / Password" required><button type="submit">Đăng Nhập</button><button type="button" id="close-modal-btn">Đóng</button></form></div></div>
 
     <script>
+    // Biến toàn cục để lưu trữ dữ liệu sản phẩm và ngôn ngữ hiện tại
     let fullProductData = null;
     let currentLang = 'vi';
     const urlParams = new URLSearchParams(window.location.search);
     const productId = urlParams.get('id');
 
+    // Đối tượng chứa tất cả các chuỗi văn bản cho đa ngôn ngữ (VI/EN)
+    // ĐÃ CẬP NHẬT ĐẦY ĐỦ CÁC TRƯỜNG MỚI
     const labels = {
         vi: {
             productName: "Tên sản phẩm", productCode: 'Mã sản phẩm', company: 'Công ty', collection: 'Bộ sưu tập', color: 'Màu sắc',
             material: 'Chất liệu', spec: 'Thông số', profile: 'Biên dạng nhôm', customer: 'Khách hàng',
             qrTitle: 'Mã QR của sản phẩm', reviewsTitle: 'Đánh giá của khách hàng',
             formTitle: 'Để lại đánh giá của bạn', submitReview: 'Gửi Đánh Giá', submitReviewSending: 'Đang gửi...',
-            internalTitle: 'Chi tiết Nội bộ', supplier: 'Nhà cung cấp', box_quantity: "Số lượng/hộp",
-origin_country: "Nơi sản xuất",
-cost_price: "Giá vốn",
-hardware: "Hardware",
-cushion_details: "Chi tiết nệm",
-pillow_details: "Chi tiết gối",
-aluminum_weight: "Định lượng nhôm",
-wicker_weight: "Định lượng Wicker",
-stone_weight: "Định lượng mặt đá",
-weaving_rope_weight: "Cân nặng dây đan",
-lining_rope_weight: "Cân nặng dây lót",
-product_weight: "Tổng cân nặng sản phẩm",
-packed_weight_total: "Tổng cân nặng đóng thùng",
-aluminum_supplier: "Nhà cung cấp nhôm",
-wicker_supplier: "Nhà cung cấp wicker",
-stone_supplier: "Nhà cung cấp mặt đá", drawing: 'Bản vẽ', materials: 'Vật tư',
+            internalTitle: 'Chi tiết Nội bộ', supplier: 'Nhà cung cấp',
+            box_quantity: "Số lượng/hộp",
+            origin_country: "Nơi sản xuất",
+            cost_price: "Giá vốn",
+            hardware: "Hardware",
+            cushion_details: "Chi tiết nệm",
+            pillow_details: "Chi tiết gối",
+            aluminum_weight: "Định lượng nhôm",
+            wicker_weight: "Định lượng Wicker",
+            stone_weight: "Định lượng mặt đá",
+            weaving_rope_weight: "Cân nặng dây đan",
+            lining_rope_weight: "Cân nặng dây lót",
+            product_weight: "Tổng cân nặng sản phẩm",
+            packed_weight_total: "Tổng cân nặng đóng thùng",
+            aluminum_supplier: "Nhà cung cấp nhôm",
+            wicker_supplier: "Nhà cung cấp wicker",
+            stone_supplier: "Nhà cung cấp mặt đá",
+            drawing: 'Bản vẽ',
+            materials: 'Vật tư',
             fabric: 'Vải', wicker: 'Dây', productionPlace: 'Nơi sản xuất', otherDetails: 'Chi tiết khác',
             noImage: 'Sản phẩm này hiện chưa có hình ảnh.', noReviews: 'Chưa có đánh giá nào cho sản phẩm này.',
             errorLoading: 'Lỗi tải dữ liệu sản phẩm', noProductId: 'Lỗi: Không có ID sản phẩm.',
@@ -161,23 +193,25 @@ stone_supplier: "Nhà cung cấp mặt đá", drawing: 'Bản vẽ', materials: 
             material: 'Material', spec: 'Specification', profile: 'Aluminum Profile', customer: 'Customer',
             qrTitle: 'Product QR Code', reviewsTitle: 'Customer Reviews',
             formTitle: 'Leave Your Review', submitReview: 'Submit Review', submitReviewSending: 'Submitting...',
-            internalTitle: 'Internal Details', supplier: 'Supplier', // DÁN CÁC DÒNG NÀY VÀO TRONG labels.en
-box_quantity: "Box Quantity",
-origin_country: "Origin",
-cost_price: "Cost Price",
-hardware: "Hardware",
-cushion_details: "Cushion Details",
-pillow_details: "Pillow Details",
-aluminum_weight: "Aluminum Weight",
-wicker_weight: "Wicker Weight",
-stone_weight: "Stone Weight",
-weaving_rope_weight: "Weaving Rope Weight",
-lining_rope_weight: "Lining Rope Weight",
-product_weight: "Product Weight",
-packed_weight_total: "Total Packed Weight",
-aluminum_supplier: "Aluminum Supplier",
-wicker_supplier: "Wicker Supplier",
-stone_supplier: "Stone Supplier", drawing: 'Drawing', materials: 'Materials',
+            internalTitle: 'Internal Details', supplier: 'Supplier',
+            box_quantity: "Box Quantity",
+            origin_country: "Origin",
+            cost_price: "Cost Price",
+            hardware: "Hardware",
+            cushion_details: "Cushion Details",
+            pillow_details: "Pillow Details",
+            aluminum_weight: "Aluminum Weight (Kg)",
+            wicker_weight: "Wicker Weight (Kg)",
+            stone_weight: "Stone Weight (Kg)",
+            weaving_rope_weight: "Weaving Rope Weight (Kg)",
+            lining_rope_weight: "Lining Rope Weight (Kg)",
+            product_weight: "Product Weight (Kg)",
+            packed_weight_total: "Total Packed Weight (Kg)",
+            aluminum_supplier: "Aluminum Supplier",
+            wicker_supplier: "Wicker Supplier",
+            stone_supplier: "Stone Supplier",
+            drawing: 'Drawing(s)',
+            materials: 'Material(s)',
             fabric: 'Fabric', wicker: 'Wicker', productionPlace: 'Production Place', otherDetails: 'Other Details',
             noImage: 'No image is available for this product.', noReviews: 'There are no reviews for this product yet.',
             errorLoading: 'Error Loading Product Data', noProductId: 'Error: No Product ID provided.',
@@ -197,7 +231,6 @@ stone_supplier: "Stone Supplier", drawing: 'Drawing', materials: 'Materials',
 
         const detailsDiv = document.getElementById('product-details');
         
-        // Tạo cấu trúc HTML cho thư viện ảnh Swiper
         let imageHTML = '';
         if (Array.isArray(fullProductData.imageUrls) && fullProductData.imageUrls.length > 0) {
             imageHTML = `
@@ -220,7 +253,6 @@ stone_supplier: "Stone Supplier", drawing: 'Drawing', materials: 'Materials',
             return dims ? `${dims} cm` : 'N/A';
         };
 
-        // Ghi chú: Đã xóa dòng "Người tạo" trong phiên bản trước
         detailsDiv.innerHTML = `
             <div class="header-container">
                 <h1>${fullProductData[`name_${currentLang}`] || 'N/A'}</h1>
@@ -235,8 +267,8 @@ stone_supplier: "Stone Supplier", drawing: 'Drawing', materials: 'Materials',
                 <p><strong>${l.productName}:</strong> ${fullProductData[`name_${currentLang}`] || 'N/A'}</p>
                 <p><strong>${l.dimensions}:</strong> ${formatDimensions(fullProductData.length, fullProductData.width, fullProductData.height)}</p>
                 <p><strong>${l.company}:</strong> ${fullProductData.company || 'N/A'}</p>
-<p><strong>${l.spec}:</strong> ${fullProductData.specification || 'N/A'}</p>
-<p><strong>${l.profile}:</strong> ${fullProductData.aluminum_profile || 'N/A'}</p>
+                <p><strong>${l.spec}:</strong> ${fullProductData.specification || 'N/A'}</p>
+                <p><strong>${l.profile}:</strong> ${fullProductData.aluminum_profile || 'N/A'}</p>
                 <p><strong>${l.collection}:</strong> ${fullProductData[`collection_${currentLang}`] || 'N/A'}</p>
                 <p><strong>${l.packed_dimensions}:</strong> ${formatDimensions(fullProductData.packed_length, fullProductData.packed_width, fullProductData.packed_height)}</p>
                 <p><strong>${l.color}:</strong> ${fullProductData[`color_${currentLang}`] || 'N/A'}</p>
@@ -251,8 +283,6 @@ stone_supplier: "Stone Supplier", drawing: 'Drawing', materials: 'Materials',
         document.getElementById('btn-vi').addEventListener('click', () => switchLanguage('vi'));
         document.getElementById('btn-en').addEventListener('click', () => switchLanguage('en'));
 
-        // GHI CHÚ QUAN TRỌNG: Di chuyển code khởi tạo Swiper vào đúng vị trí này.
-        // Nó phải được chạy SAU KHI cấu trúc HTML của swiper đã được chèn vào trang.
         if (Array.isArray(fullProductData.imageUrls) && fullProductData.imageUrls.length > 0) {
             new Swiper('.swiper', {
                 loop: true,
@@ -265,17 +295,56 @@ stone_supplier: "Stone Supplier", drawing: 'Drawing', materials: 'Materials',
     }
     
     /**
-     * Hàm render phần thông tin nội bộ (yêu cầu đăng nhập).
+     * Hàm render phần thông tin nội bộ (đã được cập nhật để hiển thị tất cả các trường mới).
+     * Chỉ được gọi khi người dùng đã đăng nhập thành công.
      */
     function showInternalInfo(isRerender = false) {
         if (!fullProductData) return;
+
         const internalSection = document.getElementById('internal-details-section');
         if (isRerender && internalSection.style.display !== 'block') return;
 
         const internalDiv = document.getElementById('internal-content');
         const l = labels[currentLang];
         
-        let internalHTML = `<div class="details-grid"><p><strong>${l.supplier}:</strong> ${fullProductData.supplier || 'N/A'}</p></div>`;
+        // Hàm trợ giúp để định dạng giá trị, thêm đơn vị nếu có
+        const formatValue = (value, unit = '') => {
+            if (value === null || value === undefined || value === '') return 'N/A';
+            return `${value}${unit}`;
+        };
+
+        let internalHTML = `
+            <h4>Thông Tin Nội Bộ Chung</h4>
+            <div class="details-grid">
+                <p><strong>${l.supplier}:</strong> ${formatValue(fullProductData.supplier)}</p>
+                <p><strong>${l.box_quantity}:</strong> ${formatValue(fullProductData.box_quantity)}</p>
+                <p><strong>${l.origin_country}:</strong> ${formatValue(fullProductData.origin_country)}</p>
+                <p><strong>${l.cost_price}:</strong> ${formatValue(fullProductData.cost_price, ' USD')}</p>
+                <p><strong>${l.hardware}:</strong> ${formatValue(fullProductData.hardware)}</p>
+                <p><strong>${l.cushion_details}:</strong> ${formatValue(fullProductData.cushion_details)}</p>
+                <p><strong>${l.pillow_details}:</strong> ${formatValue(fullProductData.pillow_details)}</p>
+            </div>
+
+            <hr>
+            <h4>Thông số Cân nặng</h4>
+            <div class="details-grid">
+                <p><strong>${l.aluminum_weight}:</strong> ${formatValue(fullProductData.aluminum_weight, ' Kg')}</p>
+                <p><strong>${l.wicker_weight}:</strong> ${formatValue(fullProductData.wicker_weight, ' Kg')}</p>
+                <p><strong>${l.stone_weight}:</strong> ${formatValue(fullProductData.stone_weight, ' Kg')}</p>
+                <p><strong>${l.weaving_rope_weight}:</strong> ${formatValue(fullProductData.weaving_rope_weight, ' Kg')}</p>
+                <p><strong>${l.lining_rope_weight}:</strong> ${formatValue(fullProductData.lining_rope_weight, ' Kg')}</p>
+                <p><strong>${l.product_weight}:</strong> ${formatValue(fullProductData.product_weight, ' Kg')}</p>
+                <p><strong>${l.packed_weight_total}:</strong> ${formatValue(fullProductData.packed_weight_total, ' Kg')}</p>
+            </div>
+
+            <hr>
+            <h4>Nhà Cung Cấp (Nội bộ)</h4>
+            <div class="details-grid">
+                <p><strong>${l.aluminum_supplier}:</strong> ${formatValue(fullProductData.aluminum_supplier)}</p>
+                <p><strong>${l.wicker_supplier}:</strong> ${formatValue(fullProductData.wicker_supplier)}</p>
+                <p><strong>${l.stone_supplier}:</strong> ${formatValue(fullProductData.stone_supplier)}</p>
+            </div>
+        `;
         
         const renderFileList = (urls, label) => {
             let listContent = '';
@@ -284,7 +353,7 @@ stone_supplier: "Stone Supplier", drawing: 'Drawing', materials: 'Materials',
             } else {
                 listContent = `<p><em>(${l.noFile})</em></p>`;
             }
-            return `<div><h4>${label}</h4>${listContent}</div>`;
+            return `<div style="margin-top: 20px;"><h4>${label}</h4>${listContent}</div>`;
         };
 
         internalHTML += renderFileList(fullProductData.drawingUrls, l.drawing);
@@ -294,7 +363,7 @@ stone_supplier: "Stone Supplier", drawing: 'Drawing', materials: 'Materials',
         internalSection.style.display = 'block';
         document.getElementById('view-internal-btn-container').style.display = 'none';
     }
-
+    
     /**
      * Hàm render danh sách các đánh giá của khách hàng.
      */
@@ -333,7 +402,7 @@ stone_supplier: "Stone Supplier", drawing: 'Drawing', materials: 'Materials',
         currentLang = lang;
         renderPublicPage();
         showInternalInfo(true);
-        fetchReviews();
+        fetchReviews(); // Tải lại review để có định dạng ngày tháng đúng
         updateAllLabels();
     }
     
@@ -366,20 +435,24 @@ stone_supplier: "Stone Supplier", drawing: 'Drawing', materials: 'Materials',
         }
         
         try {
+            // Tải dữ liệu chính của sản phẩm
             const response = await fetch(`/api/products/${productId}`);
             if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
             fullProductData = await response.json();
             
+            // Render các phần công khai trước
             renderPublicPage();
             updateAllLabels();
             generateQRCode(productId);
             generateBarcode(productId); 
             
+            // Tải song song các dữ liệu phụ (reviews và trạng thái đăng nhập)
             await Promise.all([
                 fetchReviews(),
                 fetch('/api/me').then(res => { if (res.ok) showInternalInfo(); })
             ]);
 
+            // Hiển thị nội dung chính và ẩn màn hình loading
             loadingContainer.style.display = 'none';
             mainContent.style.visibility = 'visible';
         } catch (error) {
@@ -393,35 +466,42 @@ stone_supplier: "Stone Supplier", drawing: 'Drawing', materials: 'Materials',
      */
     function generateQRCode(pId) {
         const publicUrl = `${window.location.origin}/product-view.html?id=${pId}`;
-        const qr = qrcode(0, 'H');
+        const qr = qrcode(0, 'H'); // 'H' là mức độ sửa lỗi cao nhất
         qr.addData(publicUrl);
         qr.make();
         document.getElementById('qrcode-container').innerHTML = qr.createImgTag(5, 8);
     }
+    
     /**
- * Hàm tạo và hiển thị mã vạch trên trang chi tiết
- */
-function generateBarcode(pId) {
-    if(pId) {
-        JsBarcode("#barcode-display", pId, {
-            format: "CODE128",
-            lineColor: "#000",
-            width: 2,
-            height: 80,
-            displayValue: true
-        });
+     * Hàm tạo và hiển thị mã vạch trên trang chi tiết
+     */
+    function generateBarcode(pId) {
+        if(pId) {
+            JsBarcode("#barcode-display", pId, {
+                format: "CODE128",
+                lineColor: "#000",
+                width: 2,
+                height: 80,
+                displayValue: true
+            });
+        }
     }
-}
+
     /**
      * Hàm gắn các sự kiện cho các form và nút bấm trên trang.
      */
     function setupEventListeners() {
+        // Sự kiện cho nút mở Modal Đăng nhập
         document.getElementById('view-internal-btn').addEventListener('click', () => {
             document.getElementById('login-modal').style.display = 'flex';
         });
+
+        // Sự kiện cho nút đóng Modal
         document.getElementById('close-modal-btn').addEventListener('click', () => {
             document.getElementById('login-modal').style.display = 'none';
         });
+
+        // Sự kiện cho form Đăng nhập nội bộ
         document.getElementById('internal-login-form').addEventListener('submit', async function(event) {
             event.preventDefault();
             const data = Object.fromEntries(new FormData(this).entries());
@@ -435,12 +515,14 @@ function generateBarcode(pId) {
                 if (!response.ok) throw new Error(result.error || labels[currentLang].loginFailed);
                 alert(labels[currentLang].loginSuccess);
                 document.getElementById('login-modal').style.display = 'none';
-                showInternalInfo();
+                showInternalInfo(); // Hiển thị thông tin nội bộ sau khi đăng nhập thành công
                 this.reset();
             } catch (error) {
                 alert(`${labels[currentLang].loginFailed}: ${error.message}`);
             }
         });
+
+        // Sự kiện cho form Gửi đánh giá
         document.getElementById('review-form').addEventListener('submit', async function(event) {
             event.preventDefault();
             const submitBtn = document.getElementById('submit-review-btn');
@@ -466,10 +548,11 @@ function generateBarcode(pId) {
                 if (!response.ok) throw new Error(result.error || 'Đã xảy ra lỗi.');
                 alert(result.message);
                 this.reset();
-                fetchReviews();
+                fetchReviews(); // Tải lại danh sách review để hiển thị đánh giá mới
             } catch (error) {
                 alert('Lỗi: ' + error.message);
             } finally {
+                // Luôn kích hoạt lại nút submit dù thành công hay thất bại
                 submitBtn.disabled = false;
                 submitBtn.textContent = l.submitReview;
             }
@@ -477,6 +560,7 @@ function generateBarcode(pId) {
     }
 
     // --- ĐIỂM BẮT ĐẦU THỰC THI CODE ---
+    // Gắn các hàm khởi tạo vào sự kiện 'DOMContentLoaded' để đảm bảo toàn bộ HTML đã được tải xong
     document.addEventListener('DOMContentLoaded', () => {
         initializePage();
         setupEventListeners();
