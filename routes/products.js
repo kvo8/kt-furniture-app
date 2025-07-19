@@ -137,28 +137,48 @@ router.post("/", isLoggedIn, textOnlyUpload, async (req, res, next) => {
             return res.status(400).json({ error: "Mã sản phẩm và Tên sản phẩm (VI) là bắt buộc." });
         }
 
-        const sql = `
-            INSERT INTO products (
-                id, name_vi, name_en, collection_vi, collection_en, color_vi, color_en, 
-                fabric_vi, fabric_en, wicker_vi, wicker_en, production_place,
-                company, customer, specification, material_vi, material_en, aluminum_profile, 
-                supplier, "imageUrls", "drawingUrls", "materialsUrls", other_details,
-                created_by_name, created_by_id, parent_id
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26)
-        `;
-        const params = [
-            data.id, data.name_vi, data.name_en, data.collection_vi, data.collection_en,
-            data.color_vi, data.color_en, data.fabric_vi, data.fabric_en, data.wicker_vi, data.wicker_en,
-            data.production_place, data.company, data.customer, data.specification,
-            data.material_vi, data.material_en, data.aluminum_profile, 
-            data.supplier || null,
-            JSON.stringify(data.imageUrls || []),
-            JSON.stringify(data.drawingUrls || []),
-            JSON.stringify(data.materialsUrls || []),
-            data.other_details || null, 
-            user.name, user.id,
-            data.parent_id || null
-        ];
+        // THAY THẾ BẰNG ĐOẠN NÀY
+const sql = `
+    INSERT INTO products (
+        id, name_vi, name_en, collection_vi, collection_en, color_vi, color_en, 
+        fabric_vi, fabric_en, wicker_vi, wicker_en, production_place,
+        company, customer, specification, material_vi, material_en, aluminum_profile, 
+        supplier, "imageUrls", "drawingUrls", "materialsUrls", other_details, 
+        created_by_name, created_by_id, parent_id, height, width, length, 
+        packed_height, packed_width, packed_length,
+        
+        box_quantity, origin_country, aluminum_weight, wicker_weight, stone_weight,
+        aluminum_supplier, wicker_supplier, stone_supplier, hardware, cost_price,
+        cushion_details, pillow_details, weaving_rope_weight, lining_rope_weight,
+        product_weight, packed_weight_total, powder_coating_supplier
+    ) VALUES (
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, 
+        $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32,
+        $33, $34, $35, $36, $37, $38, $39, $40, $41, $42, $43, $44, $45, $46, $47, $48, $49
+    )
+`;
+        // THAY THẾ BẰNG ĐOẠN NÀY
+const params = [
+    data.id, data.name_vi, data.name_en, data.collection_vi, data.collection_en,
+    data.color_vi, data.color_en, data.fabric_vi, data.fabric_en, data.wicker_vi, data.wicker_en,
+    data.production_place, data.company, data.customer, data.specification,
+    data.material_vi, data.material_en, data.aluminum_profile, 
+    data.supplier || null,
+    JSON.stringify(data.imageUrls || []),
+    JSON.stringify(data.drawingUrls || []),
+    JSON.stringify(data.materialsUrls || []),
+    data.other_details || null, 
+    user.name, user.id, data.parent_id || null,
+    data.height || null, data.width || null, data.length || null,
+    data.packed_height || null, data.packed_width || null, data.packed_length || null,
+   
+    data.box_quantity || null, data.origin_country || null, data.aluminum_weight || null,
+    data.wicker_weight || null, data.stone_weight || null, data.aluminum_supplier || null,
+    data.wicker_supplier || null, data.stone_supplier || null, data.hardware || null,
+    data.cost_price || null, data.cushion_details || null, data.pillow_details || null,
+    data.weaving_rope_weight || null, data.lining_rope_weight || null,
+    data.product_weight || null, data.packed_weight_total || null, data.powder_coating_supplier || null
+];
         
         await db.query(sql, params);
         res.status(201).json({ message: "Lưu sản phẩm thành công!", id: data.id });
@@ -187,12 +207,19 @@ router.put("/:id", isLoggedIn, textOnlyUpload, async (req, res, next) => {
         };
 
         // Danh sách các trường cần cập nhật
-        const updatableFields = [
-            'name_vi', 'name_en', 'collection_vi', 'collection_en', 'color_vi', 'color_en',
-            'fabric_vi', 'fabric_en', 'wicker_vi', 'wicker_en', 'production_place', 'company',
-            'customer', 'specification', 'material_vi', 'material_en', 'aluminum_profile',
-            'other_details', 'supplier', 'imageUrls', 'drawingUrls', 'materialsUrls'
-        ];
+        // THAY THẾ BẰNG ĐOẠN NÀY
+const updatableFields = [
+    'name_vi', 'name_en', 'collection_vi', 'collection_en', 'color_vi', 'color_en', 
+    'fabric_vi', 'fabric_en', 'wicker_vi', 'wicker_en', 'production_place', 'company', 
+    'customer', 'specification', 'material_vi', 'material_en', 'aluminum_profile',
+    'supplier', 'other_details', 'imageUrls', 'drawingUrls', 'materialsUrls',
+    'height', 'width', 'length', 'packed_height', 'packed_width', 'packed_length',
+    
+    'box_quantity', 'origin_country', 'aluminum_weight', 'wicker_weight', 'stone_weight',
+    'aluminum_supplier', 'wicker_supplier', 'stone_supplier', 'hardware', 'cost_price',
+    'cushion_details', 'pillow_details', 'weaving_rope_weight', 'lining_rope_weight',
+    'product_weight', 'packed_weight_total', 'powder_coating_supplier'
+];
 
         updatableFields.forEach(field => {
             if (data[field] !== undefined) {
