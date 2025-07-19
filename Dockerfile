@@ -7,7 +7,8 @@ FROM node:18 AS builder
 WORKDIR /app
 
 # "PHÁ CACHE": Thay đổi giá trị này mỗi khi bạn muốn Cloud Build xây dựng lại từ đầu.
-ARG CACHE_BUSTER=FINAL_GCS_VERSION_20250709
+# "PHÁ CACHE": Thay đổi giá trị này mỗi khi bạn muốn Cloud Build xây dựng lại từ đầu.
+ARG CACHE_BUSTER=FORCE_REBUILD_20250719_11AM
 
 COPY package*.json ./
 # Chỉ cài đặt các thư viện cần cho production, giúp giảm kích thước
