@@ -292,13 +292,13 @@
                 if (!target) return;
 
                 if (target.classList.contains('delete-btn')) {
-                    // === START: SỬA LỖI LẦN 2 (KIỂM TRA CẢ .username VÀ .name) ===
-                    const isAdmin = currentUser && (currentUser.username === 'KT01IT' || currentUser.name === 'KT01IT');
+                    // === START: SỬA LỖI CUỐI CÙNG (DÙNG employeeId) ===
+                    const isAdmin = currentUser && currentUser.employeeId === 'KT01IT';
                     if (!isAdmin) {
                         alert('Bạn không có quyền xóa danh mục này.');
                         return;
                     }
-                    // === END: SỬA LỖI LẦN 2 ===
+                    // === END: SỬA LỖI CUỐI CÙNG ===
                     
                     const productId = target.dataset.id;
                     if (confirm(`Bạn có chắc muốn xóa sản phẩm mã "${productId}"?`)) {
@@ -334,8 +334,8 @@
             const addProductLink = document.getElementById('add-product-link');
             if (addProductLink) {
                 addProductLink.addEventListener('click', function(event) {
-                    // === START: SỬA LỖI LẦN 2 (KIỂM TRA CẢ .username VÀ .name) ===
-                    const isAdmin = currentUser && (currentUser.username === 'KT01IT' || currentUser.name === 'KT01IT');
+                    // === START: SỬA LỖI CUỐI CÙNG (DÙNG employeeId) ===
+                    const isAdmin = currentUser && currentUser.employeeId === 'KT01IT';
                     if (!isAdmin) {
                         event.preventDefault();
 
@@ -355,11 +355,10 @@
                             document.body.removeChild(permissionModal);
                         });
                     }
-                    // === END: SỬA LỖI LẦN 2 ===
+                    // === END: SỬA LỖI CUỐI CÙNG ===
                 });
             }
         }
-
 
         async function initializePage() {
             try {
@@ -376,6 +375,7 @@
                 attachEventListeners();
 
             } catch (error) {
+                console.error("Lỗi khởi tạo trang:", error);
                 window.location.href = '/login.html';
             }
         }
