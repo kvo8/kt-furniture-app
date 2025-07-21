@@ -142,7 +142,7 @@
     <script>
         /**
          * @file product-list.html
-         * @version 4.1 - Phân quyền cho KT01IT
+         * @version 4.2 - Sửa lỗi phân quyền (race condition)
          * @description Script hoàn chỉnh để quản lý sản phẩm, tích hợp chuông thông báo
          * và chế độ Sáng/Tối, và logic phân quyền.
          */
@@ -263,7 +263,7 @@
                         ? data.activities.slice(0, 7).map(act => `<li class="notification-item" style="cursor:default;"><p>${act.details}</p><small>Bởi: <strong>${act.user_name}</strong> - ${new Date(act.created_at).toLocaleString('vi-VN')}</small></li>`).join('')
                         : '<li class="no-notifications">Không có hoạt động nào.</li>';
                 } else {
-                     activityListEl.innerHTML = '<li class="no-notifications" style="color:red;">Lỗi tải hoạt động.</li>';
+                         activityListEl.innerHTML = '<li class="no-notifications" style="color:red;">Lỗi tải hoạt động.</li>';
                 }
 
                 if (messagesResponse.ok) {
@@ -276,7 +276,7 @@
                     badgeEl.style.display = unread.length > 0 ? 'block' : 'none';
                     badgeEl.textContent = unread.length;
                 } else {
-                     messageListEl.innerHTML = '<li class="no-notifications" style="color:red;">Lỗi tải tin nhắn.</li>';
+                         messageListEl.innerHTML = '<li class="no-notifications" style="color:red;">Lỗi tải tin nhắn.</li>';
                 }
             } catch (error) {
                 console.error("Lỗi khi tải thông báo:", error);
@@ -288,94 +288,78 @@
             window.location.href = '/message.html';
         }
 
-        //--- HÀM KHỞI TẠO CHÍNH VÀ GẮN SỰ KIỆN ---
+        //--- HÀM GẮN CÁC SỰ KIỆN CHO TRANG ---
+        function attachEventListeners() {
+            // Sự kiện đổi theme
+            document.getElementById('theme-toggle').addEventListener('change', function() {
+                const newTheme = this.checked ? 'dark' : 'light';
+                applyTheme(newTheme);
+                saveThemePreference(newTheme);
+            });
 
-        async function initializePage() {
-            try {
-                const response = await fetch('/api/me');
-                if (!response.ok) {
-                    window.location.href = '/login.html';
-                    return;
-                }
-                currentUser = await response.json();
-                applyTheme(currentUser.theme);
-                loadProducts();
-                updateNotifications();
-            } catch (error) {
-                window.location.href = '/login.html';
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', initializePage);
-
-        document.getElementById('theme-toggle').addEventListener('change', function() {
-            const newTheme = this.checked ? 'dark' : 'light';
-            applyTheme(newTheme);
-            saveThemePreference(newTheme);
-        });
-
-        document.getElementById('search-input').addEventListener('input', e => {
-            const searchTerm = e.target.value.toLowerCase();
-            const filtered = allProducts.filter(p => (p.id?.toLowerCase().includes(searchTerm)) || (p.name_vi?.toLowerCase().includes(searchTerm)));
-            renderProducts(filtered);
-        });
-
-        document.getElementById('product-table-body').addEventListener('click', e => {
-            const target = e.target.closest('button');
-            if (!target) return;
-
-            if (target.classList.contains('delete-btn')) {
-                // === START: CODE THÊM MỚI ĐỂ KIỂM TRA QUYỀN XÓA ===
-                if (!currentUser || currentUser.username !== 'KT01IT') {
-                    alert('Bạn không có quyền xóa danh mục này.');
-                    return; // Dừng lại ngay tại đây, không thực hiện hành động xóa
-                }
-                // === END: CODE THÊM MỚI ===
-                
-                const productId = target.dataset.id;
-                if (confirm(`Bạn có chắc muốn xóa sản phẩm mã "${productId}"?`)) {
-                    fetch(`/api/products/${productId}`, { method: 'DELETE' })
-                    .then(res => res.ok ? (alert('Xóa thành công!'), loadProducts(), updateNotifications()) : alert(`Xóa thất bại: ${res.status}`))
-                    .catch(err => alert('Lỗi mạng!'));
-                }
-            }
-            if (target.classList.contains('reviews-btn')) {
-                showReviews(target.dataset.id, target.dataset.name);
-            }
-        });
-
-        const modal = document.getElementById('reviewsModal');
-        const closeButton = modal.querySelector('.close-button');
-        closeButton.onclick = () => modal.style.display = 'none';
-        window.onclick = (event) => { if (event.target == modal) modal.style.display = 'none'; };
-        
-        const notificationBell = document.getElementById('notification-bell');
-        const notificationDropdown = document.getElementById('notification-dropdown');
-        notificationBell.addEventListener('click', e => {
-            e.stopPropagation();
-            const isHidden = notificationDropdown.style.display === 'none';
-            notificationDropdown.style.display = isHidden ? 'block' : 'none';
-            if (isHidden) updateNotifications();
-        });
-        window.addEventListener('click', e => {
-            if (!notificationBell.contains(e.target) && !notificationDropdown.contains(e.target)) {
-                notificationDropdown.style.display = 'none';
-            }
-        });
-
-        // === START: CODE THÊM MỚI ĐỂ KIỂM TRA QUYỀN TRUY CẬP TRANG "THÊM SẢN PHẨM" ===
-        document.addEventListener('DOMContentLoaded', () => {
-            // Chúng ta phải chờ DOM được tải xong mới có thể tìm và gắn sự kiện cho thẻ <a>
-            const addProductLink = document.getElementById('add-product-link');
+            // Sự kiện tìm kiếm
+            document.getElementById('search-input').addEventListener('input', e => {
+                const searchTerm = e.target.value.toLowerCase();
+                const filtered = allProducts.filter(p => (p.id?.toLowerCase().includes(searchTerm)) || (p.name_vi?.toLowerCase().includes(searchTerm)));
+                renderProducts(filtered);
+            });
             
+            // Sự kiện click trên bảng (Xóa, Xem đánh giá)
+            document.getElementById('product-table-body').addEventListener('click', e => {
+                const target = e.target.closest('button');
+                if (!target) return;
+
+                if (target.classList.contains('delete-btn')) {
+                    // === START: CODE KIỂM TRA QUYỀN XÓA ===
+                    if (!currentUser || currentUser.username !== 'KT01IT') {
+                        alert('Bạn không có quyền xóa danh mục này.');
+                        return; // Dừng lại ngay tại đây
+                    }
+                    // === END: CODE KIỂM TRA QUYỀN XÓA ===
+                    
+                    const productId = target.dataset.id;
+                    if (confirm(`Bạn có chắc muốn xóa sản phẩm mã "${productId}"?`)) {
+                        fetch(`/api/products/${productId}`, { method: 'DELETE' })
+                        .then(res => res.ok ? (alert('Xóa thành công!'), loadProducts(), updateNotifications()) : alert(`Xóa thất bại: ${res.status}`))
+                        .catch(err => alert('Lỗi mạng!'));
+                    }
+                }
+                if (target.classList.contains('reviews-btn')) {
+                    showReviews(target.dataset.id, target.dataset.name);
+                }
+            });
+
+            // Sự kiện đóng modal đánh giá
+            const modal = document.getElementById('reviewsModal');
+            const closeButton = modal.querySelector('.close-button');
+            closeButton.onclick = () => modal.style.display = 'none';
+            window.onclick = (event) => { if (event.target == modal) modal.style.display = 'none'; };
+            
+            // Sự kiện cho chuông thông báo
+            const notificationBell = document.getElementById('notification-bell');
+            const notificationDropdown = document.getElementById('notification-dropdown');
+            notificationBell.addEventListener('click', e => {
+                e.stopPropagation();
+                const isHidden = notificationDropdown.style.display === 'none';
+                notificationDropdown.style.display = isHidden ? 'block' : 'none';
+                if (isHidden) updateNotifications();
+            });
+            window.addEventListener('click', e => {
+                if (!notificationBell.contains(e.target) && !notificationDropdown.contains(e.target)) {
+                    notificationDropdown.style.display = 'none';
+                }
+            });
+
+            // === START: CODE SỬA LỖI - GẮN SỰ KIỆN KIỂM TRA QUYỀN CHO NÚT "THÊM SẢN PHẨM" ===
+            // Logic này được chuyển vào đây để đảm bảo `currentUser` đã được tải xong.
+            const addProductLink = document.getElementById('add-product-link');
             if (addProductLink) {
                 addProductLink.addEventListener('click', function(event) {
-                    // Kiểm tra quyền ngay khi người dùng click vào link
-                    // Biến 'currentUser' đã được lấy ở hàm initializePage()
+                    // Biến 'currentUser' giờ đây đã được đảm bảo là có giá trị.
                     if (!currentUser || currentUser.username !== 'KT01IT') {
-                        event.preventDefault(); // Rất quan trọng: Ngăn chặn hành vi mặc định (chuyển trang)
+                        event.preventDefault(); // Rất quan trọng: Ngăn chặn chuyển trang
 
-                        // Tạo và hiển thị một hộp thoại thông báo tùy chỉnh
+                        // Hiển thị hộp thoại thông báo tùy chỉnh
                         const permissionModal = document.createElement('div');
                         permissionModal.innerHTML = `
                             <div id="permission-denied-modal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 2000;">
@@ -388,15 +372,44 @@
                         `;
                         document.body.appendChild(permissionModal);
                         
-                        // Thêm sự kiện để nút "Đã hiểu" có thể đóng hộp thoại
                         document.getElementById('close-permission-modal').addEventListener('click', () => {
                             document.body.removeChild(permissionModal);
                         });
                     }
                 });
             }
-        });
-        // === END: CODE THÊM MỚI ===
+            // === END: CODE SỬA LỖI ===
+        }
+
+
+        //--- HÀM KHỞI TẠO CHÍNH CỦA TRANG ---
+        async function initializePage() {
+            try {
+                // Bước 1: Lấy thông tin người dùng hiện tại. Đây là bước quan trọng nhất.
+                const response = await fetch('/api/me');
+                if (!response.ok) {
+                    window.location.href = '/login.html';
+                    return;
+                }
+                currentUser = await response.json();
+                
+                // Bước 2: Sau khi đã có `currentUser`, áp dụng theme và tải dữ liệu
+                applyTheme(currentUser.theme);
+                loadProducts();
+                updateNotifications();
+
+                // Bước 3: Gắn tất cả các sự kiện. Việc này chỉ xảy ra SAU KHI `currentUser` đã được tải.
+                attachEventListeners();
+
+            } catch (error) {
+                // Nếu có bất kỳ lỗi nào, chuyển về trang đăng nhập
+                window.location.href = '/login.html';
+            }
+        }
+
+        // Bắt đầu chạy hàm khởi tạo khi trang đã tải xong
+        document.addEventListener('DOMContentLoaded', initializePage);
+
     </script>
 </body>
 </html>
