@@ -140,18 +140,8 @@
     </div>
 
     <script>
-        /**
-         * @file product-list.html
-         * @version 4.2 - Sửa lỗi phân quyền (race condition)
-         * @description Script hoàn chỉnh để quản lý sản phẩm, tích hợp chuông thông báo
-         * và chế độ Sáng/Tối, và logic phân quyền.
-         */
-
-        //--- KHAI BÁO BIẾN TOÀN CỤC ---
         let allProducts = [];
         let currentUser = null;
-
-        //--- CÁC HÀM QUẢN LÝ GIAO DIỆN (UI) ---
 
         function renderProducts(products) {
             const tableBody = document.getElementById('product-table-body');
@@ -208,8 +198,6 @@
             }
         }
         
-        //--- CÁC HÀM QUẢN LÝ THEME ---
-
         function applyTheme(theme) {
             const toggle = document.getElementById('theme-toggle');
             if (theme === 'dark') {
@@ -232,8 +220,6 @@
                 currentUser.theme = theme;
             } catch (error) { console.error("Lỗi khi lưu theme:", error); }
         }
-
-        //--- CÁC HÀM TẢI DỮ LIỆU TỪ SERVER ---
 
         function loadProducts() {
             fetch('/api/products')
@@ -288,34 +274,31 @@
             window.location.href = '/message.html';
         }
 
-        //--- HÀM GẮN CÁC SỰ KIỆN CHO TRANG ---
         function attachEventListeners() {
-            // Sự kiện đổi theme
             document.getElementById('theme-toggle').addEventListener('change', function() {
                 const newTheme = this.checked ? 'dark' : 'light';
                 applyTheme(newTheme);
                 saveThemePreference(newTheme);
             });
 
-            // Sự kiện tìm kiếm
             document.getElementById('search-input').addEventListener('input', e => {
                 const searchTerm = e.target.value.toLowerCase();
                 const filtered = allProducts.filter(p => (p.id?.toLowerCase().includes(searchTerm)) || (p.name_vi?.toLowerCase().includes(searchTerm)));
                 renderProducts(filtered);
             });
             
-            // Sự kiện click trên bảng (Xóa, Xem đánh giá)
             document.getElementById('product-table-body').addEventListener('click', e => {
                 const target = e.target.closest('button');
                 if (!target) return;
 
                 if (target.classList.contains('delete-btn')) {
-                    // === START: CODE KIỂM TRA QUYỀN XÓA ===
-                    if (!currentUser || currentUser.username !== 'KT01IT') {
+                    // === START: SỬA LỖI LẦN 2 (KIỂM TRA CẢ .username VÀ .name) ===
+                    const isAdmin = currentUser && (currentUser.username === 'KT01IT' || currentUser.name === 'KT01IT');
+                    if (!isAdmin) {
                         alert('Bạn không có quyền xóa danh mục này.');
-                        return; // Dừng lại ngay tại đây
+                        return;
                     }
-                    // === END: CODE KIỂM TRA QUYỀN XÓA ===
+                    // === END: SỬA LỖI LẦN 2 ===
                     
                     const productId = target.dataset.id;
                     if (confirm(`Bạn có chắc muốn xóa sản phẩm mã "${productId}"?`)) {
@@ -329,13 +312,11 @@
                 }
             });
 
-            // Sự kiện đóng modal đánh giá
             const modal = document.getElementById('reviewsModal');
             const closeButton = modal.querySelector('.close-button');
             closeButton.onclick = () => modal.style.display = 'none';
             window.onclick = (event) => { if (event.target == modal) modal.style.display = 'none'; };
             
-            // Sự kiện cho chuông thông báo
             const notificationBell = document.getElementById('notification-bell');
             const notificationDropdown = document.getElementById('notification-dropdown');
             notificationBell.addEventListener('click', e => {
@@ -350,16 +331,14 @@
                 }
             });
 
-            // === START: CODE SỬA LỖI - GẮN SỰ KIỆN KIỂM TRA QUYỀN CHO NÚT "THÊM SẢN PHẨM" ===
-            // Logic này được chuyển vào đây để đảm bảo `currentUser` đã được tải xong.
             const addProductLink = document.getElementById('add-product-link');
             if (addProductLink) {
                 addProductLink.addEventListener('click', function(event) {
-                    // Biến 'currentUser' giờ đây đã được đảm bảo là có giá trị.
-                    if (!currentUser || currentUser.username !== 'KT01IT') {
-                        event.preventDefault(); // Rất quan trọng: Ngăn chặn chuyển trang
+                    // === START: SỬA LỖI LẦN 2 (KIỂM TRA CẢ .username VÀ .name) ===
+                    const isAdmin = currentUser && (currentUser.username === 'KT01IT' || currentUser.name === 'KT01IT');
+                    if (!isAdmin) {
+                        event.preventDefault();
 
-                        // Hiển thị hộp thoại thông báo tùy chỉnh
                         const permissionModal = document.createElement('div');
                         permissionModal.innerHTML = `
                             <div id="permission-denied-modal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 2000;">
@@ -376,38 +355,31 @@
                             document.body.removeChild(permissionModal);
                         });
                     }
+                    // === END: SỬA LỖI LẦN 2 ===
                 });
             }
-            // === END: CODE SỬA LỖI ===
         }
 
 
-        //--- HÀM KHỞI TẠO CHÍNH CỦA TRANG ---
         async function initializePage() {
             try {
-                // Bước 1: Lấy thông tin người dùng hiện tại. Đây là bước quan trọng nhất.
                 const response = await fetch('/api/me');
                 if (!response.ok) {
                     window.location.href = '/login.html';
                     return;
                 }
                 currentUser = await response.json();
-                console.log('DEBUG - Dữ liệu người dùng:', JSON.stringify(currentUser, null, 2));
-                // Bước 2: Sau khi đã có `currentUser`, áp dụng theme và tải dữ liệu
+                
                 applyTheme(currentUser.theme);
                 loadProducts();
                 updateNotifications();
-
-                // Bước 3: Gắn tất cả các sự kiện. Việc này chỉ xảy ra SAU KHI `currentUser` đã được tải.
                 attachEventListeners();
 
             } catch (error) {
-                // Nếu có bất kỳ lỗi nào, chuyển về trang đăng nhập
                 window.location.href = '/login.html';
             }
         }
 
-        // Bắt đầu chạy hàm khởi tạo khi trang đã tải xong
         document.addEventListener('DOMContentLoaded', initializePage);
 
     </script>
