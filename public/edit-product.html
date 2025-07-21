@@ -107,29 +107,31 @@
                      <div class="form-group full-width"><label>Thông số</label><input type="text" name="specification"></div>
                 </div>
             </div>
-<div class="form-section">
-    <h2>Thông Số Kỹ Thuật & Cân Nặng (Nội bộ)</h2>
-    <div class="form-grid">
-        <div class="form-group"><label>Số lượng/hộp</label><input type="text" name="box_quantity"></div>
-        <div class="form-group"><label>Nơi sản xuất</label><input type="text" name="origin_country"></div>
-        <div class="form-group"><label>Giá vốn</label><input type="number" step="0.01" name="cost_price"></div>
-        <div class="form-group"><label>Hardware</label><input type="text" name="hardware"></div>
-        <div class="form-group"><label>Nệm</label><input type="text" name="cushion_details"></div>
-        <div class="form-group"><label>Gối</label><input type="text" name="pillow_details"></div>
-        <hr class="full-width">
-        <div class="form-group"><label>Định lượng nhôm (Kg)</label><input type="number" step="0.01" name="aluminum_weight"></div>
-        <div class="form-group"><label>Định lượng Wicker (Kg)</label><input type="number" step="0.01" name="wicker_weight"></div>
-        <div class="form-group"><label>Định lượng mặt đá (Kg)</label><input type="number" step="0.01" name="stone_weight"></div>
-        <div class="form-group"><label>Cân nặng dây đan (Kg)</label><input type="number" step="0.01" name="weaving_rope_weight"></div>
-        <div class="form-group"><label>Cân nặng dây lót (Kg)</label><input type="number" step="0.01" name="lining_rope_weight"></div>
-        <div class="form-group"><label>Tổng cân nặng sản phẩm (Kg)</label><input type="number" step="0.01" name="product_weight"></div>
-        <div class="form-group"><label>Tổng cân nặng đóng thùng (Kg)</label><input type="number" step="0.01" name="packed_weight_total"></div>
-        <hr class="full-width">
-        <div class="form-group"><label>Nhà cung cấp nhôm</label><input type="text" name="aluminum_supplier"></div>
-        <div class="form-group"><label>Nhà cung cấp wicker</label><input type="text" name="wicker_supplier"></div>
-        <div class="form-group"><label>Nhà cung cấp mặt đá</label><input type="text" name="stone_supplier"></div>
-    </div>
-</div>
+            
+            <div class="form-section">
+                <h2>Thông Số Kỹ Thuật & Cân Nặng (Nội bộ)</h2>
+                <div class="form-grid">
+                    <div class="form-group"><label>Số lượng/hộp</label><input type="text" name="box_quantity"></div>
+                    <div class="form-group"><label>Nơi sản xuất</label><input type="text" name="origin_country"></div>
+                    <div class="form-group"><label>Giá vốn</label><input type="number" step="0.01" name="cost_price"></div>
+                    <div class="form-group"><label>Hardware</label><input type="text" name="hardware"></div>
+                    <div class="form-group"><label>Nệm</label><input type="text" name="cushion_details"></div>
+                    <div class="form-group"><label>Gối</label><input type="text" name="pillow_details"></div>
+                    <hr class="full-width">
+                    <div class="form-group"><label>Định lượng nhôm (Kg)</label><input type="number" step="0.01" name="aluminum_weight"></div>
+                    <div class="form-group"><label>Định lượng Wicker (Kg)</label><input type="number" step="0.01" name="wicker_weight"></div>
+                    <div class="form-group"><label>Định lượng mặt đá (Kg)</label><input type="number" step="0.01" name="stone_weight"></div>
+                    <div class="form-group"><label>Cân nặng dây đan (Kg)</label><input type="number" step="0.01" name="weaving_rope_weight"></div>
+                    <div class="form-group"><label>Cân nặng dây lót (Kg)</label><input type="number" step="0.01" name="lining_rope_weight"></div>
+                    <div class="form-group"><label>Tổng cân nặng sản phẩm (Kg)</label><input type="number" step="0.01" name="product_weight"></div>
+                    <div class="form-group"><label>Tổng cân nặng đóng thùng (Kg)</label><input type="number" step="0.01" name="packed_weight_total"></div>
+                    <hr class="full-width">
+                    <div class="form-group"><label>Nhà cung cấp nhôm</label><input type="text" name="aluminum_supplier"></div>
+                    <div class="form-group"><label>Nhà cung cấp wicker</label><input type="text" name="wicker_supplier"></div>
+                    <div class="form-group"><label>Nhà cung cấp mặt đá</label><input type="text" name="stone_supplier"></div>
+                </div>
+            </div>
+
             <div class="form-section">
                 <h2>Tệp Đính Kèm</h2>
                 <p style="font-style: italic; margin-bottom: 15px;">
@@ -181,10 +183,14 @@
             }
             const product = await response.json();
 
-            // Vòng lặp này sẽ tự động điền dữ liệu cho tất cả các trường, kể cả các trường mới
+            // Vòng lặp này sẽ tự động điền dữ liệu cho tất cả các trường
             for (const key in product) {
-                if (form.elements[key]) {
-                    const field = form.elements[key];
+                // === START: SỬA LỖI TRƯỜNG "length" ===
+                // Thay vì dùng form.elements[key] có thể gây lỗi với key="length",
+                // chúng ta dùng querySelector để tìm chính xác phần tử theo thuộc tính 'name'.
+                const field = form.querySelector(`[name="${key}"]`);
+                if (field) {
+                // === END: SỬA LỖI TRƯỜNG "length" ===
                     const value = product[key];
                     if (['imageUrls', 'drawingUrls', 'materialsUrls'].includes(key) && Array.isArray(value)) {
                         const urlString = value.map(item => (typeof item === 'object' ? item.url : item)).join('\n');
