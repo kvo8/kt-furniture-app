@@ -1,6 +1,6 @@
 // =================================================================
 // === FILE: index.js (PHIÊN BẢN HOÀN CHỈNH - FULL CHỨC NĂNG)     ===
-// === Tích hợp Upload, Quản lý Sản phẩm, và Quản lý Nhân viên     ===
+// === Tích hợp Upload, Quản lý Sản phẩm, Nhân viên, và Bảng Tin ===
 // =================================================================
 
 // --- PHẦN 1: IMPORT CÁC THƯ VIỆN CẦN THIẾT ---
@@ -257,17 +257,7 @@ app.get("/api/products/:id", async (req, res, next) => {
     }
 });
 
-// =======================================================================
-// === BẮT ĐẦU KHỐI CODE ĐÃ SỬA LỖI VÀ TỐI ƯU ===
-// =======================================================================
-
-/**
- * @route   POST /api/products
- * @desc    Tạo một sản phẩm mới (PHIÊN BẢN CẢI TIẾN - TỰ ĐỘNG)
- * @access  Private (yêu cầu đăng nhập)
- * @notes   Hàm này tự động xử lý tất cả các trường được gửi từ form,
- * giúp loại bỏ hoàn toàn lỗi sai thứ tự và dễ dàng bảo trì sau này.
- */
+// ... (API Thêm và Sửa sản phẩm của bạn vẫn giữ nguyên)
 app.post("/api/products", isLoggedIn, textOnlyUpload, async (req, res, next) => {
     console.log("--- Bắt đầu xử lý API: THÊM SẢN PHẨM MỚI (PHIÊN BẢN TỰ ĐỘNG) ---");
     console.log("Dữ liệu thô nhận được từ req.body:", req.body);
@@ -307,12 +297,6 @@ app.post("/api/products", isLoggedIn, textOnlyUpload, async (req, res, next) => 
         next(err);
     }
 });
-
-/**
- * @route   PUT /api/products/:id
- * @desc    Cập nhật một sản phẩm đã có (PHIÊN BẢN CẢI TIẾN - TỰ ĐỘNG)
- * @access  Private (yêu cầu đăng nhập)
- */
 app.put("/api/products/:id", isLoggedIn, textOnlyUpload, async (req, res, next) => {
     console.log(`--- Bắt đầu xử lý API: CẬP NHẬT SẢN PHẨM ID: ${req.params.id} ---`);
     try {
@@ -352,11 +336,7 @@ app.put("/api/products/:id", isLoggedIn, textOnlyUpload, async (req, res, next) 
     }
 });
 
-// =======================================================================
-// === KẾT THÚC KHỐI CODE ĐÃ SỬA LỖI VÀ TỐI ƯU ===
-// =======================================================================
-
-// Hàm xóa file trên Google Cloud Storage khi xóa sản phẩm
+// ... (API Xóa sản phẩm của bạn vẫn giữ nguyên)
 async function deleteFilesFromGCS(product) {
     console.log(`Bắt đầu quá trình xóa file GCS cho sản phẩm ID: ${product.id}`);
     const urlsToDelete = [];
@@ -394,8 +374,6 @@ async function deleteFilesFromGCS(product) {
     await Promise.all(deletionPromises);
     console.log(`Hoàn tất quá trình xóa file cho sản phẩm ${product.id}.`);
 }
-
-// API Xóa một sản phẩm
 app.delete("/api/products/:id", isLoggedIn, async (req, res, next) => {
     const { id } = req.params;
     try {
@@ -414,7 +392,7 @@ app.delete("/api/products/:id", isLoggedIn, async (req, res, next) => {
 });
 
 // == D. CÁC API VỀ REVIEWS ==
-// API Thêm một đánh giá mới
+// ... (API Reviews của bạn vẫn giữ nguyên)
 app.post("/api/reviews", async (req, res, next) => {
     try {
         const { productId, rating, comment, author_name } = req.body;
@@ -429,8 +407,6 @@ app.post("/api/reviews", async (req, res, next) => {
         next(err);
     }
 });
-
-// API Lấy tất cả đánh giá của một sản phẩm
 app.get("/api/products/:id/reviews", async (req, res, next) => {
     try {
         const sql = "SELECT * FROM reviews WHERE product_id = $1 ORDER BY created_at DESC";
@@ -442,7 +418,7 @@ app.get("/api/products/:id/reviews", async (req, res, next) => {
 });
 
 // == E. CÁC API VỀ TIN NHẮN NỘI BỘ ==
-// API Gửi tin nhắn mới
+// ... (API Tin nhắn của bạn vẫn giữ nguyên)
 app.post("/api/messages", isLoggedIn, async (req, res, next) => {
     console.log("--- Bắt đầu xử lý yêu cầu GỬI TIN NHẮN MỚI ---");
     try {
@@ -468,8 +444,6 @@ app.post("/api/messages", isLoggedIn, async (req, res, next) => {
         next(err);
     }
 });
-
-// API Lấy tin nhắn đã nhận
 app.get("/api/messages", isLoggedIn, async (req, res, next) => {
     try {
         const currentUserId = req.session.user.id;
@@ -480,8 +454,6 @@ app.get("/api/messages", isLoggedIn, async (req, res, next) => {
         next(err);
     }
 });
-
-// API Đánh dấu tin nhắn là đã đọc
 app.put("/api/messages/:id/read", isLoggedIn, async (req, res, next) => {
     const messageId = req.params.id;
     const currentUserId = req.session.user.id;
@@ -508,13 +480,145 @@ app.get("/api/activity-log", isLoggedIn, async (req, res, next) => {
     }
 });
 
+
+// =======================================================================
+// === BẮT ĐẦU KHỐI CODE MỚI: API CHO BẢNG TIN THÔNG BÁO ===
+// =======================================================================
+console.log("Defining Announcement Board API endpoints...");
+
+// API 1: Tải tất cả bài đăng trên bảng tin
+app.get('/api/announcements', isLoggedIn, async (req, res, next) => {
+    try {
+        // Câu lệnh SQL này kết nối bảng announcements và users để lấy tên người đăng
+        const query = `
+            SELECT 
+                a.id, a.content, a.image_url, a.created_at,
+                u.ho_ten AS author_name 
+            FROM announcements a
+            JOIN users u ON a.user_id = u.id
+            ORDER BY a.created_at DESC;
+        `;
+        const result = await db.query(query);
+        res.json(result.rows);
+    } catch (error) {
+        console.error('Lỗi khi tải bài đăng:', error);
+        next(error); // Chuyển lỗi đến middleware xử lý tập trung
+    }
+});
+
+// API 2: Tạo bài đăng mới (có xử lý upload ảnh)
+// Sử dụng multerMemory thay vì multer.single('image') cũ để upload lên GCS
+app.post('/api/announcements', isLoggedIn, multerMemory.single('image'), async (req, res, next) => {
+    const { content } = req.body;
+    const userId = req.session.user.id;
+    let imageUrl = null;
+
+    if (!content) {
+        return res.status(400).json({ error: 'Nội dung không được để trống' });
+    }
+
+    try {
+        // Nếu có file ảnh, upload lên Google Cloud Storage
+        if (req.file) {
+            const bucket = storageGCS.bucket(bucketName);
+            const originalName = req.file.originalname.replace(/\s/g, '_');
+            const blobName = `announcements/${Date.now()}-${originalName}`;
+            const blob = bucket.file(blobName);
+            const blobStream = blob.createWriteStream({
+                resumable: false,
+                contentType: req.file.mimetype
+            });
+
+            // Sử dụng Promise để xử lý stream bất đồng bộ
+            await new Promise((resolve, reject) => {
+                blobStream.on('error', err => reject(err));
+                blobStream.on('finish', () => {
+                    imageUrl = `https://storage.googleapis.com/${bucket.name}/${blob.name}`;
+                    resolve();
+                });
+                blobStream.end(req.file.buffer);
+            });
+        }
+        
+        // Sau khi có URL ảnh (hoặc không), lưu vào database
+        const query = 'INSERT INTO announcements (user_id, content, image_url) VALUES ($1, $2, $3)';
+        await db.query(query, [userId, content, imageUrl]);
+        
+        await logActivity('NEW_ANNOUNCEMENT', `Người dùng '${req.session.user.name}' đã tạo một thông báo mới.`, req.session.user.name);
+        res.status(201).json({ message: 'Đăng bài thành công' });
+    } catch (error) {
+        console.error('Lỗi khi tạo bài đăng:', error);
+        next(error);
+    }
+});
+
+// API 3: Thêm bình luận mới vào một bài đăng
+app.post('/api/announcements/:id/comments', isLoggedIn, async (req, res, next) => {
+    const announcementId = req.params.id;
+    const { content } = req.body;
+    const userId = req.session.user.id;
+
+    if (!content) {
+        return res.status(400).json({ error: 'Nội dung bình luận không được để trống' });
+    }
+
+    try {
+        const query = 'INSERT INTO comments (announcement_id, user_id, content) VALUES ($1, $2, $3)';
+        await db.query(query, [announcementId, userId, content]);
+        
+        await logActivity('NEW_COMMENT', `Người dùng '${req.session.user.name}' đã bình luận về một thông báo.`, req.session.user.name);
+        res.status(201).json({ message: 'Bình luận thành công' });
+    } catch (error) {
+        console.error('Lỗi khi bình luận:', error);
+        next(error);
+    }
+});
+
+// API 4: API tổng hợp cho chuông thông báo (đã có logic)
+app.get('/api/notifications', isLoggedIn, async (req, res, next) => {
+    try {
+        const currentUserId = req.session.user.id;
+        
+        // Lấy tin nhắn chưa đọc
+        const msgSql = "SELECT id, sender_name, title, created_at FROM messages WHERE recipient_id = $1 AND is_read = FALSE ORDER BY created_at DESC";
+        const msgResult = await db.query(msgSql, [currentUserId]);
+
+        // Lấy bài đăng mới (ví dụ: trong 24 giờ qua)
+        const annSql = `
+            SELECT a.id, u.ho_ten as author_name, a.created_at 
+            FROM announcements a 
+            JOIN users u ON a.user_id = u.id 
+            WHERE a.created_at > NOW() - INTERVAL '24 hours' 
+            ORDER BY a.created_at DESC`;
+        const annResult = await db.query(annSql);
+
+        // Lấy hoạt động gần đây
+        const actSql = "SELECT * FROM activity_log ORDER BY created_at DESC LIMIT 5";
+        const actResult = await db.query(actSql);
+
+        res.json({
+            unread_messages: msgResult.rows,
+            new_announcements: annResult.rows,
+            recent_activities: actResult.rows
+        });
+    } catch(error) {
+        console.error('Lỗi khi lấy thông báo tổng hợp:', error);
+        next(error);
+    }
+});
+
+// =======================================================================
+// === KẾT THÚC KHỐI CODE MỚI: API CHO BẢNG TIN THÔNG BÁO ===
+// =======================================================================
+
+
 // == G. ENDPOINT CHẨN ĐOÁN ==
-const APP_VERSION = "18.0_FIXED_PRODUCT_SAVE";
+const APP_VERSION = "19.0_ANNOUNCEMENT_INTEGRATED";
 app.get("/api/version", (req, res) => {
     res.status(200).json({
         status: "OK",
         version: APP_VERSION,
-        note: "This version includes the automated product creation and update logic.",
+        note: "This version includes the Announcement Board API endpoints.",
         server_time: new Date().toISOString()
     });
 });
