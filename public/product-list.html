@@ -93,7 +93,7 @@
         <div class="nav-links-left">
             <a href="/dashboard.html">Về Dashboard</a>
             <a href="/new-product.html" id="add-product-link">Thêm Sản phẩm Mới</a>
-            <a href="/employee-info.html">Quản Lý Nhân Viên</a>
+            <a href="/employee-info.html" id="employee-info-link">Quản Lý Nhân Viên</a>
             <a href="/message.html">Tin Nhắn Nội Bộ</a>
         </div>
         
@@ -292,14 +292,11 @@
                 if (!target) return;
 
                 if (target.classList.contains('delete-btn')) {
-                    // === START: SỬA LỖI CUỐI CÙNG (DÙNG employeeId) ===
                     const isAdmin = currentUser && currentUser.employeeId === 'KT01IT';
                     if (!isAdmin) {
                         alert('Bạn không có quyền xóa danh mục này.');
                         return;
                     }
-                    // === END: SỬA LỖI CUỐI CÙNG ===
-                    
                     const productId = target.dataset.id;
                     if (confirm(`Bạn có chắc muốn xóa sản phẩm mã "${productId}"?`)) {
                         fetch(`/api/products/${productId}`, { method: 'DELETE' })
@@ -334,7 +331,6 @@
             const addProductLink = document.getElementById('add-product-link');
             if (addProductLink) {
                 addProductLink.addEventListener('click', function(event) {
-                    // === START: SỬA LỖI CUỐI CÙNG (DÙNG employeeId) ===
                     const isAdmin = currentUser && currentUser.employeeId === 'KT01IT';
                     if (!isAdmin) {
                         event.preventDefault();
@@ -355,9 +351,22 @@
                             document.body.removeChild(permissionModal);
                         });
                     }
-                    // === END: SỬA LỖI CUỐI CÙNG ===
                 });
             }
+        }
+        
+        // === HÀM MỚI ĐỂ KIỂM TRA QUYỀN TRUY CẬP CÁC TRANG ===
+        function applyNavigationPermissions() {
+            // Danh sách các vai trò được phép vào trang Quản lý nhân viên
+            const employeePageRoles = ['KT01IT', 'KT01GD', 'KT02GD'];
+            const employeeLink = document.getElementById('employee-info-link');
+
+            // Ẩn link nếu vai trò người dùng không nằm trong danh sách
+            if (employeeLink && !employeePageRoles.includes(currentUser.employeeId)) {
+                employeeLink.style.display = 'none';
+            }
+
+            // (Có thể thêm các quy tắc ẩn/hiện link khác ở đây trong tương lai)
         }
 
         async function initializePage() {
@@ -373,6 +382,9 @@
                 loadProducts();
                 updateNotifications();
                 attachEventListeners();
+
+                // GỌI HÀM KIỂM TRA QUYỀN TRÊN THANH ĐIỀU HƯỚNG
+                applyNavigationPermissions();
 
             } catch (error) {
                 console.error("Lỗi khởi tạo trang:", error);
