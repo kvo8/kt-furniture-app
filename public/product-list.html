@@ -392,7 +392,7 @@
                     return;
                 }
                 currentUser = await response.json();
-                
+                console.log('DEBUG - Dữ liệu người dùng:', JSON.stringify(currentUser, null, 2));
                 // Bước 2: Sau khi đã có `currentUser`, áp dụng theme và tải dữ liệu
                 applyTheme(currentUser.theme);
                 loadProducts();
