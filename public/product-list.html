@@ -294,7 +294,7 @@
                 if (target.classList.contains('delete-btn')) {
                     const isAdmin = currentUser && currentUser.employeeId === 'KT01IT';
                     if (!isAdmin) {
-                        alert('Bạn không có quyền xóa danh mục này.');
+                        alert('Bạn không có quyền xóa sản phẩm này.');
                         return;
                     }
                     const productId = target.dataset.id;
@@ -331,8 +331,11 @@
             const addProductLink = document.getElementById('add-product-link');
             if (addProductLink) {
                 addProductLink.addEventListener('click', function(event) {
-                    const isAdmin = currentUser && currentUser.employeeId === 'KT01IT';
-                    if (!isAdmin) {
+                    // === START: CẬP NHẬT QUYỀN THÊM SẢN PHẨM ===
+                    // Thêm KT01SL vào danh sách các vai trò được phép
+                    const canAddProduct = currentUser && ['KT01IT', 'KT01SL'].includes(currentUser.employeeId);
+                    
+                    if (!canAddProduct) {
                         event.preventDefault();
 
                         const permissionModal = document.createElement('div');
@@ -351,6 +354,7 @@
                             document.body.removeChild(permissionModal);
                         });
                     }
+                    // === END: CẬP NHẬT QUYỀN THÊM SẢN PHẨM ===
                 });
             }
         }
@@ -365,8 +369,6 @@
             if (employeeLink && !employeePageRoles.includes(currentUser.employeeId)) {
                 employeeLink.style.display = 'none';
             }
-
-            // (Có thể thêm các quy tắc ẩn/hiện link khác ở đây trong tương lai)
         }
 
         async function initializePage() {
@@ -383,7 +385,6 @@
                 updateNotifications();
                 attachEventListeners();
 
-                // GỌI HÀM KIỂM TRA QUYỀN TRÊN THANH ĐIỀU HƯỚNG
                 applyNavigationPermissions();
 
             } catch (error) {
