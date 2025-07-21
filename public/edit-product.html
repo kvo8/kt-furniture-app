@@ -22,7 +22,6 @@
             font-size: 1.5em; color: #333; z-index: 1000;
         }
         
-        /* GHI CHÚ: Bổ sung style cho nút Upload popup */
         .form-group-with-button {
             position: relative;
         }
@@ -46,11 +45,22 @@
         .popup-upload-btn:hover {
              background-color: #138496;
         }
+
+        /* CSS cho các trường bị vô hiệu hóa */
+        input:disabled, textarea:disabled, select:disabled {
+            background-color: #f2f2f2 !important;
+            cursor: not-allowed;
+            color: #777;
+        }
+        .popup-upload-btn:disabled {
+            background-color: #999;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
     <div id="loading" class="loading-overlay">
-        <p>Đang tải dữ liệu sản phẩm...</p>
+        <p>Đang tải dữ liệu...</p>
     </div>
 
     <div class="container">
@@ -165,8 +175,67 @@
     const form = document.getElementById('edit-form');
     const submitButton = document.getElementById('submit-button');
     const loadingOverlay = document.getElementById('loading');
-    
-    // --- NHIỆM VỤ 1: TẢI VÀ ĐIỀN DỮ LIỆU VÀO FORM ---
+    let currentUser = null;
+
+    // --- CẤU HÌNH PHÂN QUYỀN ---
+    const PERMISSIONS = {
+        // Các trường ai cũng được sửa
+        'ALL_USERS': [
+            'name_vi', 'name_en', 'collection_vi', 'collection_en',
+            'company', 'customer', 'supplier', 'specification' // Thêm các trường thương mại vào đây
+        ],
+        // Quyền cho từng bộ phận
+        'KT01KT': [ // Kỹ thuật
+            'color_vi', 'color_en', 'fabric_vi', 'fabric_en', 'wicker_vi', 'wicker_en', 
+            'material_vi', 'material_en', 'aluminum_profile', 'production_place',
+            'length', 'width', 'height', 'other_details',
+            'imageUrls', 'drawingUrls'
+        ],
+        'KT01VT': [ // Vật tư
+            'aluminum_supplier', 'wicker_supplier', 'stone_supplier', 'materialsUrls'
+        ],
+        'KT01SX': [ // Sản xuất
+            'packed_length', 'packed_width', 'packed_height',
+            'box_quantity', 'origin_country', 'cost_price', 'hardware', 'cushion_details',
+            'pillow_details', 'aluminum_weight', 'wicker_weight', 'stone_weight',
+            'weaving_rope_weight', 'lining_rope_weight', 'product_weight', 'packed_weight_total'
+        ]
+    };
+
+    // --- HÀM ÁP DỤNG PHÂN QUYỀN ---
+    function applyPermissions(user) {
+        if (!user || !user.employeeId) return;
+
+        // Nếu là Admin, không làm gì cả, cho phép sửa tất cả
+        if (user.employeeId === 'KT01IT') {
+            console.log("Admin logged in. Full access granted.");
+            return;
+        }
+
+        const userRole = user.employeeId;
+        const allowedFields = new Set([
+            ...PERMISSIONS.ALL_USERS,
+            ...(PERMISSIONS[userRole] || [])
+        ]);
+
+        // Duyệt qua tất cả các phần tử trong form
+        const allFields = form.querySelectorAll('input, textarea, select, button.popup-upload-btn');
+        allFields.forEach(field => {
+            let fieldName = field.name;
+            // Xử lý riêng cho các nút upload
+            if (field.matches('.popup-upload-btn')) {
+                fieldName = field.dataset.target;
+            }
+
+            // Nếu trường không nằm trong danh sách được phép, vô hiệu hóa nó
+            if (!allowedFields.has(fieldName)) {
+                field.disabled = true;
+                field.title = 'Bạn không có quyền sửa trường này. Vui lòng liên hệ bộ phận có thẩm quyền.';
+            }
+        });
+    }
+
+    // --- HÀM KHỞI TẠO TRANG ---
     document.addEventListener('DOMContentLoaded', async () => {
         const urlParams = new URLSearchParams(window.location.search);
         const productId = urlParams.get('id');
@@ -177,20 +246,22 @@
         }
 
         try {
-            const response = await fetch(`/api/products/${productId}`);
-            if (!response.ok) {
-                throw new Error(`Lỗi server: ${response.status}`);
-            }
-            const product = await response.json();
+            // Tải dữ liệu sản phẩm và người dùng cùng lúc
+            const [productResponse, userResponse] = await Promise.all([
+                fetch(`/api/products/${productId}`),
+                fetch('/api/me')
+            ]);
 
-            // Vòng lặp này sẽ tự động điền dữ liệu cho tất cả các trường
+            if (!productResponse.ok) throw new Error(`Lỗi tải sản phẩm: ${productResponse.status}`);
+            if (!userResponse.ok) throw new Error(`Lỗi xác thực người dùng: ${userResponse.status}`);
+
+            const product = await productResponse.json();
+            currentUser = await userResponse.json();
+
+            // Điền dữ liệu sản phẩm vào form
             for (const key in product) {
-                // === START: SỬA LỖI TRƯỜNG "length" ===
-                // Thay vì dùng form.elements[key] có thể gây lỗi với key="length",
-                // chúng ta dùng querySelector để tìm chính xác phần tử theo thuộc tính 'name'.
                 const field = form.querySelector(`[name="${key}"]`);
                 if (field) {
-                // === END: SỬA LỖI TRƯỜNG "length" ===
                     const value = product[key];
                     if (['imageUrls', 'drawingUrls', 'materialsUrls'].includes(key) && Array.isArray(value)) {
                         const urlString = value.map(item => (typeof item === 'object' ? item.url : item)).join('\n');
@@ -201,6 +272,9 @@
                 }
             }
             
+            // Áp dụng quyền hạn sau khi đã điền form
+            applyPermissions(currentUser);
+            
             loadingOverlay.style.display = 'none';
             form.style.display = 'block';
 
@@ -210,7 +284,7 @@
     });
 
 
-    // --- NHIỆM VỤ 2: XỬ LÝ VIỆC SUBMIT FORM ---
+    // --- HÀM XỬ LÝ SUBMIT FORM ---
     form.addEventListener('submit', async function(event) {
         event.preventDefault();
         submitButton.disabled = true;
@@ -218,8 +292,19 @@
 
         try {
             const formData = new FormData(this);
-            const data = Object.fromEntries(formData.entries());
+            const data = {};
             
+            // Chỉ lấy dữ liệu từ những trường không bị vô hiệu hóa
+            formData.forEach((value, key) => {
+                const field = form.querySelector(`[name="${key}"]`);
+                if (field && !field.disabled) {
+                    data[key] = value;
+                }
+            });
+            
+            // Giữ lại ID để biết cập nhật sản phẩm nào
+            data.id = form.querySelector('[name="id"]').value;
+
             function getFileNameFromUrl(url) {
                 try {
                     const path = new URL(url).pathname;
@@ -229,9 +314,16 @@
                 }
             }
 
-            data.imageUrls = (data.imageUrls || '').split('\n').map(link => link.trim()).filter(Boolean);
-            data.drawingUrls = (data.drawingUrls || '').split('\n').map(link => link.trim()).filter(Boolean).map(link => ({ name: getFileNameFromUrl(link), url: link }));
-            data.materialsUrls = (data.materialsUrls || '').split('\n').map(link => link.trim()).filter(Boolean).map(link => ({ name: getFileNameFromUrl(link), url: link }));
+            // Xử lý các trường URL nếu chúng được phép sửa
+            if (data.imageUrls !== undefined) {
+                data.imageUrls = (data.imageUrls || '').split('\n').map(link => link.trim()).filter(Boolean);
+            }
+            if (data.drawingUrls !== undefined) {
+                data.drawingUrls = (data.drawingUrls || '').split('\n').map(link => link.trim()).filter(Boolean).map(link => ({ name: getFileNameFromUrl(link), url: link }));
+            }
+            if (data.materialsUrls !== undefined) {
+                data.materialsUrls = (data.materialsUrls || '').split('\n').map(link => link.trim()).filter(Boolean).map(link => ({ name: getFileNameFromUrl(link), url: link }));
+            }
 
             const response = await fetch(`/api/products/${data.id}`, {
                 method: 'PUT',
@@ -258,7 +350,7 @@
         }
     });
 
-    // --- NHIỆM VỤ 3: MỞ CỬA SỔ UPLOAD POPUP ---
+    // --- HÀM MỞ CỬA SỔ UPLOAD POPUP ---
     document.querySelectorAll('.popup-upload-btn').forEach(button => {
         button.addEventListener('click', () => {
             const targetId = button.dataset.target;
