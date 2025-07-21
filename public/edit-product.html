@@ -71,7 +71,7 @@
             <div class="form-section">
                 <h2>Thông Tin Chung</h2>
                 <div class="form-grid">
-                    <div class="form-group full-width"><label>Mã Sản Phẩm / Product ID (Không thể sửa)</label><input type="text" name="id" readonly style="background-color: #e9ecef;"></div>
+                    <div class="form-group full-width"><label>Mã Sản Phẩm / Product ID</label><input type="text" name="id" readonly style="background-color: #e9ecef;"></div>
                     <div class="form-group"><label>Tên Sản Phẩm (VI)</label><input type="text" name="name_vi" required></div>
                     <div class="form-group"><label>Product Name (EN)</label><input type="text" name="name_en" required></div>
                     <div class="form-group"><label>Bộ Sưu Tập (VI)</label><input type="text" name="collection_vi"></div>
@@ -177,14 +177,14 @@
     const loadingOverlay = document.getElementById('loading');
     let currentUser = null;
 
-    // --- CẤU HÌNH PHÂN QUYỀN ---
+    // --- CẤU HÌNH PHÂN QUYỀN (ĐÃ CẬP NHẬT) ---
     const PERMISSIONS = {
-        // Các trường ai cũng được sửa
-        'ALL_USERS': [
+        // --- VAI TRÒ MỚI: KT01SL (Sales) ---
+        'KT01SL': [
             'name_vi', 'name_en', 'collection_vi', 'collection_en',
-            'company', 'customer', 'supplier', 'specification' // Thêm các trường thương mại vào đây
+            'color_vi', 'color_en', 'fabric_vi', 'fabric_en', 'wicker_vi', 'wicker_en', 
+            'material_vi', 'material_en', 'aluminum_profile', 'production_place'
         ],
-        // Quyền cho từng bộ phận
         'KT01KT': [ // Kỹ thuật
             'color_vi', 'color_en', 'fabric_vi', 'fabric_en', 'wicker_vi', 'wicker_en', 
             'material_vi', 'material_en', 'aluminum_profile', 'production_place',
@@ -202,30 +202,40 @@
         ]
     };
 
-    // --- HÀM ÁP DỤNG PHÂN QUYỀN ---
+    // --- HÀM ÁP DỤNG PHÂN QUYỀN (ĐÃ CẬP NHẬT) ---
     function applyPermissions(user) {
         if (!user || !user.employeeId) return;
 
-        // Nếu là Admin, không làm gì cả, cho phép sửa tất cả
+        // BƯỚC 1: XỬ LÝ QUYỀN SỬA MÃ SẢN PHẨM (ID)
+        const productIdField = form.querySelector('[name="id"]');
+        const canEditIdRoles = ['KT01IT', 'KT01SL'];
+        if (productIdField && canEditIdRoles.includes(user.employeeId)) {
+            productIdField.readOnly = false;
+            productIdField.style.backgroundColor = 'var(--card-bg-color)';
+            productIdField.style.color = 'var(--text-color)';
+            // Cập nhật lại label để người dùng biết là có thể sửa
+            productIdField.previousElementSibling.textContent = 'Mã Sản Phẩm / Product ID (Có thể sửa)';
+        }
+
+        // BƯỚC 2: XỬ LÝ CÁC TRƯỜNG CÒN LẠI
         if (user.employeeId === 'KT01IT') {
             console.log("Admin logged in. Full access granted.");
-            return;
+            return; // Admin không cần kiểm tra gì thêm
         }
 
         const userRole = user.employeeId;
-        const allowedFields = new Set([
-            ...PERMISSIONS.ALL_USERS,
-            ...(PERMISSIONS[userRole] || [])
-        ]);
+        const allowedFields = new Set(PERMISSIONS[userRole] || []);
 
-        // Duyệt qua tất cả các phần tử trong form
+        // Duyệt qua tất cả các phần tử có thể nhập liệu trong form
         const allFields = form.querySelectorAll('input, textarea, select, button.popup-upload-btn');
         allFields.forEach(field => {
             let fieldName = field.name;
-            // Xử lý riêng cho các nút upload
             if (field.matches('.popup-upload-btn')) {
                 fieldName = field.dataset.target;
             }
+
+            // Bỏ qua trường ID vì đã được xử lý riêng ở trên
+            if (fieldName === 'id') return;
 
             // Nếu trường không nằm trong danh sách được phép, vô hiệu hóa nó
             if (!allowedFields.has(fieldName)) {
@@ -246,7 +256,6 @@
         }
 
         try {
-            // Tải dữ liệu sản phẩm và người dùng cùng lúc
             const [productResponse, userResponse] = await Promise.all([
                 fetch(`/api/products/${productId}`),
                 fetch('/api/me')
@@ -294,7 +303,7 @@
             const formData = new FormData(this);
             const data = {};
             
-            // Chỉ lấy dữ liệu từ những trường không bị vô hiệu hóa
+            // Chỉ thu thập dữ liệu từ những trường người dùng có quyền sửa (không bị disabled)
             formData.forEach((value, key) => {
                 const field = form.querySelector(`[name="${key}"]`);
                 if (field && !field.disabled) {
@@ -302,8 +311,11 @@
                 }
             });
             
-            // Giữ lại ID để biết cập nhật sản phẩm nào
-            data.id = form.querySelector('[name="id"]').value;
+            // Nếu người dùng không có quyền sửa ID, ID sẽ không có trong `data`. 
+            // Chúng ta phải luôn đảm bảo ID gốc được gửi đi để server biết cập nhật sản phẩm nào.
+            if (data.id === undefined) {
+                 data.id = form.querySelector('[name="id"]').value;
+            }
 
             function getFileNameFromUrl(url) {
                 try {
@@ -314,7 +326,6 @@
                 }
             }
 
-            // Xử lý các trường URL nếu chúng được phép sửa
             if (data.imageUrls !== undefined) {
                 data.imageUrls = (data.imageUrls || '').split('\n').map(link => link.trim()).filter(Boolean);
             }
