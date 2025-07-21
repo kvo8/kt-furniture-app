@@ -93,6 +93,7 @@
         <div class="nav-links-left">
             <a href="/dashboard.html">Về Dashboard</a>
             <a href="/new-product.html" id="add-product-link">Thêm Sản phẩm Mới</a>
+            <a href="/announcement.html" id="announcement-link">Bảng Tin Thông Báo</a>
             <a href="/employee-info.html" id="employee-info-link">Quản Lý Nhân Viên</a>
             <a href="/message.html">Tin Nhắn Nội Bộ</a>
         </div>
@@ -115,8 +116,10 @@
                     <span id="notification-badge"></span>
                 </button>
                 <div id="notification-dropdown" class="notification-dropdown">
-                    <h4>Tin Nhắn Mới</h4>
+                    <h4>Tin nhắn mới</h4>
                     <ul id="message-list" class="notification-list"></ul>
+                    <h4>Thông báo mới</h4>
+                    <ul id="announcement-list" class="notification-list"></ul>
                     <h4>Hoạt động gần đây</h4>
                     <ul id="activity-list" class="notification-list"></ul>
                 </div>
@@ -233,47 +236,91 @@
                 });
         }
 
+        // === START: HÀM updateNotifications() ĐÃ ĐƯỢC CẬP NHẬT HOÀN CHỈNH ===
         async function updateNotifications() {
-            const activityListEl = document.getElementById('activity-list');
             const messageListEl = document.getElementById('message-list');
+            const announcementListEl = document.getElementById('announcement-list');
+            const activityListEl = document.getElementById('activity-list');
             const badgeEl = document.getElementById('notification-badge');
+
             try {
-                const [activityResponse, messagesResponse] = await Promise.all([
-                    fetch('/api/activity-log'),
-                    fetch('/api/messages') 
-                ]);
+                // Bước 1: Gọi API tổng hợp
+                const response = await fetch('/api/notifications');
+                if (!response.ok) {
+                    throw new Error(`Lỗi server: ${response.status}`);
+                }
+                const data = await response.json();
 
-                if (activityResponse.ok) {
-                    const data = await activityResponse.json();
-                    activityListEl.innerHTML = (data.activities && data.activities.length) 
-                        ? data.activities.slice(0, 7).map(act => `<li class="notification-item" style="cursor:default;"><p>${act.details}</p><small>Bởi: <strong>${act.user_name}</strong> - ${new Date(act.created_at).toLocaleString('vi-VN')}</small></li>`).join('')
-                        : '<li class="no-notifications">Không có hoạt động nào.</li>';
+                // Bước 2: Xử lý tin nhắn chưa đọc
+                const unreadMessages = data.unread_messages || [];
+                if (unreadMessages.length > 0) {
+                    messageListEl.innerHTML = unreadMessages.map(msg => `
+                        <li class="notification-item" title="Click để xem" onclick="readMessage(${msg.id})">
+                            <p><strong>Từ: ${msg.sender_name}</strong></p>
+                            <p>${msg.title}</p>
+                            <small>${new Date(msg.created_at).toLocaleString('vi-VN')}</small>
+                        </li>
+                    `).join('');
                 } else {
-                         activityListEl.innerHTML = '<li class="no-notifications" style="color:red;">Lỗi tải hoạt động.</li>';
+                    messageListEl.innerHTML = '<li class="no-notifications">Không có tin nhắn mới.</li>';
                 }
 
-                if (messagesResponse.ok) {
-                    const data = await messagesResponse.json();
-                    const unread = data.messages.filter(msg => !msg.is_read);
-                    messageListEl.innerHTML = (unread.length > 0)
-                        ? unread.map(msg => `<li class="notification-item" title="Click để xem" onclick="readMessage(${msg.id})"><p><strong>Từ: ${msg.sender_name}</strong></p><p>${msg.title}</p><small>${new Date(msg.created_at).toLocaleString('vi-VN')}</small></li>`).join('')
-                        : '<li class="no-notifications">Không có tin nhắn mới.</li>';
-                    
-                    badgeEl.style.display = unread.length > 0 ? 'block' : 'none';
-                    badgeEl.textContent = unread.length;
+                // Bước 3: Xử lý bài đăng mới
+                const newAnnouncements = data.new_announcements || [];
+                if (newAnnouncements.length > 0) {
+                    announcementListEl.innerHTML = newAnnouncements.map(ann => `
+                        <li class="notification-item" title="Click để xem" onclick="goToAnnouncement(${ann.id})">
+                            <p><strong>${ann.author_name}</strong> đã đăng một thông báo mới.</p>
+                            <small>${new Date(ann.created_at).toLocaleString('vi-VN')}</small>
+                        </li>
+                    `).join('');
                 } else {
-                         messageListEl.innerHTML = '<li class="no-notifications" style="color:red;">Lỗi tải tin nhắn.</li>';
+                    announcementListEl.innerHTML = '<li class="no-notifications">Không có thông báo mới.</li>';
                 }
+
+                // Bước 4: Xử lý hoạt động gần đây (giữ nguyên)
+                const recentActivities = data.recent_activities || [];
+                if (recentActivities.length > 0) {
+                     activityListEl.innerHTML = recentActivities.slice(0, 5).map(act => `
+                        <li class="notification-item" style="cursor:default;">
+                            <p>${act.details}</p>
+                            <small>Bởi: <strong>${act.user_name}</strong> - ${new Date(act.created_at).toLocaleString('vi-VN')}</small>
+                        </li>
+                    `).join('');
+                } else {
+                    activityListEl.innerHTML = '<li class="no-notifications">Không có hoạt động nào.</li>';
+                }
+
+                // Bước 5: Cập nhật huy hiệu (badge)
+                const totalUnread = unreadMessages.length + newAnnouncements.length;
+                if (totalUnread > 0) {
+                    badgeEl.textContent = totalUnread;
+                    badgeEl.style.display = 'block';
+                } else {
+                    badgeEl.style.display = 'none';
+                }
+
             } catch (error) {
                 console.error("Lỗi khi tải thông báo:", error);
+                messageListEl.innerHTML = '<li class="no-notifications" style="color:red;">Lỗi tải thông báo.</li>';
+                announcementListEl.innerHTML = '';
+                activityListEl.innerHTML = '';
             }
         }
-        
+        // === END: HÀM updateNotifications() ===
+
+        // Hàm hỗ trợ để chuyển hướng khi click vào thông báo
         function readMessage(id) {
+            // Đánh dấu đã đọc (backend cần xử lý) và chuyển trang
             fetch(`/api/messages/${id}/read`, { method: 'PUT' });
             window.location.href = '/message.html';
         }
 
+        function goToAnnouncement(id) {
+            // Chuyển đến trang Bảng Tin và có thể scroll đến bài đăng cụ thể
+            window.location.href = `/announcement.html#post-${id}`;
+        }
+        
         function attachEventListeners() {
             document.getElementById('theme-toggle').addEventListener('change', function() {
                 const newTheme = this.checked ? 'dark' : 'light';
@@ -318,9 +365,11 @@
             const notificationDropdown = document.getElementById('notification-dropdown');
             notificationBell.addEventListener('click', e => {
                 e.stopPropagation();
-                const isHidden = notificationDropdown.style.display === 'none';
+                const isHidden = notificationDropdown.style.display === 'none' || !notificationDropdown.style.display;
                 notificationDropdown.style.display = isHidden ? 'block' : 'none';
-                if (isHidden) updateNotifications();
+                if (isHidden) {
+                    updateNotifications(); // Cập nhật thông báo khi mở
+                }
             });
             window.addEventListener('click', e => {
                 if (!notificationBell.contains(e.target) && !notificationDropdown.contains(e.target)) {
@@ -331,13 +380,9 @@
             const addProductLink = document.getElementById('add-product-link');
             if (addProductLink) {
                 addProductLink.addEventListener('click', function(event) {
-                    // === START: CẬP NHẬT QUYỀN THÊM SẢN PHẨM ===
-                    // Thêm KT01SL vào danh sách các vai trò được phép
                     const canAddProduct = currentUser && ['KT01IT', 'KT01SL'].includes(currentUser.employeeId);
-                    
                     if (!canAddProduct) {
                         event.preventDefault();
-
                         const permissionModal = document.createElement('div');
                         permissionModal.innerHTML = `
                             <div id="permission-denied-modal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 2000;">
@@ -349,23 +394,17 @@
                             </div>
                         `;
                         document.body.appendChild(permissionModal);
-                        
                         document.getElementById('close-permission-modal').addEventListener('click', () => {
                             document.body.removeChild(permissionModal);
                         });
                     }
-                    // === END: CẬP NHẬT QUYỀN THÊM SẢN PHẨM ===
                 });
             }
         }
         
-        // === HÀM MỚI ĐỂ KIỂM TRA QUYỀN TRUY CẬP CÁC TRANG ===
         function applyNavigationPermissions() {
-            // Danh sách các vai trò được phép vào trang Quản lý nhân viên
             const employeePageRoles = ['KT01IT', 'KT01GD', 'KT02GD'];
             const employeeLink = document.getElementById('employee-info-link');
-
-            // Ẩn link nếu vai trò người dùng không nằm trong danh sách
             if (employeeLink && !employeePageRoles.includes(currentUser.employeeId)) {
                 employeeLink.style.display = 'none';
             }
@@ -382,9 +421,8 @@
                 
                 applyTheme(currentUser.theme);
                 loadProducts();
-                updateNotifications();
+                updateNotifications(); // Chạy lần đầu để kiểm tra badge
                 attachEventListeners();
-
                 applyNavigationPermissions();
 
             } catch (error) {
@@ -394,7 +432,6 @@
         }
 
         document.addEventListener('DOMContentLoaded', initializePage);
-
     </script>
 </body>
 </html>
