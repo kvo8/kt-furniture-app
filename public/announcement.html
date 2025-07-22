@@ -173,6 +173,7 @@
             border-radius: 50%;
             object-fit: cover;
             border: 1px solid #f0f0f0;
+            flex-shrink: 0; /* Ngăn avatar bị co lại */
         }
         .post-author-info {
             display: flex;
@@ -193,6 +194,7 @@
             white-space: pre-wrap;
             line-height: 1.5;
             font-size: 17px;
+            word-break: break-word;
         }
         .post-image img {
             max-width: 100%;
@@ -208,7 +210,7 @@
             gap: 5px;
             padding: 10px 0;
             border-bottom: 1px solid var(--border-color);
-            min-height: 28px; /* Giữ chiều cao ổn định */
+            min-height: 28px;
         }
         .reactions-summary .icon {
             font-size: 18px;
@@ -229,14 +231,16 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
-            padding: 8px;
+            padding: 8px; /* Bỏ gap và dùng padding để kiểm soát */
             cursor: pointer;
             border-radius: 6px;
             font-weight: 600;
             color: var(--text-muted-color);
             transition: background-color 0.2s ease, color 0.2s ease;
             position: relative;
+        }
+         .action-button .icon { /* Thêm class cho icon để kiểm soát khoảng cách */
+            margin-right: 8px;
         }
         .action-button:hover {
             background-color: #f2f2f2;
@@ -255,14 +259,14 @@
             background-color: white;
             border-radius: 20px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-            display: none; /* Ẩn mặc định */
+            display: none;
             padding: 4px 8px;
             gap: 8px;
             margin-bottom: 8px;
             z-index: 10;
         }
         .action-button.reaction-trigger:hover .reactions-container {
-            display: flex; /* Hiện ra khi hover */
+            display: flex;
         }
         .reaction-emoji {
             font-size: 28px;
@@ -380,17 +384,6 @@
         const currentUserAvatarElement = document.getElementById('current-user-avatar');
         let currentUser = null;
 
-        /**
-         * @typedef {Object} ReactionInfo
-         * @property {string} emoji - Biểu tượng cảm xúc.
-         * @property {string} text - Văn bản hiển thị.
-         * @property {string} color - Mã màu cho văn bản.
-         */
-        
-        /**
-         * Đối tượng lưu trữ thông tin cho từng loại reaction.
-         * @type {Object.<string, ReactionInfo>}
-         */
         const REACTION_MAP = {
             like:   { emoji: '👍', text: 'Thích', color: 'var(--primary-color)' },
             love:   { emoji: '❤️', text: 'Yêu thích', color: 'var(--love-color)' },
@@ -398,24 +391,12 @@
             unlike: { emoji: '👎', text: 'Không thích', color: 'var(--unlike-color)' }
         };
 
-
         // --- CÁC HÀM TIỆN ÍCH ---
-
-        /**
-         * Tạo URL avatar từ tên người dùng.
-         * @param {string} name - Tên người dùng.
-         * @returns {string} URL của ảnh avatar.
-         */
         function createAvatarUrl(name) {
-            if (!name) return 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; // Ảnh trống 1x1
+            if (!name) return 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';
             return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&color=fff&size=128`;
         }
         
-        /**
-         * Định dạng thời gian thành dạng tương đối.
-         * @param {string | Date} dateInput - Ngày cần định dạng.
-         * @returns {string} Chuỗi thời gian đã định dạng.
-         */
         function formatTimeAgo(dateInput) {
             const now = new Date();
             const date = new Date(dateInput);
@@ -432,27 +413,20 @@
             return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
         }
 
-
         // --- CÁC HÀM TƯƠNG TÁC VỚI API ---
-
-        /**
-         * Hàm fetch API tập trung.
-         * @param {string} url - URL của API.
-         * @param {object} [options={}] - Tùy chọn cho fetch.
-         * @returns {Promise<any>} Dữ liệu JSON.
-         */
         async function fetchAPI(url, options = {}) {
             const response = await fetch(url, options);
             if (!response.ok) {
+                // Lỗi 404 là lỗi phổ biến nhất khi API endpoint chưa tồn tại
+                if (response.status === 404) {
+                    throw new Error(`Lỗi 404: Không tìm thấy API tại đường dẫn ${url}. Vui lòng kiểm tra lại file index.js ở backend.`);
+                }
                 const errorData = await response.json().catch(() => ({ message: response.statusText }));
                 throw new Error(errorData.message || `Lỗi ${response.status}`);
             }
             return response.json().catch(() => ({}));
         }
 
-        /**
-         * Lấy thông tin người dùng đang đăng nhập.
-         */
         async function fetchCurrentUser() {
             try {
                 currentUser = await fetchAPI('/api/me');
@@ -467,9 +441,6 @@
             }
         }
 
-        /**
-         * Tải tất cả bài đăng.
-         */
         async function fetchPosts() {
             try {
                 postFeed.innerHTML = '<div class="feed-placeholder">Đang tải bảng tin...</div>';
@@ -481,16 +452,10 @@
             }
         }
 
-
         // --- CÁC HÀM RENDER VÀ CẬP NHẬT GIAO DIỆN (UI) ---
-
-        /**
-         * Render toàn bộ danh sách bài đăng.
-         * @param {Array<object>} posts - Mảng các đối tượng bài đăng.
-         */
         function renderPosts(posts) {
             postFeed.innerHTML = '';
-            if (!posts || posts.length === 0) {
+            if (!Array.isArray(posts) || posts.length === 0) {
                 postFeed.innerHTML = '<div class="feed-placeholder">Chưa có thông báo nào. Hãy là người đầu tiên!</div>';
                 return;
             }
@@ -500,19 +465,11 @@
             });
         }
 
-        /**
-         * Tạo một phần tử DOM cho một bài đăng.
-         * @param {object} post - Đối tượng bài đăng.
-         * @returns {HTMLElement} Phần tử div.post.
-         */
         function createPostElement(post) {
             const postElement = document.createElement('div');
             postElement.className = 'post';
             postElement.dataset.postId = post.id;
-
-            // --- BƯỚC SỬA LỖI QUAN TRỌNG: Chuẩn hóa dữ liệu post ---
-            // Đảm bảo post.reactions và post.comments luôn là đối tượng/mảng hợp lệ
-            // để tránh lỗi 'undefined' ở các bước sau. Đây là kỹ thuật "Defensive Programming".
+            
             const safePost = {
                 ...post,
                 comments: post.comments || [],
@@ -534,15 +491,12 @@
             return postElement;
         }
         
-        // --- CÁC HÀM CON HỖ TRỢ RENDER ---
-        // (Tách nhỏ để dễ đọc và bảo trì)
-
         function createPostHeaderHTML(avatarUrl, authorName, timeAgo, fullDate) {
             return `
                 <div class="post-header">
                     <img class="avatar" src="${avatarUrl}" alt="Avatar của ${authorName}">
                     <div class="post-author-info">
-                        <div class="post-author">${authorName}</div>
+                        <div class="post-author">${authorName || 'Người dùng ẩn'}</div>
                         <div class="post-time" title="${fullDate}">${timeAgo}</div>
                     </div>
                 </div>`;
@@ -581,9 +535,13 @@
                 <div class="post-actions">
                     <div class="action-button reaction-trigger" style="color: ${mainReactionColor};" data-reaction="${userReactionType || ''}">
                         <div class="reactions-container">${reactionsPopupHTML}</div>
-                        ${mainReaction.emoji} ${mainReaction.text}
+                        <span class="icon">${mainReaction.emoji}</span>
+                        <span>${mainReaction.text}</span>
                     </div>
-                    <div class="action-button comment-button">💬 Bình luận</div>
+                    <div class="action-button comment-button">
+                        <span class="icon">💬</span>
+                        <span>Bình luận</span>
+                    </div>
                 </div>`;
         }
         
@@ -617,9 +575,7 @@
                 </form>`;
         }
 
-
         // --- CÁC HÀM XỬ LÝ SỰ KIỆN (EVENT HANDLERS) ---
-
         async function handlePostSubmit(event) {
             event.preventDefault();
             const submitButton = event.target.querySelector('button[type="submit"]');
@@ -715,7 +671,6 @@
                 handleCommentSubmit(event);
             }
         });
-
 
         // --- HÀM KHỞI CHẠY CHÍNH ---
         async function initializePage() {
