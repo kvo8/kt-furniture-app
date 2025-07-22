@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bảng Tin Thông Báo</title>
+    <style>
+        :root {
+            --bg-color: #f0f2f5;
+            --card-bg-color: #ffffff;
+            --text-color: #050505;
+            --text-muted-color: #65676b;
+            --border-color: #ced0d4;
+            --primary-color: #1877f2;
+            --primary-hover-color: #166fe5;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+        }
+        .nav-header {
+            background-color: var(--card-bg-color);
+            padding: 10px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        .nav-header a {
+            text-decoration: none;
+            color: var(--primary-color);
+            font-weight: bold;
+            margin-right: 20px;
+        }
+        .post-creator {
+            background: var(--card-bg-color);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        .post-creator textarea {
+            width: 100%;
+            border: none;
+            resize: none;
+            font-size: 1.2em;
+            padding: 10px;
+            box-sizing: border-box;
+            background-color: var(--bg-color);
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        .post-creator-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .post-creator-actions input[type="file"] {
+            display: none;
+        }
+        .post-creator-actions label {
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-weight: bold;
+            color: var(--text-muted-color);
+        }
+        .post-creator-actions label:hover {
+            background-color: #f0f0f0;
+        }
+        .post-creator-actions button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+        }
+        .post-creator-actions button:disabled {
+            background-color: #a0c3f1;
+            cursor: not-allowed;
+        }
+        #post-feed {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .post {
+            background: var(--card-bg-color);
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        .post-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .post-author {
+            font-weight: bold;
+        }
+        .post-time {
+            color: var(--text-muted-color);
+            font-size: 0.9em;
+        }
+        .post-content {
+            margin-bottom: 10px;
+            white-space: pre-wrap; /* Giữ lại các xuống dòng */
+        }
+        .post-image img {
+            max-width: 100%;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+        .post-actions {
+            display: flex;
+            justify-content: space-around;
+            border-top: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
+            margin: 10px 0;
+            padding: 5px 0;
+        }
+        .action-button {
+            flex: 1;
+            text-align: center;
+            padding: 8px;
+            cursor: pointer;
+            border-radius: 6px;
+            font-weight: bold;
+            color: var(--text-muted-color);
+        }
+        .action-button:hover {
+            background-color: #f0f0f0;
+        }
+        .comments-section {
+            margin-top: 10px;
+        }
+        .comment {
+            background-color: var(--bg-color);
+            padding: 8px 12px;
+            border-radius: 12px;
+            margin-bottom: 5px;
+        }
+        .comment-author {
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+        .comment-form {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .comment-form input {
+            flex-grow: 1;
+            border: 1px solid var(--border-color);
+            border-radius: 15px;
+            padding: 8px 12px;
+            background-color: var(--bg-color);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header class="nav-header">
+            <a href="/dashboard.html">Về Dashboard</a>
+            <a href="/product-list.html">Quản Lý Sản Phẩm</a>
+        </header>
+
+        <main>
+            <div class="post-creator">
+                <form id="post-form">
+                    <textarea name="content" placeholder="Hãy viết gì đó để thông báo cho mọi người..." rows="4"></textarea>
+                    <div class="post-creator-actions">
+                        <input type="file" id="image-upload" name="image" accept="image/*">
+                        <label for="image-upload">🖼️ Thêm ảnh</label>
+                        <button type="submit">Đăng</button>
+                    </div>
+                </form>
+            </div>
+
+            <div id="post-feed">
+                </div>
+        </main>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const postForm = document.getElementById('post-form');
+        const postFeed = document.getElementById('post-feed');
+        let currentUser = null;
+
+        // --- HÀM TẢI DỮ LIỆU ---
+
+        // Hàm lấy thông tin người dùng hiện tại
+        async function fetchCurrentUser() {
+            // Ghi chú: Endpoint `/api/me` cần tồn tại để lấy thông tin người dùng
+            try {
+                const response = await fetch('/api/me');
+                if (!response.ok) throw new Error('Cannot fetch user');
+                currentUser = await response.json();
+            } catch (error) {
+                console.error("Lỗi xác thực người dùng:", error);
+                // Có thể chuyển hướng về trang đăng nhập
+            }
+        }
+
+        // Hàm tải tất cả bài đăng
+        async function fetchPosts() {
+            // Ghi chú: Endpoint `GET /api/announcements` cần được backend xây dựng
+            try {
+                const response = await fetch('/api/announcements');
+                const posts = await response.json();
+                renderPosts(posts);
+            } catch (error) {
+                postFeed.innerHTML = '<p style="text-align:center; color:red;">Không thể tải bảng tin.</p>';
+            }
+        }
+
+        // --- HÀM HIỂN THỊ DỮ LIỆU ---
+
+        // Hàm hiển thị các bài đăng ra màn hình
+        function renderPosts(posts) {
+            postFeed.innerHTML = ''; // Xóa các bài đăng cũ
+            if (!posts || posts.length === 0) {
+                 postFeed.innerHTML = '<p style="text-align:center;">Chưa có thông báo nào.</p>';
+                 return;
+            }
+
+            posts.forEach(post => {
+                const postElement = document.createElement('div');
+                postElement.className = 'post';
+                postElement.dataset.postId = post.id;
+
+                // Xử lý hiển thị comment (đơn giản)
+                let commentsHtml = (post.comments || []).map(comment => `
+                    <div class="comment">
+                        <span class="comment-author">${comment.author_name}</span>
+                        <div>${comment.content}</div>
+                    </div>
+                `).join('');
+
+                postElement.innerHTML = `
+                    <div class="post-header">
+                        <div class="post-author">${post.author_name}</div>
+                        <div class="post-time">${new Date(post.created_at).toLocaleString('vi-VN')}</div>
+                    </div>
+                    <div class="post-content">${post.content}</div>
+                    ${post.image_url ? `<div class="post-image"><img src="${post.image_url}" alt="Hình ảnh thông báo"></div>` : ''}
+                    <div class="post-actions">
+                        <div class="action-button like-button">👍 Thích</div>
+                        <div class="action-button comment-button">💬 Bình luận</div>
+                    </div>
+                    <div class="comments-section">
+                        ${commentsHtml}
+                        <form class="comment-form">
+                            <input type="text" placeholder="Viết bình luận..." required>
+                            <button type="submit" style="display:none;">Gửi</button>
+                        </form>
+                    </div>
+                `;
+                postFeed.appendChild(postElement);
+            });
+        }
+
+        // --- HÀM XỬ LÝ SỰ KIỆN ---
+
+        // Xử lý khi đăng bài mới
+        postForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(postForm);
+            
+            // Ghi chú: Cần có API endpoint `POST /api/announcements` để xử lý
+            try {
+                const response = await fetch('/api/announcements', {
+                    method: 'POST',
+                    body: formData // Gửi cả ảnh và text
+                });
+                if (!response.ok) throw new Error('Failed to post');
+                
+                postForm.reset();
+                fetchPosts(); // Tải lại bảng tin
+            } catch (error) {
+                alert('Đăng bài thất bại. Vui lòng thử lại.');
+            }
+        });
+
+        // Xử lý khi nhấn nút Thích hoặc Bình luận
+        postFeed.addEventListener('click', (e) => {
+            if (e.target.classList.contains('like-button')) {
+                const postId = e.target.closest('.post').dataset.postId;
+                // Ghi chú: Cần xây dựng logic gửi yêu cầu "like" đến server
+                console.log(`Liked post ${postId}`);
+                e.target.style.color = 'var(--primary-color)'; // Đổi màu để minh họa
+            }
+        });
+
+        // Xử lý khi gửi bình luận
+        postFeed.addEventListener('submit', async (e) => {
+            if (e.target.classList.contains('comment-form')) {
+                e.preventDefault();
+                const postId = e.target.closest('.post').dataset.postId;
+                const input = e.target.querySelector('input');
+                const content = input.value.trim();
+
+                if (content) {
+                    // Ghi chú: Cần có API `POST /api/announcements/:id/comments`
+                    try {
+                        const response = await fetch(`/api/announcements/${postId}/comments`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ content })
+                        });
+                        if (!response.ok) throw new Error('Failed to comment');
+
+                        input.value = '';
+                        fetchPosts(); // Tải lại bảng tin để cập nhật bình luận
+                    } catch (error) {
+                        alert('Bình luận thất bại.');
+                    }
+                }
+            }
+        });
+
+        // --- KHỞI CHẠY ---
+        async function initializePage() {
+            await fetchCurrentUser();
+            await fetchPosts();
+        }
+
+        initializePage();
+    });
+    </script>
+</body>
+</html>

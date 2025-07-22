@@ -487,10 +487,11 @@ app.get("/api/activity-log", isLoggedIn, async (req, res, next) => {
 console.log("Defining Announcement Board API endpoints...");
 
 // API 1: Tải tất cả bài đăng trên bảng tin
+// API 1: Tải tất cả bài đăng trên bảng tin (PHIÊN BẢN SỬA LỖI)
 app.get('/api/announcements', isLoggedIn, async (req, res, next) => {
     try {
-        // Câu lệnh SQL này kết nối bảng announcements và users để lấy tên người đăng
-        const query = `
+        // 1. Lấy tất cả bài đăng, tương tự như cũ
+        const postsQuery = `
             SELECT 
                 a.id, a.content, a.image_url, a.created_at,
                 u.ho_ten AS author_name 
@@ -498,11 +499,47 @@ app.get('/api/announcements', isLoggedIn, async (req, res, next) => {
             JOIN users u ON a.user_id = u.id
             ORDER BY a.created_at DESC;
         `;
-        const result = await db.query(query);
-        res.json(result.rows);
+        const postsResult = await db.query(postsQuery);
+        const posts = postsResult.rows;
+
+        // Nếu không có bài đăng nào thì trả về mảng rỗng luôn
+        if (posts.length === 0) {
+            return res.json([]);
+        }
+
+        // 2. Lấy tất cả bình luận và tên người bình luận trong một query duy nhất
+        const commentsQuery = `
+            SELECT 
+                c.id, c.announcement_id, c.content, c.created_at,
+                u.ho_ten AS author_name
+            FROM comments c
+            JOIN users u ON c.user_id = u.id
+            ORDER BY c.created_at ASC;
+        `;
+        const commentsResult = await db.query(commentsQuery);
+        const comments = commentsResult.rows;
+
+        // 3. Tạo một map để nhóm các bình luận theo ID của bài đăng (announcement_id)
+        const commentsMap = {};
+        comments.forEach(comment => {
+            const postId = comment.announcement_id;
+            if (!commentsMap[postId]) {
+                commentsMap[postId] = [];
+            }
+            commentsMap[postId].push(comment);
+        });
+
+        // 4. Gắn mảng bình luận vào mỗi bài đăng tương ứng
+        posts.forEach(post => {
+            post.comments = commentsMap[post.id] || []; // Gán mảng bình luận, nếu không có thì gán mảng rỗng
+        });
+
+        // 5. Trả về dữ liệu hoàn chỉnh cho frontend
+        res.json(posts);
+
     } catch (error) {
-        console.error('Lỗi khi tải bài đăng:', error);
-        next(error); // Chuyển lỗi đến middleware xử lý tập trung
+        console.error('Lỗi khi tải bài đăng và bình luận:', error);
+        next(error);
     }
 });
 
