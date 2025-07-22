@@ -5,15 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bảng Tin Thông Báo</title>
     <style>
+        /* --- Biến màu và các giá trị gốc --- */
         :root {
+            --primary-color: #1877f2;
+            --primary-hover-color: #166fe5;
             --bg-color: #f0f2f5;
             --card-bg-color: #ffffff;
             --text-color: #050505;
             --text-muted-color: #65676b;
             --border-color: #ced0d4;
-            --primary-color: #1877f2;
-            --primary-hover-color: #166fe5;
+            --avatar-size: 40px;
         }
+
+        /* --- Style chung cho Body --- */
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg-color);
@@ -21,73 +25,123 @@
             margin: 0;
             padding: 20px;
         }
+
+        /* --- Container chính giữ nội dung --- */
         .container {
-            max-width: 800px;
+            max-width: 680px; /* Chiều rộng giống Feed của Facebook */
             margin: auto;
         }
+
+        /* --- Header điều hướng --- */
         .nav-header {
             background-color: var(--card-bg-color);
             padding: 10px 20px;
             border-radius: 8px;
             margin-bottom: 20px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
         }
         .nav-header a {
             text-decoration: none;
             color: var(--primary-color);
             font-weight: bold;
             margin-right: 20px;
+            padding: 8px 12px;
+            border-radius: 6px;
         }
+        .nav-header a:hover {
+            background-color: var(--bg-color);
+        }
+
+        /* --- Khung tạo bài đăng --- */
         .post-creator {
             background: var(--card-bg-color);
             border-radius: 8px;
-            padding: 15px;
+            padding: 12px 16px;
             margin-bottom: 20px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+        .post-creator-main {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #e4e6eb;
         }
         .post-creator textarea {
             width: 100%;
             border: none;
             resize: none;
-            font-size: 1.2em;
-            padding: 10px;
-            box-sizing: border-box;
+            font-size: 17px;
             background-color: var(--bg-color);
-            border-radius: 8px;
-            margin-bottom: 10px;
+            border-radius: 20px;
+            padding: 8px 12px;
+            box-sizing: border-box;
+            margin: 0;
+            font-family: inherit; /* Sử dụng font của body */
+        }
+        .post-creator textarea::placeholder {
+            color: var(--text-muted-color);
         }
         .post-creator-actions {
             display: flex;
-            justify-content: space-between;
+            justify-content: space-around; /* Căn đều các nút */
             align-items: center;
+            padding-top: 8px;
         }
         .post-creator-actions input[type="file"] {
             display: none;
         }
-        .post-creator-actions label {
+        .post-creator-actions .action-button-wrapper {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+        }
+        .post-creator-actions label, 
+        .post-creator-actions button {
+            display: flex;
+            align-items: center;
+            gap: 8px;
             cursor: pointer;
             padding: 8px 12px;
             border-radius: 6px;
-            font-weight: bold;
+            font-weight: 600;
             color: var(--text-muted-color);
+            border: none;
+            background-color: transparent;
+            font-size: 15px;
+            font-family: inherit;
         }
-        .post-creator-actions label:hover {
+        .post-creator-actions label:hover,
+        .post-creator-actions button:hover {
             background-color: #f0f0f0;
         }
         .post-creator-actions button {
+            color: white; /* Màu chữ cho nút Đăng */
             background-color: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
-            font-weight: bold;
-            cursor: pointer;
-            width: 100%;
+            flex-grow: 1; /* Nút Đăng chiếm nhiều không gian hơn */
+            justify-content: center;
+        }
+        .post-creator-actions button:hover {
+            background-color: var(--primary-hover-color);
         }
         .post-creator-actions button:disabled {
             background-color: #a0c3f1;
             cursor: not-allowed;
         }
+
+        /* --- Dòng thông báo loading hoặc chưa có bài --- */
+        .feed-placeholder {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-muted-color);
+            background-color: var(--card-bg-color);
+            border-radius: 8px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        /* --- Luồng các bài đăng --- */
         #post-feed {
             display: flex;
             flex-direction: column;
@@ -96,75 +150,143 @@
         .post {
             background: var(--card-bg-color);
             border-radius: 8px;
-            padding: 15px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            padding: 12px 16px 5px 16px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
         }
+
+        /* --- Header của bài đăng --- */
         .post-header {
             display: flex;
             align-items: center;
             gap: 10px;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
+        }
+        .avatar {
+            width: var(--avatar-size);
+            height: var(--avatar-size);
+            border-radius: 50%;
+            object-fit: cover;
+            border: 1px solid #f0f0f0;
+        }
+        .post-author-info {
+            display: flex;
+            flex-direction: column;
         }
         .post-author {
-            font-weight: bold;
+            font-weight: 600;
+            color: var(--text-color);
         }
         .post-time {
             color: var(--text-muted-color);
-            font-size: 0.9em;
+            font-size: 13px;
         }
+
+        /* --- Nội dung và hình ảnh của bài đăng --- */
         .post-content {
             margin-bottom: 10px;
             white-space: pre-wrap; /* Giữ lại các xuống dòng */
+            line-height: 1.5;
+            font-size: 17px;
         }
         .post-image img {
             max-width: 100%;
             border-radius: 8px;
             margin-top: 10px;
+            border: 1px solid var(--border-color);
         }
+
+        /* --- Các nút hành động (Like/Comment) --- */
         .post-actions {
             display: flex;
             justify-content: space-around;
-            border-top: 1px solid var(--border-color);
-            border-bottom: 1px solid var(--border-color);
+            border-top: 1px solid #e4e6eb;
             margin: 10px 0;
-            padding: 5px 0;
+            padding: 4px 0;
         }
         .action-button {
             flex: 1;
-            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
             padding: 8px;
             cursor: pointer;
             border-radius: 6px;
-            font-weight: bold;
+            font-weight: 600;
             color: var(--text-muted-color);
+            transition: background-color 0.2s;
         }
         .action-button:hover {
-            background-color: #f0f0f0;
+            background-color: #f2f2f2;
         }
+        .action-button.liked {
+            color: var(--primary-color);
+        }
+
+        /* --- Khu vực bình luận --- */
         .comments-section {
             margin-top: 10px;
+            padding-top: 5px;
+            border-top: 1px solid #e4e6eb;
         }
         .comment {
-            background-color: var(--bg-color);
-            padding: 8px 12px;
-            border-radius: 12px;
-            margin-bottom: 5px;
-        }
-        .comment-author {
-            font-weight: bold;
-            font-size: 0.9em;
-        }
-        .comment-form {
             display: flex;
             gap: 10px;
             margin-top: 10px;
         }
+        .comment .avatar {
+             width: 32px;
+             height: 32px;
+        }
+        .comment-content-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .comment-content {
+            background-color: var(--bg-color);
+            padding: 8px 12px;
+            border-radius: 18px;
+            max-width: 100%;
+        }
+        .comment-author {
+            font-weight: 600;
+            font-size: 13px;
+        }
+        .comment-text {
+            font-size: 15px;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .comment-timestamp {
+            font-size: 12px;
+            color: var(--text-muted-color);
+            padding-left: 12px;
+            margin-top: 2px;
+        }
+        
+        /* --- Form viết bình luận --- */
+        .comment-form {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            align-items: center;
+        }
+        .comment-form .avatar {
+            width: 32px;
+            height: 32px;
+        }
         .comment-form input {
             flex-grow: 1;
-            border: 1px solid var(--border-color);
-            border-radius: 15px;
+            border: none;
+            border-radius: 18px;
             padding: 8px 12px;
             background-color: var(--bg-color);
+            font-size: 15px;
+            font-family: inherit;
+        }
+        .comment-form input:focus {
+            outline: none;
         }
     </style>
 </head>
@@ -179,11 +301,18 @@
         <main>
             <div class="post-creator">
                 <form id="post-form">
-                    <textarea name="content" placeholder="Hãy viết gì đó để thông báo cho mọi người..." rows="4"></textarea>
+                    <div class="post-creator-main">
+                        <img id="current-user-avatar" class="avatar" src="" alt="Avatar">
+                        <textarea name="content" placeholder="Hãy viết gì đó để thông báo cho mọi người..." rows="1"></textarea>
+                    </div>
                     <div class="post-creator-actions">
-                        <input type="file" id="image-upload" name="image" accept="image/*">
-                        <label for="image-upload">🖼️ Thêm ảnh</label>
-                        <button type="submit">Đăng</button>
+                         <div class="action-button-wrapper">
+                            <label for="image-upload">🖼️ Thêm ảnh</label>
+                            <input type="file" id="image-upload" name="image" accept="image/*">
+                         </div>
+                         <div class="action-button-wrapper">
+                            <button type="submit">Đăng</button>
+                         </div>
                     </div>
                 </form>
             </div>
@@ -195,45 +324,104 @@
 
     <script>
     document.addEventListener('DOMContentLoaded', () => {
+        // --- Lấy các phần tử DOM ---
         const postForm = document.getElementById('post-form');
         const postFeed = document.getElementById('post-feed');
+        const currentUserAvatarElement = document.getElementById('current-user-avatar');
         let currentUser = null;
 
-        // --- HÀM TẢI DỮ LIỆU ---
+        // --- HÀM TIỆN ÍCH ---
 
-        // Hàm lấy thông tin người dùng hiện tại
+        /**
+         * Hàm tạo URL avatar từ tên người dùng.
+         * @param {string} name - Tên người dùng.
+         * @returns {string} URL của ảnh avatar.
+         */
+        function createAvatarUrl(name) {
+            if (!name) return 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; // Ảnh trống
+            // Sử dụng dịch vụ miễn phí để tạo avatar từ tên, chọn màu nền ngẫu nhiên
+            return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&color=fff&size=128`;
+        }
+        
+        /**
+         * Hàm định dạng thời gian tương đối (vd: 5 phút trước).
+         * @param {string | Date} date - Ngày cần định dạng.
+         * @returns {string} Chuỗi thời gian đã định dạng.
+         */
+        function formatTimeAgo(date) {
+            const now = new Date();
+            const seconds = Math.floor((now - new Date(date)) / 1000);
+
+            let interval = seconds / 31536000;
+            if (interval > 1) return Math.floor(interval) + " năm trước";
+            interval = seconds / 2592000;
+            if (interval > 1) return Math.floor(interval) + " tháng trước";
+            interval = seconds / 86400;
+            if (interval > 1) return Math.floor(interval) + " ngày trước";
+            interval = seconds / 3600;
+            if (interval > 1) return Math.floor(interval) + " giờ trước";
+            interval = seconds / 60;
+            if (interval > 1) return Math.floor(interval) + " phút trước";
+            return "Vừa xong";
+        }
+
+
+        // --- HÀM TƯƠNG TÁC VỚI API ---
+
+        /**
+         * Lấy thông tin người dùng đang đăng nhập từ server.
+         */
         async function fetchCurrentUser() {
-            // Ghi chú: Endpoint `/api/me` cần tồn tại để lấy thông tin người dùng
             try {
                 const response = await fetch('/api/me');
-                if (!response.ok) throw new Error('Cannot fetch user');
+                if (!response.ok) {
+                    throw new Error(`Lỗi ${response.status}: Không thể lấy thông tin người dùng.`);
+                }
                 currentUser = await response.json();
+                
+                // Cập nhật avatar cho người dùng hiện tại ở khung đăng bài
+                if(currentUser && currentUser.name) {
+                    currentUserAvatarElement.src = createAvatarUrl(currentUser.name);
+                    currentUserAvatarElement.alt = currentUser.name;
+                }
+
             } catch (error) {
                 console.error("Lỗi xác thực người dùng:", error);
-                // Có thể chuyển hướng về trang đăng nhập
+                alert("Phiên đăng nhập đã hết hạn hoặc có lỗi. Vui lòng đăng nhập lại.");
+                window.location.href = '/index.html'; // Chuyển hướng về trang đăng nhập
             }
         }
 
-        // Hàm tải tất cả bài đăng
+        /**
+         * Tải tất cả bài đăng và bình luận từ server.
+         */
         async function fetchPosts() {
-            // Ghi chú: Endpoint `GET /api/announcements` cần được backend xây dựng
             try {
+                postFeed.innerHTML = '<div class="feed-placeholder">Đang tải bảng tin...</div>';
                 const response = await fetch('/api/announcements');
+                 if (!response.ok) {
+                    throw new Error(`Lỗi ${response.status}: Không thể tải bài đăng.`);
+                }
                 const posts = await response.json();
                 renderPosts(posts);
             } catch (error) {
-                postFeed.innerHTML = '<p style="text-align:center; color:red;">Không thể tải bảng tin.</p>';
+                console.error("Lỗi tải bài đăng:", error);
+                postFeed.innerHTML = '<div class="feed-placeholder" style="color:red;">Không thể tải bảng tin. Vui lòng thử lại sau.</div>';
             }
         }
 
-        // --- HÀM HIỂN THỊ DỮ LIỆU ---
 
-        // Hàm hiển thị các bài đăng ra màn hình
+        // --- HÀM HIỂN THỊ DỮ LIỆU (RENDER) ---
+
+        /**
+         * Hiển thị danh sách các bài đăng ra màn hình với giao diện đã nâng cấp.
+         * @param {Array} posts - Mảng các đối tượng bài đăng.
+         */
         function renderPosts(posts) {
-            postFeed.innerHTML = ''; // Xóa các bài đăng cũ
+            postFeed.innerHTML = ''; // Xóa thông báo "Đang tải..." hoặc các bài đăng cũ
             if (!posts || posts.length === 0) {
-                 postFeed.innerHTML = '<p style="text-align:center;">Chưa có thông báo nào.</p>';
-                 return;
+                postFeed.innerHTML = '<div class="feed-placeholder">Chưa có thông báo nào.</div>';
+                return;
             }
 
             posts.forEach(post => {
@@ -241,18 +429,36 @@
                 postElement.className = 'post';
                 postElement.dataset.postId = post.id;
 
-                // Xử lý hiển thị comment (đơn giản)
-                let commentsHtml = (post.comments || []).map(comment => `
-                    <div class="comment">
-                        <span class="comment-author">${comment.author_name}</span>
-                        <div>${comment.content}</div>
-                    </div>
-                `).join('');
+                const authorAvatarUrl = createAvatarUrl(post.author_name);
+                const postTimeAgo = formatTimeAgo(post.created_at);
+                const postFullDate = new Date(post.created_at).toLocaleString('vi-VN');
 
+                // Tạo HTML cho các bình luận
+                const commentsHtml = (post.comments || []).map(comment => {
+                    const commentAvatarUrl = createAvatarUrl(comment.author_name);
+                    const commentTimeAgo = formatTimeAgo(comment.created_at);
+                    return `
+                        <div class="comment">
+                            <img class="avatar" src="${commentAvatarUrl}" alt="${comment.author_name}">
+                            <div class="comment-content-wrapper">
+                                <div class="comment-content">
+                                    <div class="comment-author">${comment.author_name}</div>
+                                    <div class="comment-text">${comment.content}</div>
+                                </div>
+                                <div class="comment-timestamp">${commentTimeAgo}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                // Tạo cấu trúc HTML hoàn chỉnh cho một bài đăng
                 postElement.innerHTML = `
                     <div class="post-header">
-                        <div class="post-author">${post.author_name}</div>
-                        <div class="post-time">${new Date(post.created_at).toLocaleString('vi-VN')}</div>
+                        <img class="avatar" src="${authorAvatarUrl}" alt="${post.author_name}">
+                        <div class="post-author-info">
+                            <div class="post-author">${post.author_name}</div>
+                            <div class="post-time" title="${postFullDate}">${postTimeAgo}</div>
+                        </div>
                     </div>
                     <div class="post-content">${post.content}</div>
                     ${post.image_url ? `<div class="post-image"><img src="${post.image_url}" alt="Hình ảnh thông báo"></div>` : ''}
@@ -262,9 +468,10 @@
                     </div>
                     <div class="comments-section">
                         ${commentsHtml}
-                        <form class="comment-form">
-                            <input type="text" placeholder="Viết bình luận..." required>
-                            <button type="submit" style="display:none;">Gửi</button>
+                        <form class="comment-form" data-post-id="${post.id}">
+                            <img class="avatar" src="${createAvatarUrl(currentUser.name)}" alt="${currentUser.name}">
+                            <input type="text" placeholder="Viết bình luận..." name="content" required autocomplete="off">
+                            <button type="submit" style="display:none;"></button>
                         </form>
                     </div>
                 `;
@@ -274,69 +481,119 @@
 
         // --- HÀM XỬ LÝ SỰ KIỆN ---
 
-        // Xử lý khi đăng bài mới
-        postForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
+        /**
+         * Xử lý sự kiện khi người dùng đăng một bài mới.
+         */
+        async function handlePostSubmit(event) {
+            event.preventDefault();
+            const submitButton = event.target.querySelector('button[type="submit"]');
             const formData = new FormData(postForm);
-            
-            // Ghi chú: Cần có API endpoint `POST /api/announcements` để xử lý
+            const content = formData.get('content').trim();
+            const imageFile = formData.get('image');
+
+            if (!content && !imageFile) {
+                alert('Bạn cần nhập nội dung hoặc chọn một hình ảnh để đăng.');
+                return;
+            }
+
+            submitButton.disabled = true;
+            submitButton.textContent = 'Đang đăng...';
+
             try {
                 const response = await fetch('/api/announcements', {
                     method: 'POST',
-                    body: formData // Gửi cả ảnh và text
+                    body: formData
                 });
-                if (!response.ok) throw new Error('Failed to post');
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Đăng bài thất bại');
+                }
                 
                 postForm.reset();
-                fetchPosts(); // Tải lại bảng tin
+                await fetchPosts(); // Tải lại toàn bộ bảng tin để thấy bài mới
             } catch (error) {
-                alert('Đăng bài thất bại. Vui lòng thử lại.');
+                console.error('Lỗi khi đăng bài:', error);
+                alert(`Đăng bài thất bại: ${error.message}`);
+            } finally {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Đăng';
             }
-        });
+        }
 
-        // Xử lý khi nhấn nút Thích hoặc Bình luận
-        postFeed.addEventListener('click', (e) => {
-            if (e.target.classList.contains('like-button')) {
-                const postId = e.target.closest('.post').dataset.postId;
-                // Ghi chú: Cần xây dựng logic gửi yêu cầu "like" đến server
-                console.log(`Liked post ${postId}`);
-                e.target.style.color = 'var(--primary-color)'; // Đổi màu để minh họa
-            }
-        });
+        /**
+         * Xử lý sự kiện khi người dùng gửi một bình luận mới.
+         */
+        async function handleCommentSubmit(event) {
+             event.preventDefault();
+            if (!event.target.classList.contains('comment-form')) return;
 
-        // Xử lý khi gửi bình luận
-        postFeed.addEventListener('submit', async (e) => {
-            if (e.target.classList.contains('comment-form')) {
-                e.preventDefault();
-                const postId = e.target.closest('.post').dataset.postId;
-                const input = e.target.querySelector('input');
-                const content = input.value.trim();
+            const form = event.target;
+            const postId = form.dataset.postId;
+            const input = form.querySelector('input[name="content"]');
+            const content = input.value.trim();
 
-                if (content) {
-                    // Ghi chú: Cần có API `POST /api/announcements/:id/comments`
-                    try {
-                        const response = await fetch(`/api/announcements/${postId}/comments`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ content })
-                        });
-                        if (!response.ok) throw new Error('Failed to comment');
-
-                        input.value = '';
-                        fetchPosts(); // Tải lại bảng tin để cập nhật bình luận
-                    } catch (error) {
-                        alert('Bình luận thất bại.');
+            if (content) {
+                input.disabled = true;
+                try {
+                    const response = await fetch(`/api/announcements/${postId}/comments`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ content })
+                    });
+                    if (!response.ok) {
+                         const errorData = await response.json();
+                         throw new Error(errorData.message || 'Bình luận thất bại');
                     }
+                    input.value = '';
+                    await fetchPosts(); // Tải lại toàn bộ để cập nhật bình luận mới
+                } catch (error) {
+                    console.error('Lỗi khi bình luận:', error);
+                    alert(`Bình luận thất bại: ${error.message}`);
+                } finally {
+                    // Kích hoạt lại input dù thành công hay thất bại
+                    // (Lưu ý: fetchPosts sẽ render lại toàn bộ nên input này sẽ là cái mới)
                 }
             }
-        });
+        }
+        
+        /**
+         * Xử lý các sự kiện click trên luồng tin (Thích, Bình luận).
+         */
+        function handleFeedClick(event) {
+            const target = event.target;
 
-        // --- KHỞI CHẠY ---
+            // Xử lý nút Thích
+            if (target.classList.contains('like-button')) {
+                target.classList.toggle('liked');
+                // Ghi chú: Logic "like" thực sự cần gửi yêu cầu đến server
+                // Ví dụ: handleLike(target.closest('.post').dataset.postId);
+            }
+
+            // Xử lý nút Bình luận (focus vào input)
+            if (target.classList.contains('comment-button')) {
+                const formInput = target.closest('.post').querySelector('.comment-form input');
+                if (formInput) {
+                    formInput.focus();
+                }
+            }
+        }
+
+        // --- GẮN CÁC EVENT LISTENER ---
+        postForm.addEventListener('submit', handlePostSubmit);
+        postFeed.addEventListener('submit', handleCommentSubmit);
+        postFeed.addEventListener('click', handleFeedClick);
+
+
+        // --- HÀM KHỞI CHẠY CHÍNH ---
+        /**
+         * Khởi tạo trang: lấy thông tin người dùng và tải các bài đăng.
+         */
         async function initializePage() {
             await fetchCurrentUser();
             await fetchPosts();
         }
 
+        // Bắt đầu thực thi
         initializePage();
     });
     </script>
