@@ -5,343 +5,63 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bảng Tin Thông Báo</title>
     <style>
-        /* --- Biến màu và các giá trị gốc --- */
         :root {
-            --primary-color: #1877f2;
-            --love-color: #f33e58;
-            --hate-color: #8b4513; /* Màu nâu đất cho Poop */
-            --unlike-color: #f7b928; /* Màu vàng cho Unlike */
-            --primary-hover-color: #166fe5;
-            --bg-color: #f0f2f5;
-            --card-bg-color: #ffffff;
-            --text-color: #050505;
-            --text-muted-color: #65676b;
-            --border-color: #dddfe2;
-            --avatar-size: 40px;
+            --primary-color: #1877f2; --love-color: #f33e58; --hate-color: #8b4513; --unlike-color: #f7b928;
+            --primary-hover-color: #166fe5; --bg-color: #f0f2f5; --card-bg-color: #ffffff;
+            --text-color: #050505; --text-muted-color: #65676b; --border-color: #dddfe2; --avatar-size: 40px;
         }
-
-        /* --- Style chung cho Body --- */
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            margin: 0;
-            padding: 20px;
-        }
-
-        /* --- Container chính giữ nội dung --- */
-        .container {
-            max-width: 680px;
-            margin: auto;
-        }
-
-        /* --- Header điều hướng --- */
-        .nav-header {
-            background-color: var(--card-bg-color);
-            padding: 10px 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-            display: flex;
-            align-items: center;
-        }
-        .nav-header a {
-            text-decoration: none;
-            color: var(--primary-color);
-            font-weight: bold;
-            margin-right: 20px;
-            padding: 8px 12px;
-            border-radius: 6px;
-            transition: background-color 0.2s ease;
-        }
-        .nav-header a:hover, .nav-header a:focus-visible {
-            background-color: var(--bg-color);
-            outline: none;
-        }
-
-        /* --- Khung tạo bài đăng --- */
-        .post-creator {
-            background: var(--card-bg-color);
-            border-radius: 8px;
-            padding: 12px 16px;
-            margin-bottom: 20px;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-        }
-        .post-creator-main {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid var(--border-color);
-        }
-        .post-creator textarea {
-            width: 100%;
-            border: none;
-            resize: none;
-            font-size: 17px;
-            background-color: var(--bg-color);
-            border-radius: 20px;
-            padding: 8px 12px;
-            box-sizing: border-box;
-            margin: 0;
-            font-family: inherit;
-        }
-        .post-creator textarea::placeholder {
-            color: var(--text-muted-color);
-        }
-        .post-creator-actions {
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            padding-top: 8px;
-        }
-        .post-creator-actions input[type="file"] {
-            display: none;
-        }
-        .post-creator-actions .action-button-wrapper {
-            flex: 1;
-            display: flex;
-            justify-content: center;
-        }
-        .post-creator-actions label, 
-        .post-creator-actions button {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            cursor: pointer;
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-weight: 600;
-            color: var(--text-muted-color);
-            border: none;
-            background-color: transparent;
-            font-size: 15px;
-            font-family: inherit;
-            transition: background-color 0.2s ease;
-        }
-        .post-creator-actions label:hover,
-        .post-creator-actions button:hover {
-            background-color: #f0f0f0;
-        }
-        .post-creator-actions button {
-            color: white;
-            background-color: var(--primary-color);
-            flex-grow: 1;
-            justify-content: center;
-        }
-        .post-creator-actions button:hover {
-            background-color: var(--primary-hover-color);
-        }
-        .post-creator-actions button:disabled {
-            background-color: #a0c3f1;
-            cursor: wait;
-        }
-
-        /* --- Dòng thông báo loading hoặc chưa có bài --- */
-        .feed-placeholder {
-            text-align: center;
-            padding: 20px;
-            color: var(--text-muted-color);
-            background-color: var(--card-bg-color);
-            border-radius: 8px;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-        }
-
-        /* --- Luồng các bài đăng --- */
-        #post-feed {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-        .post {
-            background: var(--card-bg-color);
-            border-radius: 8px;
-            padding: 12px 16px 5px 16px;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-        }
-
-        /* --- Header của bài đăng --- */
-        .post-header {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 12px;
-        }
-        .avatar {
-            width: var(--avatar-size);
-            height: var(--avatar-size);
-            border-radius: 50%;
-            object-fit: cover;
-            border: 1px solid #f0f0f0;
-            flex-shrink: 0; /* Ngăn avatar bị co lại */
-        }
-        .post-author-info {
-            display: flex;
-            flex-direction: column;
-        }
-        .post-author {
-            font-weight: 600;
-            color: var(--text-color);
-        }
-        .post-time {
-            color: var(--text-muted-color);
-            font-size: 13px;
-        }
-
-        /* --- Nội dung và hình ảnh của bài đăng --- */
-        .post-content {
-            margin-bottom: 10px;
-            white-space: pre-wrap;
-            line-height: 1.5;
-            font-size: 17px;
-            word-break: break-word;
-        }
-        .post-image img {
-            max-width: 100%;
-            border-radius: 8px;
-            margin-top: 10px;
-            border: 1px solid var(--border-color);
-        }
-
-        /* --- Khu vực hiển thị số đếm reactions --- */
-        .reactions-summary {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            padding: 10px 0;
-            border-bottom: 1px solid var(--border-color);
-            min-height: 28px;
-        }
-        .reactions-summary .icon {
-            font-size: 18px;
-        }
-        .reactions-summary-count {
-            font-size: 14px;
-            color: var(--text-muted-color);
-        }
-
-        /* --- Các nút hành động (Like/Comment) --- */
-        .post-actions {
-            display: flex;
-            justify-content: space-around;
-            padding: 4px 0;
-        }
-        .action-button {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 8px; /* Bỏ gap và dùng padding để kiểm soát */
-            cursor: pointer;
-            border-radius: 6px;
-            font-weight: 600;
-            color: var(--text-muted-color);
-            transition: background-color 0.2s ease, color 0.2s ease;
-            position: relative;
-        }
-         .action-button .icon { /* Thêm class cho icon để kiểm soát khoảng cách */
-            margin-right: 8px;
-        }
-        .action-button:hover {
-            background-color: #f2f2f2;
-        }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 20px; }
+        .container { max-width: 680px; margin: auto; }
+        .nav-header { background-color: var(--card-bg-color); padding: 10px 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); display: flex; align-items: center; }
+        .nav-header a { text-decoration: none; color: var(--primary-color); font-weight: bold; margin-right: 20px; padding: 8px 12px; border-radius: 6px; transition: background-color 0.2s ease; }
+        .nav-header a:hover, .nav-header a:focus-visible { background-color: var(--bg-color); outline: none; }
+        .post-creator { background: var(--card-bg-color); border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+        .post-creator-main { display: flex; align-items: center; gap: 10px; padding-bottom: 12px; border-bottom: 1px solid var(--border-color); }
+        .post-creator textarea { width: 100%; border: none; resize: none; font-size: 17px; background-color: var(--bg-color); border-radius: 20px; padding: 8px 12px; box-sizing: border-box; margin: 0; font-family: inherit; }
+        .post-creator-actions { display: flex; justify-content: space-around; align-items: center; padding-top: 8px; }
+        .post-creator-actions input[type="file"] { display: none; }
+        .post-creator-actions .action-button-wrapper { flex: 1; display: flex; justify-content: center; }
+        .post-creator-actions label, .post-creator-actions button { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px 12px; border-radius: 6px; font-weight: 600; color: var(--text-muted-color); border: none; background-color: transparent; font-size: 15px; font-family: inherit; transition: background-color 0.2s ease; }
+        .post-creator-actions label:hover, .post-creator-actions button:hover { background-color: #f0f0f0; }
+        .post-creator-actions button { color: white; background-color: var(--primary-color); flex-grow: 1; justify-content: center; }
+        .post-creator-actions button:disabled { background-color: #a0c3f1; cursor: wait; }
+        .feed-placeholder { text-align: center; padding: 20px; color: var(--text-muted-color); background-color: var(--card-bg-color); border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        #post-feed { display: flex; flex-direction: column; gap: 20px; }
+        .post { background: var(--card-bg-color); border-radius: 8px; padding: 12px 16px 5px 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+        .post-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+        .avatar { width: var(--avatar-size); height: var(--avatar-size); border-radius: 50%; object-fit: cover; border: 1px solid #f0f0f0; flex-shrink: 0; }
+        .post-author-info { display: flex; flex-direction: column; }
+        .post-author { font-weight: 600; }
+        .post-time { color: var(--text-muted-color); font-size: 13px; }
+        .post-content { margin-bottom: 10px; white-space: pre-wrap; line-height: 1.5; font-size: 17px; word-break: break-word; }
+        .post-image img { max-width: 100%; border-radius: 8px; margin-top: 10px; border: 1px solid var(--border-color); }
+        .reactions-summary { display: flex; align-items: center; gap: 5px; padding: 10px 0; border-bottom: 1px solid var(--border-color); min-height: 28px; }
+        .reactions-summary .icon { font-size: 18px; }
+        .reactions-summary-count { font-size: 14px; color: var(--text-muted-color); }
+        .post-actions { display: flex; justify-content: space-around; padding: 4px 0; }
+        .action-button { flex: 1; display: flex; align-items: center; justify-content: center; padding: 8px; cursor: pointer; border-radius: 6px; font-weight: 600; color: var(--text-muted-color); transition: background-color 0.2s ease, color 0.2s ease; position: relative; }
+        .action-button .icon { margin-right: 8px; }
+        .action-button:hover { background-color: #f2f2f2; }
         .action-button.reaction-trigger[data-reaction="like"] { color: var(--primary-color); }
         .action-button.reaction-trigger[data-reaction="love"] { color: var(--love-color); }
         .action-button.reaction-trigger[data-reaction="hate"] { color: var(--hate-color); }
         .action-button.reaction-trigger[data-reaction="unlike"] { color: var(--unlike-color); }
-
-        /* --- CSS cho popup reaction --- */
-        .reactions-container {
-            position: absolute;
-            bottom: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: white;
-            border-radius: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-            display: none;
-            padding: 4px 8px;
-            gap: 8px;
-            margin-bottom: 8px;
-            z-index: 10;
-        }
-        .action-button.reaction-trigger:hover .reactions-container {
-            display: flex;
-        }
-        .reaction-emoji {
-            font-size: 28px;
-            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        .reaction-emoji:hover {
-            transform: scale(1.3);
-        }
-
-        /* --- Khu vực bình luận --- */
-        .comments-section {
-            margin-top: 5px;
-            border-top: 1px solid var(--border-color);
-            padding-top: 5px;
-        }
-        .comment {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-        }
-        .comment .avatar {
-             width: 32px;
-             height: 32px;
-        }
-        .comment-content-wrapper {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-        }
-        .comment-content {
-            background-color: var(--bg-color);
-            padding: 8px 12px;
-            border-radius: 18px;
-            max-width: 100%;
-        }
-        .comment-author {
-            font-weight: 600;
-            font-size: 13px;
-        }
-        .comment-text {
-            font-size: 15px;
-            white-space: pre-wrap;
-            word-break: break-word;
-        }
-        .comment-timestamp {
-            font-size: 12px;
-            color: var(--text-muted-color);
-            padding-left: 12px;
-            margin-top: 2px;
-        }
-        
-        /* --- Form viết bình luận --- */
-        .comment-form {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-            align-items: center;
-        }
-        .comment-form .avatar {
-            width: 32px;
-            height: 32px;
-        }
-        .comment-form input {
-            flex-grow: 1;
-            border: none;
-            border-radius: 18px;
-            padding: 8px 12px;
-            background-color: var(--bg-color);
-            font-size: 15px;
-            font-family: inherit;
-        }
-        .comment-form input:focus, .post-creator textarea:focus {
-            outline: none;
-            box-shadow: 0 0 0 2px var(--primary-color);
-        }
+        .reactions-container { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background-color: white; border-radius: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); display: none; padding: 4px 8px; gap: 8px; margin-bottom: 8px; z-index: 10; }
+        .action-button.reaction-trigger:hover .reactions-container { display: flex; }
+        .reaction-emoji { font-size: 28px; transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .reaction-emoji:hover { transform: scale(1.3); }
+        .comments-section { margin-top: 5px; border-top: 1px solid var(--border-color); padding-top: 5px; }
+        .comment { display: flex; gap: 10px; margin-top: 10px; }
+        .comment .avatar { width: 32px; height: 32px; }
+        .comment-content-wrapper { display: flex; flex-direction: column; align-items: flex-start; }
+        .comment-content { background-color: var(--bg-color); padding: 8px 12px; border-radius: 18px; max-width: 100%; }
+        .comment-author { font-weight: 600; font-size: 13px; }
+        .comment-text { font-size: 15px; white-space: pre-wrap; word-break: break-word; }
+        .comment-timestamp { font-size: 12px; color: var(--text-muted-color); padding-left: 12px; margin-top: 2px; }
+        .comment-form { display: flex; gap: 10px; margin-top: 10px; align-items: center; }
+        .comment-form .avatar { width: 32px; height: 32px; }
+        .comment-form input { flex-grow: 1; border: none; border-radius: 18px; padding: 8px 12px; background-color: var(--bg-color); font-size: 15px; font-family: inherit; }
+        .comment-form input:focus, .post-creator textarea:focus { outline: none; box-shadow: 0 0 0 2px var(--primary-color); }
     </style>
 </head>
 <body>
@@ -370,15 +90,12 @@
                     </div>
                 </form>
             </div>
-
-            <div id="post-feed">
-                </div>
+            <div id="post-feed"></div>
         </main>
     </div>
 
     <script>
     document.addEventListener('DOMContentLoaded', () => {
-        // --- KHAI BÁO BIẾN VÀ HẰNG SỐ ---
         const postForm = document.getElementById('post-form');
         const postFeed = document.getElementById('post-feed');
         const currentUserAvatarElement = document.getElementById('current-user-avatar');
@@ -391,7 +108,6 @@
             unlike: { emoji: '👎', text: 'Không thích', color: 'var(--unlike-color)' }
         };
 
-        // --- CÁC HÀM TIỆN ÍCH ---
         function createAvatarUrl(name) {
             if (!name) return 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';
             return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&color=fff&size=128`;
@@ -413,13 +129,11 @@
             return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
         }
 
-        // --- CÁC HÀM TƯƠNG TÁC VỚI API ---
         async function fetchAPI(url, options = {}) {
             const response = await fetch(url, options);
             if (!response.ok) {
-                // Lỗi 404 là lỗi phổ biến nhất khi API endpoint chưa tồn tại
                 if (response.status === 404) {
-                    throw new Error(`Lỗi 404: Không tìm thấy API tại đường dẫn ${url}. Vui lòng kiểm tra lại file index.js ở backend.`);
+                    throw new Error(`Lỗi 404: Không tìm thấy API tại đường dẫn ${new URL(url, window.location.origin).pathname}. Vui lòng kiểm tra lại file index.js ở backend.`);
                 }
                 const errorData = await response.json().catch(() => ({ message: response.statusText }));
                 throw new Error(errorData.message || `Lỗi ${response.status}`);
@@ -452,7 +166,6 @@
             }
         }
 
-        // --- CÁC HÀM RENDER VÀ CẬP NHẬT GIAO DIỆN (UI) ---
         function renderPosts(posts) {
             postFeed.innerHTML = '';
             if (!Array.isArray(posts) || posts.length === 0) {
@@ -575,7 +288,6 @@
                 </form>`;
         }
 
-        // --- CÁC HÀM XỬ LÝ SỰ KIỆN (EVENT HANDLERS) ---
         async function handlePostSubmit(event) {
             event.preventDefault();
             const submitButton = event.target.querySelector('button[type="submit"]');
@@ -663,7 +375,6 @@
             }
         }
 
-        // --- GẮN CÁC EVENT LISTENER ---
         postForm.addEventListener('submit', handlePostSubmit);
         postFeed.addEventListener('click', handleFeedClick);
         postFeed.addEventListener('submit', event => {
@@ -672,7 +383,6 @@
             }
         });
 
-        // --- HÀM KHỞI CHẠY CHÍNH ---
         async function initializePage() {
             await fetchCurrentUser();
             await fetchPosts();
