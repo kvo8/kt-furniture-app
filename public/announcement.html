@@ -5,63 +5,339 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bảng Tin Thông Báo</title>
     <style>
+        /* --- Biến màu và các giá trị gốc --- */
         :root {
-            --primary-color: #1877f2; --love-color: #f33e58; --hate-color: #8b4513; --unlike-color: #f7b928;
-            --primary-hover-color: #166fe5; --bg-color: #f0f2f5; --card-bg-color: #ffffff;
-            --text-color: #050505; --text-muted-color: #65676b; --border-color: #dddfe2; --avatar-size: 40px;
+            --primary-color: #1877f2;
+            --love-color: #f33e58;
+            --hate-color: #8b4513; /* Màu nâu đất cho Poop */
+            --unlike-color: #f7b928; /* Màu vàng cho Unlike */
+            --primary-hover-color: #166fe5;
+            --bg-color: #f0f2f5;
+            --card-bg-color: #ffffff;
+            --text-color: #050505;
+            --text-muted-color: #65676b;
+            --border-color: #dddfe2;
+            --avatar-size: 40px;
         }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 20px; }
-        .container { max-width: 680px; margin: auto; }
-        .nav-header { background-color: var(--card-bg-color); padding: 10px 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); display: flex; align-items: center; }
-        .nav-header a { text-decoration: none; color: var(--primary-color); font-weight: bold; margin-right: 20px; padding: 8px 12px; border-radius: 6px; transition: background-color 0.2s ease; }
-        .nav-header a:hover, .nav-header a:focus-visible { background-color: var(--bg-color); outline: none; }
-        .post-creator { background: var(--card-bg-color); border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
-        .post-creator-main { display: flex; align-items: center; gap: 10px; padding-bottom: 12px; border-bottom: 1px solid var(--border-color); }
-        .post-creator textarea { width: 100%; border: none; resize: none; font-size: 17px; background-color: var(--bg-color); border-radius: 20px; padding: 8px 12px; box-sizing: border-box; margin: 0; font-family: inherit; }
-        .post-creator-actions { display: flex; justify-content: space-around; align-items: center; padding-top: 8px; }
-        .post-creator-actions input[type="file"] { display: none; }
-        .post-creator-actions .action-button-wrapper { flex: 1; display: flex; justify-content: center; }
-        .post-creator-actions label, .post-creator-actions button { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px 12px; border-radius: 6px; font-weight: 600; color: var(--text-muted-color); border: none; background-color: transparent; font-size: 15px; font-family: inherit; transition: background-color 0.2s ease; }
-        .post-creator-actions label:hover, .post-creator-actions button:hover { background-color: #f0f0f0; }
-        .post-creator-actions button { color: white; background-color: var(--primary-color); flex-grow: 1; justify-content: center; }
-        .post-creator-actions button:disabled { background-color: #a0c3f1; cursor: wait; }
-        .feed-placeholder { text-align: center; padding: 20px; color: var(--text-muted-color); background-color: var(--card-bg-color); border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
-        #post-feed { display: flex; flex-direction: column; gap: 20px; }
-        .post { background: var(--card-bg-color); border-radius: 8px; padding: 12px 16px 5px 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
-        .post-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-        .avatar { width: var(--avatar-size); height: var(--avatar-size); border-radius: 50%; object-fit: cover; border: 1px solid #f0f0f0; flex-shrink: 0; }
-        .post-author-info { display: flex; flex-direction: column; }
-        .post-author { font-weight: 600; }
-        .post-time { color: var(--text-muted-color); font-size: 13px; }
-        .post-content { margin-bottom: 10px; white-space: pre-wrap; line-height: 1.5; font-size: 17px; word-break: break-word; }
-        .post-image img { max-width: 100%; border-radius: 8px; margin-top: 10px; border: 1px solid var(--border-color); }
-        .reactions-summary { display: flex; align-items: center; gap: 5px; padding: 10px 0; border-bottom: 1px solid var(--border-color); min-height: 28px; }
-        .reactions-summary .icon { font-size: 18px; }
-        .reactions-summary-count { font-size: 14px; color: var(--text-muted-color); }
-        .post-actions { display: flex; justify-content: space-around; padding: 4px 0; }
-        .action-button { flex: 1; display: flex; align-items: center; justify-content: center; padding: 8px; cursor: pointer; border-radius: 6px; font-weight: 600; color: var(--text-muted-color); transition: background-color 0.2s ease, color 0.2s ease; position: relative; }
-        .action-button .icon { margin-right: 8px; }
-        .action-button:hover { background-color: #f2f2f2; }
+
+        /* --- Style chung cho Body --- */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+        }
+
+        /* --- Container chính giữ nội dung --- */
+        .container {
+            max-width: 680px;
+            margin: auto;
+        }
+
+        /* --- Header điều hướng --- */
+        .nav-header {
+            background-color: var(--card-bg-color);
+            padding: 10px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+        }
+        .nav-header a {
+            text-decoration: none;
+            color: var(--primary-color);
+            font-weight: bold;
+            margin-right: 20px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            transition: background-color 0.2s ease;
+        }
+        .nav-header a:hover, .nav-header a:focus-visible {
+            background-color: var(--bg-color);
+            outline: none;
+        }
+
+        /* --- Khung tạo bài đăng --- */
+        .post-creator {
+            background: var(--card-bg-color);
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+        .post-creator-main {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .post-creator textarea {
+            width: 100%;
+            border: none;
+            resize: none;
+            font-size: 17px;
+            background-color: var(--bg-color);
+            border-radius: 20px;
+            padding: 8px 12px;
+            box-sizing: border-box;
+            margin: 0;
+            font-family: inherit;
+        }
+        .post-creator textarea::placeholder {
+            color: var(--text-muted-color);
+        }
+        .post-creator-actions {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding-top: 8px;
+        }
+        .post-creator-actions input[type="file"] {
+            display: none;
+        }
+        .post-creator-actions .action-button-wrapper {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+        }
+        .post-creator-actions label, 
+        .post-creator-actions button {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-weight: 600;
+            color: var(--text-muted-color);
+            border: none;
+            background-color: transparent;
+            font-size: 15px;
+            font-family: inherit;
+            transition: background-color 0.2s ease;
+        }
+        .post-creator-actions label:hover,
+        .post-creator-actions button:hover {
+            background-color: #f0f0f0;
+        }
+        .post-creator-actions button {
+            color: white;
+            background-color: var(--primary-color);
+            flex-grow: 1;
+            justify-content: center;
+        }
+        .post-creator-actions button:hover {
+            background-color: var(--primary-hover-color);
+        }
+        .post-creator-actions button:disabled {
+            background-color: #a0c3f1;
+            cursor: wait;
+        }
+
+        /* --- Dòng thông báo loading hoặc chưa có bài --- */
+        .feed-placeholder {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-muted-color);
+            background-color: var(--card-bg-color);
+            border-radius: 8px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        /* --- Luồng các bài đăng --- */
+        #post-feed {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .post {
+            background: var(--card-bg-color);
+            border-radius: 8px;
+            padding: 12px 16px 5px 16px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+
+        /* --- Header của bài đăng --- */
+        .post-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        .avatar {
+            width: var(--avatar-size);
+            height: var(--avatar-size);
+            border-radius: 50%;
+            object-fit: cover;
+            border: 1px solid #f0f0f0;
+        }
+        .post-author-info {
+            display: flex;
+            flex-direction: column;
+        }
+        .post-author {
+            font-weight: 600;
+            color: var(--text-color);
+        }
+        .post-time {
+            color: var(--text-muted-color);
+            font-size: 13px;
+        }
+
+        /* --- Nội dung và hình ảnh của bài đăng --- */
+        .post-content {
+            margin-bottom: 10px;
+            white-space: pre-wrap;
+            line-height: 1.5;
+            font-size: 17px;
+        }
+        .post-image img {
+            max-width: 100%;
+            border-radius: 8px;
+            margin-top: 10px;
+            border: 1px solid var(--border-color);
+        }
+
+        /* --- Khu vực hiển thị số đếm reactions --- */
+        .reactions-summary {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border-color);
+            min-height: 28px; /* Giữ chiều cao ổn định */
+        }
+        .reactions-summary .icon {
+            font-size: 18px;
+        }
+        .reactions-summary-count {
+            font-size: 14px;
+            color: var(--text-muted-color);
+        }
+
+        /* --- Các nút hành động (Like/Comment) --- */
+        .post-actions {
+            display: flex;
+            justify-content: space-around;
+            padding: 4px 0;
+        }
+        .action-button {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 8px;
+            cursor: pointer;
+            border-radius: 6px;
+            font-weight: 600;
+            color: var(--text-muted-color);
+            transition: background-color 0.2s ease, color 0.2s ease;
+            position: relative;
+        }
+        .action-button:hover {
+            background-color: #f2f2f2;
+        }
         .action-button.reaction-trigger[data-reaction="like"] { color: var(--primary-color); }
         .action-button.reaction-trigger[data-reaction="love"] { color: var(--love-color); }
         .action-button.reaction-trigger[data-reaction="hate"] { color: var(--hate-color); }
         .action-button.reaction-trigger[data-reaction="unlike"] { color: var(--unlike-color); }
-        .reactions-container { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background-color: white; border-radius: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); display: none; padding: 4px 8px; gap: 8px; margin-bottom: 8px; z-index: 10; }
-        .action-button.reaction-trigger:hover .reactions-container { display: flex; }
-        .reaction-emoji { font-size: 28px; transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        .reaction-emoji:hover { transform: scale(1.3); }
-        .comments-section { margin-top: 5px; border-top: 1px solid var(--border-color); padding-top: 5px; }
-        .comment { display: flex; gap: 10px; margin-top: 10px; }
-        .comment .avatar { width: 32px; height: 32px; }
-        .comment-content-wrapper { display: flex; flex-direction: column; align-items: flex-start; }
-        .comment-content { background-color: var(--bg-color); padding: 8px 12px; border-radius: 18px; max-width: 100%; }
-        .comment-author { font-weight: 600; font-size: 13px; }
-        .comment-text { font-size: 15px; white-space: pre-wrap; word-break: break-word; }
-        .comment-timestamp { font-size: 12px; color: var(--text-muted-color); padding-left: 12px; margin-top: 2px; }
-        .comment-form { display: flex; gap: 10px; margin-top: 10px; align-items: center; }
-        .comment-form .avatar { width: 32px; height: 32px; }
-        .comment-form input { flex-grow: 1; border: none; border-radius: 18px; padding: 8px 12px; background-color: var(--bg-color); font-size: 15px; font-family: inherit; }
-        .comment-form input:focus, .post-creator textarea:focus { outline: none; box-shadow: 0 0 0 2px var(--primary-color); }
+
+        /* --- CSS cho popup reaction --- */
+        .reactions-container {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: white;
+            border-radius: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            display: none; /* Ẩn mặc định */
+            padding: 4px 8px;
+            gap: 8px;
+            margin-bottom: 8px;
+            z-index: 10;
+        }
+        .action-button.reaction-trigger:hover .reactions-container {
+            display: flex; /* Hiện ra khi hover */
+        }
+        .reaction-emoji {
+            font-size: 28px;
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .reaction-emoji:hover {
+            transform: scale(1.3);
+        }
+
+        /* --- Khu vực bình luận --- */
+        .comments-section {
+            margin-top: 5px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 5px;
+        }
+        .comment {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .comment .avatar {
+             width: 32px;
+             height: 32px;
+        }
+        .comment-content-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .comment-content {
+            background-color: var(--bg-color);
+            padding: 8px 12px;
+            border-radius: 18px;
+            max-width: 100%;
+        }
+        .comment-author {
+            font-weight: 600;
+            font-size: 13px;
+        }
+        .comment-text {
+            font-size: 15px;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .comment-timestamp {
+            font-size: 12px;
+            color: var(--text-muted-color);
+            padding-left: 12px;
+            margin-top: 2px;
+        }
+        
+        /* --- Form viết bình luận --- */
+        .comment-form {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            align-items: center;
+        }
+        .comment-form .avatar {
+            width: 32px;
+            height: 32px;
+        }
+        .comment-form input {
+            flex-grow: 1;
+            border: none;
+            border-radius: 18px;
+            padding: 8px 12px;
+            background-color: var(--bg-color);
+            font-size: 15px;
+            font-family: inherit;
+        }
+        .comment-form input:focus, .post-creator textarea:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px var(--primary-color);
+        }
     </style>
 </head>
 <body>
@@ -81,27 +357,40 @@
                     </div>
                     <div class="post-creator-actions">
                          <div class="action-button-wrapper">
-                             <label for="image-upload">🖼️ Thêm ảnh</label>
-                             <input type="file" id="image-upload" name="image" accept="image/*">
+                            <label for="image-upload">🖼️ Thêm ảnh</label>
+                            <input type="file" id="image-upload" name="image" accept="image/*">
                          </div>
                          <div class="action-button-wrapper">
-                             <button type="submit">Đăng</button>
+                            <button type="submit">Đăng</button>
                          </div>
                     </div>
                 </form>
             </div>
-            <div id="post-feed"></div>
+
+            <div id="post-feed">
+                </div>
         </main>
     </div>
 
     <script>
     document.addEventListener('DOMContentLoaded', () => {
+        // --- KHAI BÁO BIẾN VÀ HẰNG SỐ ---
         const postForm = document.getElementById('post-form');
         const postFeed = document.getElementById('post-feed');
         const currentUserAvatarElement = document.getElementById('current-user-avatar');
         let currentUser = null;
 
-        // Định nghĩa các loại reaction để dễ dàng sử dụng lại
+        /**
+         * @typedef {Object} ReactionInfo
+         * @property {string} emoji - Biểu tượng cảm xúc.
+         * @property {string} text - Văn bản hiển thị.
+         * @property {string} color - Mã màu cho văn bản.
+         */
+        
+        /**
+         * Đối tượng lưu trữ thông tin cho từng loại reaction.
+         * @type {Object.<string, ReactionInfo>}
+         */
         const REACTION_MAP = {
             like:   { emoji: '👍', text: 'Thích', color: 'var(--primary-color)' },
             love:   { emoji: '❤️', text: 'Yêu thích', color: 'var(--love-color)' },
@@ -109,17 +398,29 @@
             unlike: { emoji: '👎', text: 'Không thích', color: 'var(--unlike-color)' }
         };
 
-        // Hàm tạo URL avatar từ tên
+
+        // --- CÁC HÀM TIỆN ÍCH ---
+
+        /**
+         * Tạo URL avatar từ tên người dùng.
+         * @param {string} name - Tên người dùng.
+         * @returns {string} URL của ảnh avatar.
+         */
         function createAvatarUrl(name) {
-            if (!name) return 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; // Ảnh trống
+            if (!name) return 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; // Ảnh trống 1x1
             return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&color=fff&size=128`;
         }
         
-        // Hàm định dạng thời gian (vd: 5 phút trước)
+        /**
+         * Định dạng thời gian thành dạng tương đối.
+         * @param {string | Date} dateInput - Ngày cần định dạng.
+         * @returns {string} Chuỗi thời gian đã định dạng.
+         */
         function formatTimeAgo(dateInput) {
             const now = new Date();
             const date = new Date(dateInput);
             const seconds = Math.floor((now - date) / 1000);
+
             if (seconds < 60) return "Vừa xong";
             const minutes = Math.floor(seconds / 60);
             if (minutes < 60) return `${minutes} phút trước`;
@@ -127,48 +428,37 @@
             if (hours < 24) return `${hours} giờ trước`;
             const days = Math.floor(hours / 24);
             if (days < 30) return `${days} ngày trước`;
+            
             return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
         }
 
+
+        // --- CÁC HÀM TƯƠNG TÁC VỚI API ---
+
         /**
-         * Hàm fetch API chung, có xử lý lỗi 404 và các lỗi khác.
-         * Đây là nơi tạo ra thông báo lỗi mà bạn thấy trong ảnh chụp màn hình.
+         * Hàm fetch API tập trung.
+         * @param {string} url - URL của API.
+         * @param {object} [options={}] - Tùy chọn cho fetch.
+         * @returns {Promise<any>} Dữ liệu JSON.
          */
         async function fetchAPI(url, options = {}) {
-            try {
-                 const response = await fetch(url, options);
-                 if (!response.ok) {
-                     // Nếu lỗi là 404, hiển thị thông báo chi tiết
-                     if (response.status === 404) {
-                         // Lấy đường dẫn của API từ URL đầy đủ
-                         const apiPath = new URL(url, window.location.origin).pathname;
-                         throw new Error(`Lỗi 404: Không tìm thấy API tại đường dẫn ${apiPath}. Vui lòng kiểm tra lại file index.js ở backend.`);
-                     }
-                     // Với các lỗi khác, thử parse JSON để lấy thông báo từ server
-                     const errorData = await response.json().catch(() => ({ error: response.statusText }));
-                     throw new Error(errorData.error || `Lỗi ${response.status}`);
-                 }
-                 // Nếu response không có nội dung (vd: 204 No Content), trả về object rỗng
-                 const contentType = response.headers.get("content-type");
-                 if (contentType && contentType.indexOf("application/json") !== -1) {
-                    return response.json();
-                 }
-                 return {};
-            } catch (error) {
-                console.error(`API Fetch Error for ${url}:`, error);
-                throw error; // Ném lỗi ra ngoài để hàm gọi nó có thể bắt
+            const response = await fetch(url, options);
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ message: response.statusText }));
+                throw new Error(errorData.message || `Lỗi ${response.status}`);
             }
+            return response.json().catch(() => ({}));
         }
 
-        // Lấy thông tin người dùng đang đăng nhập
+        /**
+         * Lấy thông tin người dùng đang đăng nhập.
+         */
         async function fetchCurrentUser() {
             try {
                 currentUser = await fetchAPI('/api/me');
                 if (currentUser && currentUser.name) {
                     currentUserAvatarElement.src = createAvatarUrl(currentUser.name);
                     currentUserAvatarElement.alt = `Avatar của ${currentUser.name}`;
-                } else {
-                    throw new Error("Thông tin người dùng không hợp lệ.");
                 }
             } catch (error) {
                 console.error("Lỗi xác thực người dùng:", error);
@@ -177,7 +467,9 @@
             }
         }
 
-        // Tải toàn bộ bài đăng từ server
+        /**
+         * Tải tất cả bài đăng.
+         */
         async function fetchPosts() {
             try {
                 postFeed.innerHTML = '<div class="feed-placeholder">Đang tải bảng tin...</div>';
@@ -188,11 +480,17 @@
                 postFeed.innerHTML = `<div class="feed-placeholder" style="color:red;">Không thể tải bảng tin: ${error.message}</div>`;
             }
         }
-        
-        // Render danh sách bài đăng ra màn hình
+
+
+        // --- CÁC HÀM RENDER VÀ CẬP NHẬT GIAO DIỆN (UI) ---
+
+        /**
+         * Render toàn bộ danh sách bài đăng.
+         * @param {Array<object>} posts - Mảng các đối tượng bài đăng.
+         */
         function renderPosts(posts) {
             postFeed.innerHTML = '';
-            if (!Array.isArray(posts) || posts.length === 0) {
+            if (!posts || posts.length === 0) {
                 postFeed.innerHTML = '<div class="feed-placeholder">Chưa có thông báo nào. Hãy là người đầu tiên!</div>';
                 return;
             }
@@ -201,14 +499,20 @@
                 postFeed.appendChild(postElement);
             });
         }
-        
-        // Hàm "nhà máy" tạo ra một phần tử HTML cho một bài đăng
+
+        /**
+         * Tạo một phần tử DOM cho một bài đăng.
+         * @param {object} post - Đối tượng bài đăng.
+         * @returns {HTMLElement} Phần tử div.post.
+         */
         function createPostElement(post) {
             const postElement = document.createElement('div');
             postElement.className = 'post';
             postElement.dataset.postId = post.id;
-            
-            // Đảm bảo các thuộc tính luôn tồn tại để tránh lỗi
+
+            // --- BƯỚC SỬA LỖI QUAN TRỌNG: Chuẩn hóa dữ liệu post ---
+            // Đảm bảo post.reactions và post.comments luôn là đối tượng/mảng hợp lệ
+            // để tránh lỗi 'undefined' ở các bước sau. Đây là kỹ thuật "Defensive Programming".
             const safePost = {
                 ...post,
                 comments: post.comments || [],
@@ -219,7 +523,6 @@
             const postTimeAgo = formatTimeAgo(safePost.created_at);
             const postFullDate = new Date(safePost.created_at).toLocaleString('vi-VN');
             
-            // Dùng template literals để tạo HTML, giúp code sạch sẽ hơn
             postElement.innerHTML = `
                 ${createPostHeaderHTML(authorAvatarUrl, safePost.author_name, postTimeAgo, postFullDate)}
                 ${createPostContentHTML(safePost.content, safePost.image_url)}
@@ -231,24 +534,141 @@
             return postElement;
         }
         
-        // Các hàm con để tạo từng phần nhỏ của bài đăng
-        function createPostHeaderHTML(avatarUrl, authorName, timeAgo, fullDate) { /* ... giữ nguyên ... */ }
-        function createPostContentHTML(content, imageUrl) { /* ... giữ nguyên ... */ }
-        function createReactionsSummaryHTML(reactions) { /* ... giữ nguyên ... */ }
-        function createPostActionsHTML(userReactionType) { /* ... giữ nguyên ... */ }
-        function createCommentsSectionHTML(comments) { /* ... giữ nguyên ... */ }
-        function createCommentFormHTML() { /* ... giữ nguyên ... */ }
+        // --- CÁC HÀM CON HỖ TRỢ RENDER ---
+        // (Tách nhỏ để dễ đọc và bảo trì)
 
-        // Xử lý sự kiện khi submit form đăng bài
-        async function handlePostSubmit(event) { /* ... giữ nguyên ... */ }
+        function createPostHeaderHTML(avatarUrl, authorName, timeAgo, fullDate) {
+            return `
+                <div class="post-header">
+                    <img class="avatar" src="${avatarUrl}" alt="Avatar của ${authorName}">
+                    <div class="post-author-info">
+                        <div class="post-author">${authorName}</div>
+                        <div class="post-time" title="${fullDate}">${timeAgo}</div>
+                    </div>
+                </div>`;
+        }
+
+        function createPostContentHTML(content, imageUrl) {
+            const imageHTML = imageUrl ? `<div class="post-image"><img src="${imageUrl}" alt="Hình ảnh thông báo"></div>` : '';
+            return `<div class="post-content">${content || ''}</div>${imageHTML}`;
+        }
+
+        function createReactionsSummaryHTML(reactions) {
+            const total = (reactions.like || 0) + (reactions.love || 0) + (reactions.hate || 0) + (reactions.unlike || 0);
+            if (total === 0) return '<div class="reactions-summary"></div>';
+
+            const iconsHTML = Object.entries(reactions)
+                .filter(([type, count]) => REACTION_MAP[type] && count > 0)
+                .map(([type, _]) => `<span class="icon">${REACTION_MAP[type].emoji}</span>`)
+                .join('');
+            
+            return `
+                <div class="reactions-summary">
+                    ${iconsHTML}
+                    <span class="reactions-summary-count">${total}</span>
+                </div>`;
+        }
         
-        // Xử lý sự kiện khi submit form bình luận
-        async function handleCommentSubmit(event) { /* ... giữ nguyên ... */ }
+        function createPostActionsHTML(userReactionType) {
+            const mainReaction = userReactionType ? REACTION_MAP[userReactionType] : { emoji: '👍', text: 'Thích' };
+            const mainReactionColor = userReactionType ? mainReaction.color : 'var(--text-muted-color)';
+
+            const reactionsPopupHTML = Object.entries(REACTION_MAP).map(([type, { emoji, text }]) => 
+                `<span class="reaction-emoji" data-type="${type}" title="${text}">${emoji}</span>`
+            ).join('');
+
+            return `
+                <div class="post-actions">
+                    <div class="action-button reaction-trigger" style="color: ${mainReactionColor};" data-reaction="${userReactionType || ''}">
+                        <div class="reactions-container">${reactionsPopupHTML}</div>
+                        ${mainReaction.emoji} ${mainReaction.text}
+                    </div>
+                    <div class="action-button comment-button">💬 Bình luận</div>
+                </div>`;
+        }
         
-        /**
-         * Hàm xử lý chính khi có click vào khu vực feed.
-         * Sử dụng kỹ thuật "Event Delegation" để chỉ cần một event listener duy nhất.
-         */
+        function createCommentsSectionHTML(comments) {
+             const commentsHtml = comments.map(comment => {
+                const commentAvatarUrl = createAvatarUrl(comment.author_name);
+                const commentTimeAgo = formatTimeAgo(comment.created_at);
+                return `
+                    <div class="comment">
+                        <img class="avatar" src="${commentAvatarUrl}" alt="Avatar của ${comment.author_name}">
+                        <div class="comment-content-wrapper">
+                            <div class="comment-content">
+                                <div class="comment-author">${comment.author_name}</div>
+                                <div class="comment-text">${comment.content}</div>
+                            </div>
+                            <div class="comment-timestamp">${commentTimeAgo}</div>
+                        </div>
+                    </div>`;
+            }).join('');
+            return `<div class="comments-section">${commentsHtml}</div>`;
+        }
+
+        function createCommentFormHTML() {
+            if (!currentUser) return '';
+            const userAvatarUrl = createAvatarUrl(currentUser.name);
+            return `
+                <form class="comment-form">
+                    <img class="avatar" src="${userAvatarUrl}" alt="Avatar của ${currentUser.name}">
+                    <input type="text" placeholder="Viết bình luận..." name="content" required autocomplete="off">
+                    <button type="submit" style="display:none;"></button>
+                </form>`;
+        }
+
+
+        // --- CÁC HÀM XỬ LÝ SỰ KIỆN (EVENT HANDLERS) ---
+
+        async function handlePostSubmit(event) {
+            event.preventDefault();
+            const submitButton = event.target.querySelector('button[type="submit"]');
+            const formData = new FormData(postForm);
+            
+            if (!formData.get('content').trim() && !formData.get('image').size) {
+                alert('Bạn cần nhập nội dung hoặc chọn một hình ảnh để đăng.');
+                return;
+            }
+            submitButton.disabled = true;
+            submitButton.textContent = 'Đang đăng...';
+
+            try {
+                await fetchAPI('/api/announcements', { method: 'POST', body: formData });
+                postForm.reset();
+                await fetchPosts();
+            } catch (error) {
+                alert(`Đăng bài thất bại: ${error.message}`);
+            } finally {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Đăng';
+            }
+        }
+
+        async function handleCommentSubmit(event) {
+            event.preventDefault();
+            const form = event.target;
+            const input = form.querySelector('input[name="content"]');
+            const postId = form.closest('.post').dataset.postId;
+            const content = input.value.trim();
+
+            if (content) {
+                input.disabled = true;
+                try {
+                    await fetchAPI(`/api/announcements/${postId}/comments`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ content })
+                    });
+                    input.value = '';
+                    await fetchPosts();
+                } catch (error) {
+                    alert(`Bình luận thất bại: ${error.message}`);
+                } finally {
+                    input.disabled = false;
+                }
+            }
+        }
+        
         function handleFeedClick(event) {
             const target = event.target;
             const postElement = target.closest('.post');
@@ -256,227 +676,55 @@
 
             const postId = postElement.dataset.postId;
 
-            // Trường hợp 1: Click vào một emoji trong popup
             const reactionEmoji = target.closest('.reaction-emoji');
             if (reactionEmoji) {
                 handleReaction(postId, reactionEmoji.dataset.type);
                 return;
             }
-
-            // Trường hợp 2: Click vào nút "Thích" chính
             const reactionTrigger = target.closest('.reaction-trigger');
             if (reactionTrigger) {
-                // Nếu đã có reaction, click lại sẽ xóa reaction đó.
-                // Nếu chưa có, mặc định là 'like'.
                 const currentReaction = reactionTrigger.dataset.reaction;
                 handleReaction(postId, currentReaction || 'like');
                 return;
             }
-
-            // Trường hợp 3: Click vào nút "Bình luận"
             const commentButton = target.closest('.comment-button');
             if (commentButton) {
                 postElement.querySelector('.comment-form input')?.focus();
             }
         }
 
-        /**
-         * Hàm gửi yêu cầu reaction lên server.
-         * Đây là hàm quan trọng nhất để sửa lỗi của bạn.
-         */
         async function handleReaction(postId, reactionType) {
-            console.log(`Sending reaction: User wants to '${reactionType}' post ID: ${postId}`);
-            
-            // Vô hiệu hóa tạm thời nút để tránh click nhiều lần
-            const postElement = document.querySelector(`.post[data-post-id='${postId}']`);
-            const reactionButton = postElement.querySelector('.reaction-trigger');
-            if(reactionButton) reactionButton.style.pointerEvents = 'none';
-
             try {
-                // Gửi yêu cầu POST đến đúng endpoint
                 await fetchAPI(`/api/announcements/${postId}/reactions`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ reactionType: reactionType })
+                    body: JSON.stringify({ reactionType })
                 });
-                
-                // Sau khi thành công, tải lại toàn bộ bài đăng để cập nhật giao diện
-                // Đây là cách đơn giản nhất, đảm bảo dữ liệu luôn đúng
                 await fetchPosts();
             } catch (error) {
                 console.error('Lỗi khi reaction:', error);
-                alert(`Không thể gửi cảm xúc: ${error.message}`);
-                // Nếu lỗi, bật lại nút
-                if(reactionButton) reactionButton.style.pointerEvents = 'auto';
+                alert(`Lỗi: ${error.message}`);
             }
         }
 
         // --- GẮN CÁC EVENT LISTENER ---
         postForm.addEventListener('submit', handlePostSubmit);
         postFeed.addEventListener('click', handleFeedClick);
-        // Dùng event delegation cho các form comment
         postFeed.addEventListener('submit', event => {
              if (event.target.classList.contains('comment-form')) {
-                 handleCommentSubmit(event);
-             }
+                handleCommentSubmit(event);
+            }
         });
 
-        // Hàm khởi tạo trang
+
+        // --- HÀM KHỞI CHẠY CHÍNH ---
         async function initializePage() {
             await fetchCurrentUser();
             await fetchPosts();
         }
 
-        // Chạy hàm khởi tạo
         initializePage();
     });
-
-    // Mình sẽ điền lại các hàm tạo HTML bị thiếu ở trên để bạn có code hoàn chỉnh
-    function createPostHeaderHTML(avatarUrl, authorName, timeAgo, fullDate) {
-        return `
-            <div class="post-header">
-                <img class="avatar" src="${avatarUrl}" alt="Avatar của ${authorName}">
-                <div class="post-author-info">
-                    <div class="post-author">${authorName || 'Người dùng ẩn'}</div>
-                    <div class="post-time" title="${fullDate}">${timeAgo}</div>
-                </div>
-            </div>`;
-    }
-
-    function createPostContentHTML(content, imageUrl) {
-        const imageHTML = imageUrl ? `<div class="post-image"><a href="${imageUrl}" target="_blank"><img src="${imageUrl}" alt="Hình ảnh thông báo"></a></div>` : '';
-        return `<div class="post-content">${content || ''}</div>${imageHTML}`;
-    }
-
-    function createReactionsSummaryHTML(reactions) {
-        const total = (reactions.like || 0) + (reactions.love || 0) + (reactions.hate || 0) + (reactions.unlike || 0);
-        if (total === 0) return '<div class="reactions-summary"></div>';
-
-        const REACTION_MAP = { like: '👍', love: '❤️', hate: '💩', unlike: '👎' };
-        const iconsHTML = Object.entries(reactions)
-            .filter(([type, count]) => REACTION_MAP[type] && count > 0)
-            .sort((a, b) => b[1] - a[1]) // Sắp xếp cho icon nhiều nhất ra trước
-            .map(([type, _]) => `<span class="icon">${REACTION_MAP[type]}</span>`)
-            .join('');
-        
-        return `
-            <div class="reactions-summary">
-                ${iconsHTML}
-                <span class="reactions-summary-count">${total}</span>
-            </div>`;
-    }
-
-    function createPostActionsHTML(userReactionType) {
-        const REACTION_MAP = {
-            like:   { emoji: '👍', text: 'Thích', color: 'var(--primary-color)' },
-            love:   { emoji: '❤️', text: 'Yêu thích', color: 'var(--love-color)' },
-            hate:   { emoji: '💩', text: 'Phẫn nộ', color: 'var(--hate-color)' },
-            unlike: { emoji: '👎', text: 'Không thích', color: 'var(--unlike-color)' }
-        };
-        const mainReaction = userReactionType ? REACTION_MAP[userReactionType] : { emoji: '👍', text: 'Thích' };
-        const mainReactionColor = userReactionType ? mainReaction.color : 'var(--text-muted-color)';
-
-        const reactionsPopupHTML = Object.entries(REACTION_MAP).map(([type, { emoji, text }]) => 
-            `<span class="reaction-emoji" data-type="${type}" title="${text}">${emoji}</span>`
-        ).join('');
-
-        return `
-            <div class="post-actions">
-                <div class="action-button reaction-trigger" style="color: ${mainReactionColor};" data-reaction="${userReactionType || ''}">
-                    <div class="reactions-container">${reactionsPopupHTML}</div>
-                    <span class="icon">${mainReaction.emoji}</span>
-                    <span>${mainReaction.text}</span>
-                </div>
-                <div class="action-button comment-button">
-                    <span class="icon">💬</span>
-                    <span>Bình luận</span>
-                </div>
-            </div>`;
-    }
-
-    function createCommentsSectionHTML(comments) {
-        const commentsHtml = comments.map(comment => {
-            const commentAvatarUrl = createAvatarUrl(comment.author_name);
-            const commentTimeAgo = formatTimeAgo(comment.created_at);
-            return `
-                <div class="comment">
-                    <img class="avatar" src="${commentAvatarUrl}" alt="Avatar của ${comment.author_name}">
-                    <div class="comment-content-wrapper">
-                        <div class="comment-content">
-                            <div class="comment-author">${comment.author_name}</div>
-                            <div class="comment-text">${comment.content}</div>
-                        </div>
-                        <div class="comment-timestamp">${commentTimeAgo}</div>
-                    </div>
-                </div>`;
-        }).join('');
-        return `<div class="comments-section">${commentsHtml}</div>`;
-    }
-
-    function createCommentFormHTML() {
-        const currentUser = window.currentUser || null; // Giả định currentUser được lưu global
-        if (!currentUser) return '';
-        const userAvatarUrl = createAvatarUrl(currentUser.name);
-        return `
-            <form class="comment-form">
-                <img class="avatar" src="${userAvatarUrl}" alt="Avatar của ${currentUser.name}">
-                <input type="text" placeholder="Viết bình luận..." name="content" required autocomplete="off">
-                <button type="submit" style="display:none;"></button>
-            </form>`;
-    }
-
-    async function handlePostSubmit(event) {
-        event.preventDefault();
-        const postForm = document.getElementById('post-form');
-        const submitButton = event.target.querySelector('button[type="submit"]');
-        const formData = new FormData(postForm);
-        
-        if (!formData.get('content').trim() && (!formData.get('image') || !formData.get('image').size)) {
-            alert('Bạn cần nhập nội dung hoặc chọn một hình ảnh để đăng.');
-            return;
-        }
-        submitButton.disabled = true;
-        submitButton.textContent = 'Đang đăng...';
-
-        try {
-            await fetchAPI('/api/announcements', { method: 'POST', body: formData });
-            postForm.reset();
-            await fetchPosts();
-        } catch (error) {
-            alert(`Đăng bài thất bại: ${error.message}`);
-        } finally {
-            submitButton.disabled = false;
-            submitButton.textContent = 'Đăng';
-        }
-    }
-
-    async function handleCommentSubmit(event) {
-        event.preventDefault();
-        const form = event.target;
-        const input = form.querySelector('input[name="content"]');
-        const postElement = form.closest('.post');
-        if (!postElement) return;
-
-        const postId = postElement.dataset.postId;
-        const content = input.value.trim();
-
-        if (content) {
-            input.disabled = true;
-            try {
-                await fetchAPI(`/api/announcements/${postId}/comments`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ content })
-                });
-                input.value = '';
-                await fetchPosts(); // Tải lại để hiển thị comment mới
-            } catch (error) {
-                alert(`Bình luận thất bại: ${error.message}`);
-            } finally {
-                input.disabled = false;
-            }
-        }
-    }
     </script>
 </body>
 </html>
