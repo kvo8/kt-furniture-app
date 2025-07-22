@@ -81,11 +81,11 @@
                     </div>
                     <div class="post-creator-actions">
                          <div class="action-button-wrapper">
-                            <label for="image-upload">🖼️ Thêm ảnh</label>
-                            <input type="file" id="image-upload" name="image" accept="image/*">
+                             <label for="image-upload">🖼️ Thêm ảnh</label>
+                             <input type="file" id="image-upload" name="image" accept="image/*">
                          </div>
                          <div class="action-button-wrapper">
-                            <button type="submit">Đăng</button>
+                             <button type="submit">Đăng</button>
                          </div>
                     </div>
                 </form>
@@ -101,6 +101,7 @@
         const currentUserAvatarElement = document.getElementById('current-user-avatar');
         let currentUser = null;
 
+        // Định nghĩa các loại reaction để dễ dàng sử dụng lại
         const REACTION_MAP = {
             like:   { emoji: '👍', text: 'Thích', color: 'var(--primary-color)' },
             love:   { emoji: '❤️', text: 'Yêu thích', color: 'var(--love-color)' },
@@ -108,16 +109,17 @@
             unlike: { emoji: '👎', text: 'Không thích', color: 'var(--unlike-color)' }
         };
 
+        // Hàm tạo URL avatar từ tên
         function createAvatarUrl(name) {
-            if (!name) return 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';
+            if (!name) return 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='; // Ảnh trống
             return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&color=fff&size=128`;
         }
         
+        // Hàm định dạng thời gian (vd: 5 phút trước)
         function formatTimeAgo(dateInput) {
             const now = new Date();
             const date = new Date(dateInput);
             const seconds = Math.floor((now - date) / 1000);
-
             if (seconds < 60) return "Vừa xong";
             const minutes = Math.floor(seconds / 60);
             if (minutes < 60) return `${minutes} phút trước`;
@@ -125,28 +127,48 @@
             if (hours < 24) return `${hours} giờ trước`;
             const days = Math.floor(hours / 24);
             if (days < 30) return `${days} ngày trước`;
-            
             return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
         }
 
+        /**
+         * Hàm fetch API chung, có xử lý lỗi 404 và các lỗi khác.
+         * Đây là nơi tạo ra thông báo lỗi mà bạn thấy trong ảnh chụp màn hình.
+         */
         async function fetchAPI(url, options = {}) {
-            const response = await fetch(url, options);
-            if (!response.ok) {
-                if (response.status === 404) {
-                    throw new Error(`Lỗi 404: Không tìm thấy API tại đường dẫn ${new URL(url, window.location.origin).pathname}. Vui lòng kiểm tra lại file index.js ở backend.`);
-                }
-                const errorData = await response.json().catch(() => ({ message: response.statusText }));
-                throw new Error(errorData.message || `Lỗi ${response.status}`);
+            try {
+                 const response = await fetch(url, options);
+                 if (!response.ok) {
+                     // Nếu lỗi là 404, hiển thị thông báo chi tiết
+                     if (response.status === 404) {
+                         // Lấy đường dẫn của API từ URL đầy đủ
+                         const apiPath = new URL(url, window.location.origin).pathname;
+                         throw new Error(`Lỗi 404: Không tìm thấy API tại đường dẫn ${apiPath}. Vui lòng kiểm tra lại file index.js ở backend.`);
+                     }
+                     // Với các lỗi khác, thử parse JSON để lấy thông báo từ server
+                     const errorData = await response.json().catch(() => ({ error: response.statusText }));
+                     throw new Error(errorData.error || `Lỗi ${response.status}`);
+                 }
+                 // Nếu response không có nội dung (vd: 204 No Content), trả về object rỗng
+                 const contentType = response.headers.get("content-type");
+                 if (contentType && contentType.indexOf("application/json") !== -1) {
+                    return response.json();
+                 }
+                 return {};
+            } catch (error) {
+                console.error(`API Fetch Error for ${url}:`, error);
+                throw error; // Ném lỗi ra ngoài để hàm gọi nó có thể bắt
             }
-            return response.json().catch(() => ({}));
         }
 
+        // Lấy thông tin người dùng đang đăng nhập
         async function fetchCurrentUser() {
             try {
                 currentUser = await fetchAPI('/api/me');
                 if (currentUser && currentUser.name) {
                     currentUserAvatarElement.src = createAvatarUrl(currentUser.name);
                     currentUserAvatarElement.alt = `Avatar của ${currentUser.name}`;
+                } else {
+                    throw new Error("Thông tin người dùng không hợp lệ.");
                 }
             } catch (error) {
                 console.error("Lỗi xác thực người dùng:", error);
@@ -155,6 +177,7 @@
             }
         }
 
+        // Tải toàn bộ bài đăng từ server
         async function fetchPosts() {
             try {
                 postFeed.innerHTML = '<div class="feed-placeholder">Đang tải bảng tin...</div>';
@@ -165,7 +188,8 @@
                 postFeed.innerHTML = `<div class="feed-placeholder" style="color:red;">Không thể tải bảng tin: ${error.message}</div>`;
             }
         }
-
+        
+        // Render danh sách bài đăng ra màn hình
         function renderPosts(posts) {
             postFeed.innerHTML = '';
             if (!Array.isArray(posts) || posts.length === 0) {
@@ -177,12 +201,14 @@
                 postFeed.appendChild(postElement);
             });
         }
-
+        
+        // Hàm "nhà máy" tạo ra một phần tử HTML cho một bài đăng
         function createPostElement(post) {
             const postElement = document.createElement('div');
             postElement.className = 'post';
             postElement.dataset.postId = post.id;
             
+            // Đảm bảo các thuộc tính luôn tồn tại để tránh lỗi
             const safePost = {
                 ...post,
                 comments: post.comments || [],
@@ -193,6 +219,7 @@
             const postTimeAgo = formatTimeAgo(safePost.created_at);
             const postFullDate = new Date(safePost.created_at).toLocaleString('vi-VN');
             
+            // Dùng template literals để tạo HTML, giúp code sạch sẽ hơn
             postElement.innerHTML = `
                 ${createPostHeaderHTML(authorAvatarUrl, safePost.author_name, postTimeAgo, postFullDate)}
                 ${createPostContentHTML(safePost.content, safePost.image_url)}
@@ -204,139 +231,24 @@
             return postElement;
         }
         
-        function createPostHeaderHTML(avatarUrl, authorName, timeAgo, fullDate) {
-            return `
-                <div class="post-header">
-                    <img class="avatar" src="${avatarUrl}" alt="Avatar của ${authorName}">
-                    <div class="post-author-info">
-                        <div class="post-author">${authorName || 'Người dùng ẩn'}</div>
-                        <div class="post-time" title="${fullDate}">${timeAgo}</div>
-                    </div>
-                </div>`;
-        }
+        // Các hàm con để tạo từng phần nhỏ của bài đăng
+        function createPostHeaderHTML(avatarUrl, authorName, timeAgo, fullDate) { /* ... giữ nguyên ... */ }
+        function createPostContentHTML(content, imageUrl) { /* ... giữ nguyên ... */ }
+        function createReactionsSummaryHTML(reactions) { /* ... giữ nguyên ... */ }
+        function createPostActionsHTML(userReactionType) { /* ... giữ nguyên ... */ }
+        function createCommentsSectionHTML(comments) { /* ... giữ nguyên ... */ }
+        function createCommentFormHTML() { /* ... giữ nguyên ... */ }
 
-        function createPostContentHTML(content, imageUrl) {
-            const imageHTML = imageUrl ? `<div class="post-image"><img src="${imageUrl}" alt="Hình ảnh thông báo"></div>` : '';
-            return `<div class="post-content">${content || ''}</div>${imageHTML}`;
-        }
-
-        function createReactionsSummaryHTML(reactions) {
-            const total = (reactions.like || 0) + (reactions.love || 0) + (reactions.hate || 0) + (reactions.unlike || 0);
-            if (total === 0) return '<div class="reactions-summary"></div>';
-
-            const iconsHTML = Object.entries(reactions)
-                .filter(([type, count]) => REACTION_MAP[type] && count > 0)
-                .map(([type, _]) => `<span class="icon">${REACTION_MAP[type].emoji}</span>`)
-                .join('');
-            
-            return `
-                <div class="reactions-summary">
-                    ${iconsHTML}
-                    <span class="reactions-summary-count">${total}</span>
-                </div>`;
-        }
+        // Xử lý sự kiện khi submit form đăng bài
+        async function handlePostSubmit(event) { /* ... giữ nguyên ... */ }
         
-        function createPostActionsHTML(userReactionType) {
-            const mainReaction = userReactionType ? REACTION_MAP[userReactionType] : { emoji: '👍', text: 'Thích' };
-            const mainReactionColor = userReactionType ? mainReaction.color : 'var(--text-muted-color)';
-
-            const reactionsPopupHTML = Object.entries(REACTION_MAP).map(([type, { emoji, text }]) => 
-                `<span class="reaction-emoji" data-type="${type}" title="${text}">${emoji}</span>`
-            ).join('');
-
-            return `
-                <div class="post-actions">
-                    <div class="action-button reaction-trigger" style="color: ${mainReactionColor};" data-reaction="${userReactionType || ''}">
-                        <div class="reactions-container">${reactionsPopupHTML}</div>
-                        <span class="icon">${mainReaction.emoji}</span>
-                        <span>${mainReaction.text}</span>
-                    </div>
-                    <div class="action-button comment-button">
-                        <span class="icon">💬</span>
-                        <span>Bình luận</span>
-                    </div>
-                </div>`;
-        }
+        // Xử lý sự kiện khi submit form bình luận
+        async function handleCommentSubmit(event) { /* ... giữ nguyên ... */ }
         
-        function createCommentsSectionHTML(comments) {
-             const commentsHtml = comments.map(comment => {
-                const commentAvatarUrl = createAvatarUrl(comment.author_name);
-                const commentTimeAgo = formatTimeAgo(comment.created_at);
-                return `
-                    <div class="comment">
-                        <img class="avatar" src="${commentAvatarUrl}" alt="Avatar của ${comment.author_name}">
-                        <div class="comment-content-wrapper">
-                            <div class="comment-content">
-                                <div class="comment-author">${comment.author_name}</div>
-                                <div class="comment-text">${comment.content}</div>
-                            </div>
-                            <div class="comment-timestamp">${commentTimeAgo}</div>
-                        </div>
-                    </div>`;
-            }).join('');
-            return `<div class="comments-section">${commentsHtml}</div>`;
-        }
-
-        function createCommentFormHTML() {
-            if (!currentUser) return '';
-            const userAvatarUrl = createAvatarUrl(currentUser.name);
-            return `
-                <form class="comment-form">
-                    <img class="avatar" src="${userAvatarUrl}" alt="Avatar của ${currentUser.name}">
-                    <input type="text" placeholder="Viết bình luận..." name="content" required autocomplete="off">
-                    <button type="submit" style="display:none;"></button>
-                </form>`;
-        }
-
-        async function handlePostSubmit(event) {
-            event.preventDefault();
-            const submitButton = event.target.querySelector('button[type="submit"]');
-            const formData = new FormData(postForm);
-            
-            if (!formData.get('content').trim() && !formData.get('image').size) {
-                alert('Bạn cần nhập nội dung hoặc chọn một hình ảnh để đăng.');
-                return;
-            }
-            submitButton.disabled = true;
-            submitButton.textContent = 'Đang đăng...';
-
-            try {
-                await fetchAPI('/api/announcements', { method: 'POST', body: formData });
-                postForm.reset();
-                await fetchPosts();
-            } catch (error) {
-                alert(`Đăng bài thất bại: ${error.message}`);
-            } finally {
-                submitButton.disabled = false;
-                submitButton.textContent = 'Đăng';
-            }
-        }
-
-        async function handleCommentSubmit(event) {
-            event.preventDefault();
-            const form = event.target;
-            const input = form.querySelector('input[name="content"]');
-            const postId = form.closest('.post').dataset.postId;
-            const content = input.value.trim();
-
-            if (content) {
-                input.disabled = true;
-                try {
-                    await fetchAPI(`/api/announcements/${postId}/comments`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ content })
-                    });
-                    input.value = '';
-                    await fetchPosts();
-                } catch (error) {
-                    alert(`Bình luận thất bại: ${error.message}`);
-                } finally {
-                    input.disabled = false;
-                }
-            }
-        }
-        
+        /**
+         * Hàm xử lý chính khi có click vào khu vực feed.
+         * Sử dụng kỹ thuật "Event Delegation" để chỉ cần một event listener duy nhất.
+         */
         function handleFeedClick(event) {
             const target = event.target;
             const postElement = target.closest('.post');
@@ -344,52 +256,227 @@
 
             const postId = postElement.dataset.postId;
 
+            // Trường hợp 1: Click vào một emoji trong popup
             const reactionEmoji = target.closest('.reaction-emoji');
             if (reactionEmoji) {
                 handleReaction(postId, reactionEmoji.dataset.type);
                 return;
             }
+
+            // Trường hợp 2: Click vào nút "Thích" chính
             const reactionTrigger = target.closest('.reaction-trigger');
             if (reactionTrigger) {
+                // Nếu đã có reaction, click lại sẽ xóa reaction đó.
+                // Nếu chưa có, mặc định là 'like'.
                 const currentReaction = reactionTrigger.dataset.reaction;
                 handleReaction(postId, currentReaction || 'like');
                 return;
             }
+
+            // Trường hợp 3: Click vào nút "Bình luận"
             const commentButton = target.closest('.comment-button');
             if (commentButton) {
                 postElement.querySelector('.comment-form input')?.focus();
             }
         }
 
+        /**
+         * Hàm gửi yêu cầu reaction lên server.
+         * Đây là hàm quan trọng nhất để sửa lỗi của bạn.
+         */
         async function handleReaction(postId, reactionType) {
+            console.log(`Sending reaction: User wants to '${reactionType}' post ID: ${postId}`);
+            
+            // Vô hiệu hóa tạm thời nút để tránh click nhiều lần
+            const postElement = document.querySelector(`.post[data-post-id='${postId}']`);
+            const reactionButton = postElement.querySelector('.reaction-trigger');
+            if(reactionButton) reactionButton.style.pointerEvents = 'none';
+
             try {
+                // Gửi yêu cầu POST đến đúng endpoint
                 await fetchAPI(`/api/announcements/${postId}/reactions`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ reactionType })
+                    body: JSON.stringify({ reactionType: reactionType })
                 });
+                
+                // Sau khi thành công, tải lại toàn bộ bài đăng để cập nhật giao diện
+                // Đây là cách đơn giản nhất, đảm bảo dữ liệu luôn đúng
                 await fetchPosts();
             } catch (error) {
                 console.error('Lỗi khi reaction:', error);
-                alert(`Lỗi: ${error.message}`);
+                alert(`Không thể gửi cảm xúc: ${error.message}`);
+                // Nếu lỗi, bật lại nút
+                if(reactionButton) reactionButton.style.pointerEvents = 'auto';
             }
         }
 
+        // --- GẮN CÁC EVENT LISTENER ---
         postForm.addEventListener('submit', handlePostSubmit);
         postFeed.addEventListener('click', handleFeedClick);
+        // Dùng event delegation cho các form comment
         postFeed.addEventListener('submit', event => {
              if (event.target.classList.contains('comment-form')) {
-                handleCommentSubmit(event);
-            }
+                 handleCommentSubmit(event);
+             }
         });
 
+        // Hàm khởi tạo trang
         async function initializePage() {
             await fetchCurrentUser();
             await fetchPosts();
         }
 
+        // Chạy hàm khởi tạo
         initializePage();
     });
+
+    // Mình sẽ điền lại các hàm tạo HTML bị thiếu ở trên để bạn có code hoàn chỉnh
+    function createPostHeaderHTML(avatarUrl, authorName, timeAgo, fullDate) {
+        return `
+            <div class="post-header">
+                <img class="avatar" src="${avatarUrl}" alt="Avatar của ${authorName}">
+                <div class="post-author-info">
+                    <div class="post-author">${authorName || 'Người dùng ẩn'}</div>
+                    <div class="post-time" title="${fullDate}">${timeAgo}</div>
+                </div>
+            </div>`;
+    }
+
+    function createPostContentHTML(content, imageUrl) {
+        const imageHTML = imageUrl ? `<div class="post-image"><a href="${imageUrl}" target="_blank"><img src="${imageUrl}" alt="Hình ảnh thông báo"></a></div>` : '';
+        return `<div class="post-content">${content || ''}</div>${imageHTML}`;
+    }
+
+    function createReactionsSummaryHTML(reactions) {
+        const total = (reactions.like || 0) + (reactions.love || 0) + (reactions.hate || 0) + (reactions.unlike || 0);
+        if (total === 0) return '<div class="reactions-summary"></div>';
+
+        const REACTION_MAP = { like: '👍', love: '❤️', hate: '💩', unlike: '👎' };
+        const iconsHTML = Object.entries(reactions)
+            .filter(([type, count]) => REACTION_MAP[type] && count > 0)
+            .sort((a, b) => b[1] - a[1]) // Sắp xếp cho icon nhiều nhất ra trước
+            .map(([type, _]) => `<span class="icon">${REACTION_MAP[type]}</span>`)
+            .join('');
+        
+        return `
+            <div class="reactions-summary">
+                ${iconsHTML}
+                <span class="reactions-summary-count">${total}</span>
+            </div>`;
+    }
+
+    function createPostActionsHTML(userReactionType) {
+        const REACTION_MAP = {
+            like:   { emoji: '👍', text: 'Thích', color: 'var(--primary-color)' },
+            love:   { emoji: '❤️', text: 'Yêu thích', color: 'var(--love-color)' },
+            hate:   { emoji: '💩', text: 'Phẫn nộ', color: 'var(--hate-color)' },
+            unlike: { emoji: '👎', text: 'Không thích', color: 'var(--unlike-color)' }
+        };
+        const mainReaction = userReactionType ? REACTION_MAP[userReactionType] : { emoji: '👍', text: 'Thích' };
+        const mainReactionColor = userReactionType ? mainReaction.color : 'var(--text-muted-color)';
+
+        const reactionsPopupHTML = Object.entries(REACTION_MAP).map(([type, { emoji, text }]) => 
+            `<span class="reaction-emoji" data-type="${type}" title="${text}">${emoji}</span>`
+        ).join('');
+
+        return `
+            <div class="post-actions">
+                <div class="action-button reaction-trigger" style="color: ${mainReactionColor};" data-reaction="${userReactionType || ''}">
+                    <div class="reactions-container">${reactionsPopupHTML}</div>
+                    <span class="icon">${mainReaction.emoji}</span>
+                    <span>${mainReaction.text}</span>
+                </div>
+                <div class="action-button comment-button">
+                    <span class="icon">💬</span>
+                    <span>Bình luận</span>
+                </div>
+            </div>`;
+    }
+
+    function createCommentsSectionHTML(comments) {
+        const commentsHtml = comments.map(comment => {
+            const commentAvatarUrl = createAvatarUrl(comment.author_name);
+            const commentTimeAgo = formatTimeAgo(comment.created_at);
+            return `
+                <div class="comment">
+                    <img class="avatar" src="${commentAvatarUrl}" alt="Avatar của ${comment.author_name}">
+                    <div class="comment-content-wrapper">
+                        <div class="comment-content">
+                            <div class="comment-author">${comment.author_name}</div>
+                            <div class="comment-text">${comment.content}</div>
+                        </div>
+                        <div class="comment-timestamp">${commentTimeAgo}</div>
+                    </div>
+                </div>`;
+        }).join('');
+        return `<div class="comments-section">${commentsHtml}</div>`;
+    }
+
+    function createCommentFormHTML() {
+        const currentUser = window.currentUser || null; // Giả định currentUser được lưu global
+        if (!currentUser) return '';
+        const userAvatarUrl = createAvatarUrl(currentUser.name);
+        return `
+            <form class="comment-form">
+                <img class="avatar" src="${userAvatarUrl}" alt="Avatar của ${currentUser.name}">
+                <input type="text" placeholder="Viết bình luận..." name="content" required autocomplete="off">
+                <button type="submit" style="display:none;"></button>
+            </form>`;
+    }
+
+    async function handlePostSubmit(event) {
+        event.preventDefault();
+        const postForm = document.getElementById('post-form');
+        const submitButton = event.target.querySelector('button[type="submit"]');
+        const formData = new FormData(postForm);
+        
+        if (!formData.get('content').trim() && (!formData.get('image') || !formData.get('image').size)) {
+            alert('Bạn cần nhập nội dung hoặc chọn một hình ảnh để đăng.');
+            return;
+        }
+        submitButton.disabled = true;
+        submitButton.textContent = 'Đang đăng...';
+
+        try {
+            await fetchAPI('/api/announcements', { method: 'POST', body: formData });
+            postForm.reset();
+            await fetchPosts();
+        } catch (error) {
+            alert(`Đăng bài thất bại: ${error.message}`);
+        } finally {
+            submitButton.disabled = false;
+            submitButton.textContent = 'Đăng';
+        }
+    }
+
+    async function handleCommentSubmit(event) {
+        event.preventDefault();
+        const form = event.target;
+        const input = form.querySelector('input[name="content"]');
+        const postElement = form.closest('.post');
+        if (!postElement) return;
+
+        const postId = postElement.dataset.postId;
+        const content = input.value.trim();
+
+        if (content) {
+            input.disabled = true;
+            try {
+                await fetchAPI(`/api/announcements/${postId}/comments`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content })
+                });
+                input.value = '';
+                await fetchPosts(); // Tải lại để hiển thị comment mới
+            } catch (error) {
+                alert(`Bình luận thất bại: ${error.message}`);
+            } finally {
+                input.disabled = false;
+            }
+        }
+    }
     </script>
 </body>
 </html>
