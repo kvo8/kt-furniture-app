@@ -389,7 +389,6 @@
         
         /**
          * Đối tượng lưu trữ thông tin cho từng loại reaction.
-         * Giúp quản lý tập trung, dễ dàng thêm/sửa reaction sau này.
          * @type {Object.<string, ReactionInfo>}
          */
         const REACTION_MAP = {
@@ -403,7 +402,7 @@
         // --- CÁC HÀM TIỆN ÍCH ---
 
         /**
-         * Tạo URL avatar từ tên người dùng bằng dịch vụ ui-avatars.
+         * Tạo URL avatar từ tên người dùng.
          * @param {string} name - Tên người dùng.
          * @returns {string} URL của ảnh avatar.
          */
@@ -413,8 +412,8 @@
         }
         
         /**
-         * Định dạng thời gian thành dạng tương đối (vd: "5 phút trước").
-         * @param {string | Date} dateInput - Chuỗi ngày hoặc đối tượng Date cần định dạng.
+         * Định dạng thời gian thành dạng tương đối.
+         * @param {string | Date} dateInput - Ngày cần định dạng.
          * @returns {string} Chuỗi thời gian đã định dạng.
          */
         function formatTimeAgo(dateInput) {
@@ -430,7 +429,6 @@
             const days = Math.floor(hours / 24);
             if (days < 30) return `${days} ngày trước`;
             
-            // Nếu quá lâu, hiển thị ngày tháng đầy đủ
             return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
         }
 
@@ -438,11 +436,10 @@
         // --- CÁC HÀM TƯƠNG TÁC VỚI API ---
 
         /**
-         * Hàm fetch API tập trung, bao gồm xử lý lỗi và parsing JSON.
-         * @param {string} url - URL của API endpoint.
-         * @param {object} [options={}] - Các tùy chọn cho hàm fetch (method, headers, body).
-         * @returns {Promise<any>} Dữ liệu JSON từ response.
-         * @throws {Error} Ném lỗi nếu response không 'ok'.
+         * Hàm fetch API tập trung.
+         * @param {string} url - URL của API.
+         * @param {object} [options={}] - Tùy chọn cho fetch.
+         * @returns {Promise<any>} Dữ liệu JSON.
          */
         async function fetchAPI(url, options = {}) {
             const response = await fetch(url, options);
@@ -450,12 +447,11 @@
                 const errorData = await response.json().catch(() => ({ message: response.statusText }));
                 throw new Error(errorData.message || `Lỗi ${response.status}`);
             }
-            // Trả về object rỗng nếu response body trống
             return response.json().catch(() => ({}));
         }
 
         /**
-         * Lấy thông tin người dùng đang đăng nhập và cập nhật avatar.
+         * Lấy thông tin người dùng đang đăng nhập.
          */
         async function fetchCurrentUser() {
             try {
@@ -472,7 +468,7 @@
         }
 
         /**
-         * Tải tất cả bài đăng và render ra giao diện.
+         * Tải tất cả bài đăng.
          */
         async function fetchPosts() {
             try {
@@ -490,7 +486,7 @@
 
         /**
          * Render toàn bộ danh sách bài đăng.
-         * @param {Array<object>} posts - Mảng các đối tượng bài đăng từ API.
+         * @param {Array<object>} posts - Mảng các đối tượng bài đăng.
          */
         function renderPosts(posts) {
             postFeed.innerHTML = '';
@@ -498,7 +494,6 @@
                 postFeed.innerHTML = '<div class="feed-placeholder">Chưa có thông báo nào. Hãy là người đầu tiên!</div>';
                 return;
             }
-
             posts.forEach(post => {
                 const postElement = createPostElement(post);
                 postFeed.appendChild(postElement);
@@ -508,30 +503,40 @@
         /**
          * Tạo một phần tử DOM cho một bài đăng.
          * @param {object} post - Đối tượng bài đăng.
-         * @returns {HTMLElement} Phần tử div.post đã được tạo.
+         * @returns {HTMLElement} Phần tử div.post.
          */
         function createPostElement(post) {
             const postElement = document.createElement('div');
             postElement.className = 'post';
             postElement.dataset.postId = post.id;
 
-            const authorAvatarUrl = createAvatarUrl(post.author_name);
-            const postTimeAgo = formatTimeAgo(post.created_at);
-            const postFullDate = new Date(post.created_at).toLocaleString('vi-VN');
+            // --- BƯỚC SỬA LỖI QUAN TRỌNG: Chuẩn hóa dữ liệu post ---
+            // Đảm bảo post.reactions và post.comments luôn là đối tượng/mảng hợp lệ
+            // để tránh lỗi 'undefined' ở các bước sau. Đây là kỹ thuật "Defensive Programming".
+            const safePost = {
+                ...post,
+                comments: post.comments || [],
+                reactions: post.reactions || { like: 0, love: 0, hate: 0, unlike: 0, user_reaction: null }
+            };
+
+            const authorAvatarUrl = createAvatarUrl(safePost.author_name);
+            const postTimeAgo = formatTimeAgo(safePost.created_at);
+            const postFullDate = new Date(safePost.created_at).toLocaleString('vi-VN');
             
-            // Render các thành phần và gắn vào postElement
             postElement.innerHTML = `
-                ${createPostHeaderHTML(authorAvatarUrl, post.author_name, postTimeAgo, postFullDate)}
-                ${createPostContentHTML(post.content, post.image_url)}
-                ${createReactionsSummaryHTML(post.reactions)}
-                ${createPostActionsHTML(post.reactions.user_reaction)}
-                ${createCommentsSectionHTML(post.comments)}
+                ${createPostHeaderHTML(authorAvatarUrl, safePost.author_name, postTimeAgo, postFullDate)}
+                ${createPostContentHTML(safePost.content, safePost.image_url)}
+                ${createReactionsSummaryHTML(safePost.reactions)}
+                ${createPostActionsHTML(safePost.reactions.user_reaction)}
+                ${createCommentsSectionHTML(safePost.comments)}
                 ${createCommentFormHTML()}
             `;
             return postElement;
         }
+        
+        // --- CÁC HÀM CON HỖ TRỢ RENDER ---
+        // (Tách nhỏ để dễ đọc và bảo trì)
 
-        // Các hàm con để tạo từng phần của HTML, giúp code sạch hơn
         function createPostHeaderHTML(avatarUrl, authorName, timeAgo, fullDate) {
             return `
                 <div class="post-header">
@@ -545,22 +550,15 @@
 
         function createPostContentHTML(content, imageUrl) {
             const imageHTML = imageUrl ? `<div class="post-image"><img src="${imageUrl}" alt="Hình ảnh thông báo"></div>` : '';
-            return `<div class="post-content">${content}</div>${imageHTML}`;
+            return `<div class="post-content">${content || ''}</div>${imageHTML}`;
         }
 
         function createReactionsSummaryHTML(reactions) {
-            const reactionCounts = {
-                like: reactions.like || 0,
-                love: reactions.love || 0,
-                hate: reactions.hate || 0,
-                unlike: reactions.unlike || 0
-            };
-            const total = Object.values(reactionCounts).reduce((sum, count) => sum + count, 0);
+            const total = (reactions.like || 0) + (reactions.love || 0) + (reactions.hate || 0) + (reactions.unlike || 0);
+            if (total === 0) return '<div class="reactions-summary"></div>';
 
-            if (total === 0) return '<div class="reactions-summary"></div>'; // Trả về div rỗng để giữ layout
-
-            const iconsHTML = Object.entries(reactionCounts)
-                .filter(([_, count]) => count > 0)
+            const iconsHTML = Object.entries(reactions)
+                .filter(([type, count]) => REACTION_MAP[type] && count > 0)
                 .map(([type, _]) => `<span class="icon">${REACTION_MAP[type].emoji}</span>`)
                 .join('');
             
@@ -575,8 +573,8 @@
             const mainReaction = userReactionType ? REACTION_MAP[userReactionType] : { emoji: '👍', text: 'Thích' };
             const mainReactionColor = userReactionType ? mainReaction.color : 'var(--text-muted-color)';
 
-            const reactionsPopupHTML = Object.entries(REACTION_MAP).map(([type, { emoji }]) => 
-                `<span class="reaction-emoji" data-type="${type}" title="${REACTION_MAP[type].text}">${emoji}</span>`
+            const reactionsPopupHTML = Object.entries(REACTION_MAP).map(([type, { emoji, text }]) => 
+                `<span class="reaction-emoji" data-type="${type}" title="${text}">${emoji}</span>`
             ).join('');
 
             return `
@@ -590,7 +588,7 @@
         }
         
         function createCommentsSectionHTML(comments) {
-             const commentsHtml = (comments || []).map(comment => {
+             const commentsHtml = comments.map(comment => {
                 const commentAvatarUrl = createAvatarUrl(comment.author_name);
                 const commentTimeAgo = formatTimeAgo(comment.created_at);
                 return `
@@ -622,10 +620,6 @@
 
         // --- CÁC HÀM XỬ LÝ SỰ KIỆN (EVENT HANDLERS) ---
 
-        /**
-         * Xử lý khi người dùng đăng bài mới.
-         * @param {SubmitEvent} event - Sự kiện submit form.
-         */
         async function handlePostSubmit(event) {
             event.preventDefault();
             const submitButton = event.target.querySelector('button[type="submit"]');
@@ -650,10 +644,6 @@
             }
         }
 
-        /**
-         * Xử lý khi người dùng gửi bình luận.
-         * @param {SubmitEvent} event - Sự kiện submit form bình luận.
-         */
         async function handleCommentSubmit(event) {
             event.preventDefault();
             const form = event.target;
@@ -670,7 +660,7 @@
                         body: JSON.stringify({ content })
                     });
                     input.value = '';
-                    await fetchPosts(); // Tải lại để thấy comment mới
+                    await fetchPosts();
                 } catch (error) {
                     alert(`Bình luận thất bại: ${error.message}`);
                 } finally {
@@ -679,10 +669,6 @@
             }
         }
         
-        /**
-         * Xử lý tất cả các sự kiện click trên #post-feed (event delegation).
-         * @param {MouseEvent} event - Sự kiện click.
-         */
         function handleFeedClick(event) {
             const target = event.target;
             const postElement = target.closest('.post');
@@ -690,43 +676,30 @@
 
             const postId = postElement.dataset.postId;
 
-            // Xử lý click vào emoji reaction
             const reactionEmoji = target.closest('.reaction-emoji');
             if (reactionEmoji) {
                 handleReaction(postId, reactionEmoji.dataset.type);
                 return;
             }
-
-            // Xử lý click vào nút reaction chính
             const reactionTrigger = target.closest('.reaction-trigger');
             if (reactionTrigger) {
                 const currentReaction = reactionTrigger.dataset.reaction;
-                handleReaction(postId, currentReaction || 'like'); // Bấm vào nút là để Thích hoặc Bỏ thích
+                handleReaction(postId, currentReaction || 'like');
                 return;
             }
-
-            // Xử lý click vào nút bình luận
             const commentButton = target.closest('.comment-button');
             if (commentButton) {
                 postElement.querySelector('.comment-form input')?.focus();
             }
         }
 
-        /**
-         * Gửi reaction tới server và cập nhật UI.
-         * @param {string} postId - ID của bài đăng.
-         * @param {string} reactionType - Loại reaction ('like', 'love', etc.).
-         */
         async function handleReaction(postId, reactionType) {
             try {
-                // Gửi yêu cầu tới server
                 await fetchAPI(`/api/announcements/${postId}/reactions`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ reactionType })
                 });
-                // Sau khi thành công, tải lại toàn bộ feed để đảm bảo dữ liệu đồng nhất.
-                // Để tối ưu hơn, có thể viết hàm cập nhật UI tại đây mà không cần fetch lại.
                 await fetchPosts();
             } catch (error) {
                 console.error('Lỗi khi reaction:', error);
@@ -745,15 +718,11 @@
 
 
         // --- HÀM KHỞI CHẠY CHÍNH ---
-        /**
-         * Khởi tạo toàn bộ trang: lấy thông tin người dùng và tải các bài đăng.
-         */
         async function initializePage() {
             await fetchCurrentUser();
             await fetchPosts();
         }
 
-        // Bắt đầu thực thi JavaScript khi DOM đã sẵn sàng
         initializePage();
     });
     </script>
