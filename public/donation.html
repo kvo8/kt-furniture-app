@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ủng hộ đội ngũ phát triển</title>
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            max-width: 500px; 
+            margin: 40px auto; 
+            padding: 20px; 
+            background-color: #f4f4f9; 
+        }
+        .container {
+            background-color: white; 
+            padding: 30px; 
+            border-radius: 8px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        h1 { text-align: center; color: #333; }
+        p { text-align: center; color: #555; line-height: 1.6; }
+        .form-group { display: flex; flex-direction: column; margin-bottom: 15px; }
+        label { margin-bottom: 5px; font-weight: bold; color: #555; }
+        input { 
+            padding: 12px; font-size: 16px; border-radius: 5px; 
+            border: 1px solid #ccc;
+        }
+        .expiry-cvc-group { display: flex; gap: 15px; }
+        .expiry-cvc-group .form-group { flex: 1; }
+        
+        button { 
+            width: 100%; padding: 15px; font-size: 18px; font-weight: bold;
+            background-color: #28a745; color: white; border: none; 
+            border-radius: 5px; cursor: pointer; margin-top: 10px;
+            transition: background-color 0.2s;
+        }
+        button:hover { background-color: #218838; }
+
+        .secure-badge {
+            text-align: center; margin-top: 20px; color: #6c757d; font-size: 13px;
+        }
+        .secure-badge span { font-weight: bold; color: #28a745; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Cảm ơn bạn đã ghé thăm! ❤️</h1>
+        <p>Sự ủng hộ của bạn, dù nhỏ, cũng là nguồn động viên to lớn để chúng tôi tiếp tục duy trì và phát triển công cụ này.</p>
+        
+        <form id="donation-form">
+            <div class="form-group">
+                <label for="card-name">Tên trên thẻ</label>
+                <input type="text" id="card-name" placeholder="NGUYEN VAN A" required>
+            </div>
+            <div class="form-group">
+                <label for="card-number">Số thẻ</label>
+                <input type="text" id="card-number" placeholder="4123 4567 8901 2345" required>
+            </div>
+            <div class="expiry-cvc-group">
+                <div class="form-group">
+                    <label for="expiry-date">Ngày hết hạn (MM/YY)</label>
+                    <input type="text" id="expiry-date" placeholder="12/28" required>
+                </div>
+                <div class="form-group">
+                    <label for="cvc">CVC</label>
+                    <input type="text" id="cvc" placeholder="123" required>
+                </div>
+            </div>
+            <button type="submit">Ủng hộ 50,000 VNĐ</button>
+        </form>
+
+        <div class="secure-badge">
+            <span>🔒</span> Đây là giao diện MÔ PHỎNG. Giao dịch an toàn.
+        </div>
+    </div>
+
+    <script>
+        // Lắng nghe sự kiện submit của form
+        document.getElementById('donation-form').addEventListener('submit', function(event) {
+            // Ngăn chặn form gửi đi theo cách thông thường
+            event.preventDefault();
+
+            // Hiển thị thông báo cảm ơn và khẳng định tính an toàn
+            alert(
+                'Cảm ơn tấm lòng của bạn rất nhiều! 🥰\n\n' +
+                'YÊN TÂM NHÉ: Đây chỉ là một giao diện mô phỏng để cho vui. ' + 
+                'Không có bất kỳ thông tin nào của bạn được gửi đi hay lưu lại. ' +
+                'Thông tin của bạn vẫn an toàn 100% trên máy của bạn.'
+            );
+
+            // Xóa nội dung trong form sau khi bấm nút
+            this.reset();
+        });
+    </script>
+</body>
+</html>
