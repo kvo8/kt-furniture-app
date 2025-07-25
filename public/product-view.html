@@ -265,16 +265,25 @@
             imageHTML = `<p>${l.noImage}</p>`;
         }
         
-        const formatDimensions = (length, width, height) => {
-        // Áp dụng hàm định dạng mới cho từng con số
+         const formatDimensions = (length, width, height) => {
+        // Hàm nội bộ để xử lý một con số duy nhất
+        const formatSingle = (num) => {
+            if (num === null || num === undefined || num === '') return null;
+            const number = parseFloat(num);
+            if (isNaN(number)) return num; // Nếu không phải số, giữ nguyên
+
+            // Kiểm tra và bỏ phần .00 nếu là số nguyên
+            return number % 1 === 0 ? number.toFixed(0) : number.toFixed(2);
+        };
+
+        // Áp dụng hàm formatSingle cho từng chiều (dài, rộng, cao)
         const dims = [length, width, height]
-            .map(d => formatSingleDimension(d)) // <- THAY ĐỔI QUAN TRỌNG NẰM Ở ĐÂY
-            .filter(d => d != null)
+            .map(d => formatSingle(d))
+            .filter(d => d != null) // Lọc bỏ các giá trị rỗng
             .join(' x ');
             
         return dims ? `${dims} cm` : 'N/A';
     };
-
         detailsDiv.innerHTML = `
             <div class="header-container">
                 <h1>${fullProductData[`name_${currentLang}`] || 'N/A'}</h1>
