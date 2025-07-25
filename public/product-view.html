@@ -226,6 +226,21 @@
      * Hàm render phần thông tin công khai của sản phẩm.
      * Sẽ được gọi lại mỗi khi đổi ngôn ngữ để cập nhật nội dung.
      */
+    /**
+     * Hàm mới: Định dạng một số kích thước duy nhất.
+     * Bỏ phần .00 nếu là số nguyên, giữ lại nếu là số thập phân.
+     */
+    function formatSingleDimension(num) {
+      if (num === null || num === undefined || num === '') return null;
+      const number = parseFloat(num);
+      if (isNaN(number)) return num; // Trả về giá trị gốc nếu không phải số
+
+      if (number % 1 === 0) {
+        return number.toFixed(0); // Trả về '150' từ 150.00
+      } else {
+        return number.toFixed(2); // Trả về '150.55' từ 150.55
+      }
+    }
     function renderPublicPage() {
         if (!fullProductData) return;
         const l = labels[currentLang];
@@ -251,9 +266,14 @@
         }
         
         const formatDimensions = (length, width, height) => {
-            const dims = [length, width, height].filter(d => d != null && d !== '').join(' x ');
-            return dims ? `${dims} cm` : 'N/A';
-        };
+        // Áp dụng hàm định dạng mới cho từng con số
+        const dims = [length, width, height]
+            .map(d => formatSingleDimension(d)) // <- THAY ĐỔI QUAN TRỌNG NẰM Ở ĐÂY
+            .filter(d => d != null)
+            .join(' x ');
+            
+        return dims ? `${dims} cm` : 'N/A';
+    };
 
         detailsDiv.innerHTML = `
             <div class="header-container">
