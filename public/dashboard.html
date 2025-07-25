@@ -50,6 +50,24 @@
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
 
+        /* --- BẮT ĐẦU CSS THÊM MỚI --- */
+        .fun-fact {
+            margin-top: 40px; /* Thêm khoảng cách với nút ở trên */
+            margin-bottom: 40px; /* Thêm khoảng cách với ảnh ở dưới */
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-left: 5px solid #007bff;
+            font-style: italic;
+            color: #555;
+            text-align: center;
+            font-size: 16px;
+            line-height: 1.6;
+            max-width: 700px; /* Giới hạn chiều rộng để dễ đọc hơn */
+            margin-left: auto;
+            margin-right: auto;
+        }
+        /* --- KẾT THÚC CSS THÊM MỚI --- */
+
     </style>
 </head>
 <body>
@@ -60,36 +78,95 @@
         <a href="/product-list.html">Quản lý Sản phẩm / Manage Products</a>
     </div>
 
+    <div id="fun-fact-quote" class="fun-fact"></div>
     <div class="dashboard-image-container">
         <img src="https://i.postimg.cc/0Qk1yK9q/unnamed.png" alt="KT Furniture Dashboard Image">
     </div>
 
     <script>
-        // Khi trang tải, gọi API để lấy thông tin người dùng
-        fetch('/api/me')
-            .then(response => {
-                if (!response.ok) {
-                    // Nếu response không thành công (ví dụ: 401 Unauthorized), chuyển hướng ngay
-                    throw new Error('Not authenticated');
-                }
-                return response.json();
-            })
-            .then(data => {
-                // Nếu API trả về tên người dùng, hiển thị lời chào
-                if (data && data.name) {
-                    document.getElementById('welcome-message').textContent = 'Chào mừng, ' + data.name + '!';
-                } else {
-                    // Nếu data không có thông tin user, cũng là lỗi
-                    throw new Error('User data not found');
-                }
-            })
-            .catch(error => {
-                // Nếu có bất kỳ lỗi nào, chuyển về trang đăng nhập
-                console.error('Lỗi xác thực:', error);
-                // === SỬA LỖI TẠI ĐÂY ===
-                // Chuyển hướng về trang chủ ("/") thay vì file "login.html" không còn tồn tại
-                window.location.href = '/'; 
-            });
+        // Sử dụng DOMContentLoaded để đảm bảo tất cả các phần tử HTML đã sẵn sàng trước khi chạy script
+        document.addEventListener('DOMContentLoaded', function() {
+            
+            // --- PHẦN 1: LẤY THÔNG TIN NGƯỜI DÙNG (Giữ nguyên logic của bạn) ---
+            fetch('/api/me')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Not authenticated');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data && data.name) {
+                        document.getElementById('welcome-message').textContent = 'Chào mừng, ' + data.name + '!';
+                    } else {
+                        throw new Error('User data not found');
+                    }
+                })
+                .catch(error => {
+                    console.error('Lỗi xác thực:', error);
+                    window.location.href = '/'; 
+                });
+
+            // --- PHẦN 2: HIỂN THỊ FUN FACT NGẪU NHIÊN (Code thêm mới) ---
+            const funFacts = [
+                "Jeff Bezos đặt tên công ty là 'Amazon' vì nó bắt đầu bằng chữ 'A' và liên tưởng đến sự khổng lồ của rừng Amazon.",
+                "Logo của FedEx có một mũi tên ẩn giữa chữ 'E' và 'x', tượng trưng cho tốc độ và sự chính xác.",
+                "Google ban đầu được đặt tên là 'Backrub'.",
+                "Warren Buffett vẫn sống trong ngôi nhà ông mua vào năm 1958 với giá chỉ 31,500 USD.",
+                "Người sáng lập Nike, Phil Knight, ban đầu chỉ bán giày từ thùng xe hơi của mình.",
+                "Steve Jobs bị sa thải khỏi Apple vào năm 1985, sau đó ông quay lại và biến nó thành công ty giá trị nhất thế giới.",
+                "Netflix được thành lập sau khi người sáng lập Reed Hastings bị phạt 40 USD vì trả muộn một cuốn băng VHS phim Apollo 13.",
+                "Slogan 'Just Do It' của Nike được lấy cảm hứng từ những lời cuối cùng của một tử tù ở Utah.",
+                "Hơn 50% số công ty trong danh sách Fortune 500 của năm 1955 đã không còn tồn tại.",
+                "Bill Gates đã từng nói rằng ông sẽ nghỉ hưu khi trở thành triệu phú, nhưng điều đó đã không xảy ra.",
+                "Người sáng lập IKEA, Ingvar Kamprad, nổi tiếng là người cực kỳ tiết kiệm, thường xuyên đi xe bus dù là tỷ phú.",
+                "Thương hiệu Coca-Cola được nhận diện bởi 94% dân số thế giới.",
+                "Mỗi ngày, McDonald's phục vụ khoảng 68 triệu người, nhiều hơn dân số của cả nước Anh.",
+                "Henry Ford đã tăng lương công nhân lên gấp đôi vào năm 1914, không phải vì lòng tốt, mà để họ có đủ tiền mua chính những chiếc xe họ làm ra.",
+                "Nhà đầu tư huyền thoại Peter Lynch cho rằng 'Hãy đầu tư vào những gì bạn biết'.",
+                "Elon Musk tự học lập trình và bán game đầu tiên của mình tên là Blastar khi mới 12 tuổi.",
+                "Starbucks bán được hơn 4 triệu ly cà phê mỗi ngày.",
+                "Walt Disney từng bị một tờ báo sa thải vì 'thiếu trí tưởng tượng và không có ý tưởng hay'.",
+                "Rolex là một tổ chức phi lợi nhuận. Lợi nhuận của công ty được dùng cho các hoạt động từ thiện.",
+                "Người sáng lập Alibaba, Jack Ma, đã bị Harvard từ chối 10 lần.",
+                "80% các triệu phú là thế hệ tự thân làm giàu đầu tiên.",
+                "Sản phẩm đầu tiên của Sony là một chiếc nồi cơm điện.",
+                "Samsung ban đầu là một công ty buôn bán mỳ và hàng tạp hóa.",
+                "Harland Sanders (Người sáng lập KFC) đã bị từ chối 1009 lần trước khi công thức gà rán của ông được chấp nhận.",
+                "Tên 'LEGO' bắt nguồn từ cụm từ 'leg godt' trong tiếng Đan Mạch, có nghĩa là 'chơi hay'.",
+                "Mark Zuckerberg chọn màu xanh cho Facebook vì anh bị mù màu đỏ-xanh lá.",
+                "Giá trị của việc mắc sai lầm trong kinh doanh không nằm ở việc tránh nó, mà là học hỏi từ nó thật nhanh.",
+                "Richard Branson, người sáng lập Virgin Group, đã bắt đầu kinh doanh đầu tiên của mình là một tạp chí khi mới 16 tuổi.",
+                "Air Jordan của Nike mang lại hơn 3 tỷ USD doanh thu mỗi năm.",
+                "'Stay hungry, stay foolish' (Hãy cứ khát khao, hãy cứ dại khờ) là câu nói kết thúc bài phát biểu nổi tiếng của Steve Jobs tại Đại học Stanford.",
+                "90% các startup thất bại.",
+                "Người sáng lập Twitter, Jack Dorsey, ban đầu hình dung nó là một dịch vụ tin nhắn SMS nội bộ cho công ty của mình.",
+                "Để thành công, bạn cần phải có một ý tưởng và không có gì khác ngoài sự thực thi hoàn hảo. - Michael Dell",
+                "Lý do tốt nhất để thành lập một công ty là để tạo ra ý nghĩa; để tạo ra một sản phẩm hoặc dịch vụ giúp thế giới trở nên tốt đẹp hơn. - Guy Kawasaki",
+                "Đừng lo lắng về thất bại; bạn chỉ cần đúng một lần duy nhất. - Drew Houston, người sáng lập Dropbox.",
+                "Thành công thường đến với những người quá bận rộn để đi tìm nó. - Henry David Thoreau",
+                "Thời gian của bạn có hạn, đừng lãng phí nó để sống cuộc đời của người khác. - Steve Jobs",
+                "Một thương hiệu đối với một công ty cũng giống như danh tiếng đối với một người. Bạn có được danh tiếng bằng cách cố gắng làm tốt những việc khó khăn. - Jeff Bezos",
+                "Rủi ro lớn nhất là không chấp nhận bất kỳ rủi ro nào. - Mark Zuckerberg",
+                "Nếu bạn không tự xây dựng ước mơ của mình, người khác sẽ thuê bạn để xây dựng ước mơ của họ.",
+                "Lamborghini ban đầu là một công ty sản xuất máy kéo.",
+                "Howard Schultz đã bị từ chối 217 lần khi kêu gọi vốn để thành lập Starbucks.",
+                "Khách hàng không mua sản phẩm và dịch vụ. Họ mua các mối quan hệ, những câu chuyện và phép màu. - Seth Godin",
+                "Bạn không cần một ý tưởng mang tính cách mạng. Bạn chỉ cần một sản phẩm tốt hơn 10% so với đối thủ.",
+                "Nokia ban đầu là một nhà máy sản xuất giấy.",
+                "Microsoft đã tạo ra một chiếc smartwatch vào năm 1994, 20 năm trước khi Apple Watch ra đời.",
+                "Người bình thường có một mục tiêu. Người thành công có một hệ thống.",
+                "Đừng bao giờ từ bỏ một giấc mơ chỉ vì thời gian cần để thực hiện nó. Thời gian rồi cũng sẽ trôi đi. - Earl Nightingale",
+                "Cách để bắt đầu là ngừng nói và bắt đầu làm. - Walt Disney",
+                "Nếu bạn sinh ra trong nghèo khó, đó không phải là lỗi của bạn. Nhưng nếu bạn chết trong nghèo khó, đó là lỗi của bạn. - Bill Gates"
+            ];
+            const quoteElement = document.getElementById('fun-fact-quote');
+            if (quoteElement) {
+                const randomIndex = Math.floor(Math.random() * funFacts.length);
+                const randomFact = funFacts[randomIndex];
+                quoteElement.innerHTML = `💡 <strong>Có thể bạn chưa biết:</strong> "${randomFact}"`;
+            }
+        });
     </script>
 </body>
 </html>
