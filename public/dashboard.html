@@ -50,10 +50,10 @@
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
 
-        /* --- BẮT ĐẦU CSS THÊM MỚI --- */
+        /* --- CSS CHO FUN FACT --- */
         .fun-fact {
-            margin-top: 40px; /* Thêm khoảng cách với nút ở trên */
-            margin-bottom: 40px; /* Thêm khoảng cách với ảnh ở dưới */
+            margin-top: 40px;
+            margin-bottom: 25px; /* Giảm khoảng cách dưới để nhường cho ticker */
             padding: 15px;
             background-color: #f8f9fa;
             border-left: 5px solid #007bff;
@@ -62,12 +62,42 @@
             text-align: center;
             font-size: 16px;
             line-height: 1.6;
-            max-width: 700px; /* Giới hạn chiều rộng để dễ đọc hơn */
+            max-width: 700px;
             margin-left: auto;
             margin-right: auto;
         }
-        /* --- KẾT THÚC CSS THÊM MỚI --- */
 
+        /* --- CSS CHO BẢNG TIN TÀI CHÍNH (THÊM MỚI) --- */
+        .financial-ticker-container {
+            padding: 10px;
+            background-color: #1a1a1a; /* Nền đen để nổi bật */
+            border-radius: 5px;
+            max-width: 800px;
+            margin: 0 auto 40px auto; /* Tách biệt với các phần khác */
+            overflow: hidden; /* Ẩn đi các phần tử tràn ra ngoài */
+            height: 40px; /* Cố định chiều cao */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #financial-ticker {
+            color: #fff; /* Chữ trắng */
+            font-size: 18px;
+            font-weight: 500;
+            margin: 0;
+            padding: 5px 0;
+            white-space: nowrap; /* Đảm bảo nội dung trên một dòng */
+            transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out; /* Hiệu ứng mượt mà */
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Class để tạo hiệu ứng ẩn đi */
+        #financial-ticker.fading-out {
+            opacity: 0;
+            transform: translateY(-10px); /* Di chuyển lên trên một chút khi mờ đi */
+        }
     </style>
 </head>
 <body>
@@ -79,20 +109,22 @@
     </div>
 
     <div id="fun-fact-quote" class="fun-fact"></div>
+
+    <div class="financial-ticker-container">
+        <p id="financial-ticker"></p>
+    </div>
+
     <div class="dashboard-image-container">
         <img src="https://i.postimg.cc/0Qk1yK9q/unnamed.png" alt="KT Furniture Dashboard Image">
     </div>
 
     <script>
-        // Sử dụng DOMContentLoaded để đảm bảo tất cả các phần tử HTML đã sẵn sàng trước khi chạy script
         document.addEventListener('DOMContentLoaded', function() {
             
-            // --- PHẦN 1: LẤY THÔNG TIN NGƯỜI DÙNG (Giữ nguyên logic của bạn) ---
+            // --- PHẦN 1: LẤY THÔNG TIN NGƯỜI DÙNG ---
             fetch('/api/me')
                 .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Not authenticated');
-                    }
+                    if (!response.ok) { throw new Error('Not authenticated'); }
                     return response.json();
                 })
                 .then(data => {
@@ -107,7 +139,7 @@
                     window.location.href = '/'; 
                 });
 
-            // --- PHẦN 2: HIỂN THỊ FUN FACT NGẪU NHIÊN (Code thêm mới) ---
+            // --- PHẦN 2: HIỂN THỊ FUN FACT NGẪU NHIÊN ---
             const funFacts = [
                 "Jeff Bezos đặt tên công ty là 'Amazon' vì nó bắt đầu bằng chữ 'A' và liên tưởng đến sự khổng lồ của rừng Amazon.",
                 "Logo của FedEx có một mũi tên ẩn giữa chữ 'E' và 'x', tượng trưng cho tốc độ và sự chính xác.",
@@ -165,6 +197,56 @@
                 const randomIndex = Math.floor(Math.random() * funFacts.length);
                 const randomFact = funFacts[randomIndex];
                 quoteElement.innerHTML = `💡 <strong>Có thể bạn chưa biết:</strong> "${randomFact}"`;
+            }
+
+            // --- PHẦN 3: HIỂN THỊ BẢNG TIN TÀI CHÍNH TỰ ĐỘNG LẬT (Code thêm mới) ---
+            const financialData = [
+                '<strong>VN-INDEX:</strong> 1,282.15 pts <span style="color:#33ff99;">(+0.75%)</span>',
+                '<strong>Giá vàng SJC:</strong> 76.98 triệu/lượng (bán ra)',
+                '<strong>Tỷ giá USD/VND:</strong> 25,450 <span style="color:#ff5733;">(-25đ)</span>',
+                '<strong>Tỷ giá EUR/VND:</strong> 27,610',
+                '<strong>Tỷ giá JPY/VND:</strong> 162.50',
+                '<strong>S&P 500:</strong> 5,480.40 pts <span style="color:#33ff99;">(+0.90%)</span>',
+                '<strong>Giá dầu Brent:</strong> $85.50/thùng',
+                '<strong>Bitcoin (BTC):</strong> $68,500.75 <span style="color:#33ff99;">(+2.1%)</span>',
+                '<strong>Cổ phiếu FPT:</strong> 135,500đ/cp',
+                '<strong>Cổ phiếu HPG (Hòa Phát):</strong> 28,900đ/cp <span style="color:#ff5733;">(-0.5%)</span>',
+                '<strong>Dow Jones:</strong> 39,112.16 pts <span style="color:#33ff99;">(+0.6%)</span>',
+                '<strong>Lãi suất tiết kiệm (12 tháng):</strong> ~4.8%/năm',
+                '<strong>Ethereum (ETH):</strong> $3,550.30',
+                '<strong>Nasdaq Composite:</strong> 17,689.80 pts <span style="color:#33ff99;">(+1.2%)</span>',
+                '<strong>Vốn hóa thị trường VN:</strong> ~6.8 triệu tỷ VNĐ',
+                '<strong>Giá vàng 9999:</strong> 74.10 triệu/lượng',
+                '<strong>Cổ phiếu VNM (Vinamilk):</strong> 66,200đ/cp',
+                '<strong>Tỷ giá AUD/VND:</strong> 16,950',
+                '<strong>Cổ phiếu TCB (Techcombank):</strong> 22,700đ/cp <span style="color:#33ff99;">(+1.1%)</span>',
+                '<strong>GDP Việt Nam (dự báo):</strong> tăng trưởng ~6.5%',
+                '<strong>Giá cà phê Robusta:</strong> 120,500đ/kg',
+                '<strong>Hang Seng Index:</strong> 18,027.71 pts <span style="color:#ff5733;">(-0.8%)</span>',
+                '<strong>Cổ phiếu VIC (Vingroup):</strong> 42,400đ/cp',
+                '<strong>Lạm phát (CPI):</strong> mục tiêu dưới 4.5%',
+                '<strong>Giá Bạc (Silver):</strong> $29.50/ounce',
+                '<strong>Tỷ giá GBP/VND:</strong> 32,250',
+                '<strong>Cổ phiếu MWG (Thế Giới Di Động):</strong> 63,800đ/cp',
+                '<strong>Chỉ số Nikkei 225:</strong> 39,215.00 pts',
+                '<strong>Giá gạo 5% tấm (XK):</strong> ~$580/tấn',
+                '<strong>Dự trữ ngoại hối:</strong> ~110 tỷ USD'
+            ];
+            const tickerElement = document.getElementById('financial-ticker');
+            if (tickerElement) {
+                let currentDataIndex = 0;
+                // Hàm để cập nhật nội dung ticker
+                function updateTicker() {
+                    tickerElement.classList.add('fading-out');
+                    setTimeout(() => {
+                        currentDataIndex = (currentDataIndex + 1) % financialData.length;
+                        tickerElement.innerHTML = financialData[currentDataIndex];
+                        tickerElement.classList.remove('fading-out');
+                    }, 500);
+                }
+                // Hiển thị thông tin đầu tiên và bắt đầu chu kỳ
+                tickerElement.innerHTML = financialData[0];
+                setInterval(updateTicker, 10000); // Đổi thông tin mỗi 10 giây
             }
         });
     </script>
