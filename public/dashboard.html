@@ -53,7 +53,7 @@
         /* --- CSS CHO FUN FACT --- */
         .fun-fact {
             margin-top: 40px;
-            margin-bottom: 25px; /* Giảm khoảng cách dưới để nhường cho ticker */
+            margin-bottom: 25px;
             padding: 15px;
             background-color: #f8f9fa;
             border-left: 5px solid #007bff;
@@ -67,36 +67,66 @@
             margin-right: auto;
         }
 
-        /* --- CSS CHO BẢNG TIN TÀI CHÍNH (THÊM MỚI) --- */
+        /* --- CSS CHO BẢNG TIN TÀI CHÍNH --- */
         .financial-ticker-container {
             padding: 10px;
-            background-color: #1a1a1a; /* Nền đen để nổi bật */
+            background-color: #1a1a1a; /* Nền đen */
             border-radius: 5px;
             max-width: 800px;
-            margin: 0 auto 40px auto; /* Tách biệt với các phần khác */
-            overflow: hidden; /* Ẩn đi các phần tử tràn ra ngoài */
-            height: 40px; /* Cố định chiều cao */
+            margin: 0 auto 15px auto; /* Giảm khoảng cách dưới */
+            overflow: hidden;
+            height: 40px;
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
         #financial-ticker {
-            color: #fff; /* Chữ trắng */
+            color: #fff;
             font-size: 18px;
             font-weight: 500;
             margin: 0;
             padding: 5px 0;
-            white-space: nowrap; /* Đảm bảo nội dung trên một dòng */
-            transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out; /* Hiệu ứng mượt mà */
+            white-space: nowrap;
+            transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
             opacity: 1;
             transform: translateY(0);
         }
 
-        /* Class để tạo hiệu ứng ẩn đi */
         #financial-ticker.fading-out {
             opacity: 0;
-            transform: translateY(-10px); /* Di chuyển lên trên một chút khi mờ đi */
+            transform: translateY(-10px);
+        }
+
+        /* --- CSS CHO BẢNG TIN THỜI SỰ (THÊM MỚI) --- */
+        .news-ticker-container {
+            padding: 10px;
+            background-color: #b32a2a; /* Nền đỏ */
+            border-radius: 5px;
+            max-width: 800px;
+            margin: 0 auto 40px auto; /* Khoảng cách với ảnh */
+            overflow: hidden;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #news-ticker {
+            color: #fff;
+            font-size: 18px;
+            font-weight: 500;
+            margin: 0;
+            padding: 5px 0;
+            white-space: nowrap;
+            transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        #news-ticker.fading-out {
+            opacity: 0;
+            transform: translateY(-10px);
         }
     </style>
 </head>
@@ -112,6 +142,10 @@
 
     <div class="financial-ticker-container">
         <p id="financial-ticker"></p>
+    </div>
+
+    <div class="news-ticker-container">
+        <p id="news-ticker"></p>
     </div>
 
     <div class="dashboard-image-container">
@@ -199,7 +233,7 @@
                 quoteElement.innerHTML = `💡 <strong>Có thể bạn chưa biết:</strong> "${randomFact}"`;
             }
 
-            // --- PHẦN 3: HIỂN THỊ BẢNG TIN TÀI CHÍNH TỰ ĐỘNG LẬT (Code thêm mới) ---
+            // --- PHẦN 3: HIỂN THỊ BẢNG TIN TÀI CHÍNH TỰ ĐỘNG LẬT ---
             const financialData = [
                 '<strong>VN-INDEX:</strong> 1,282.15 pts <span style="color:#33ff99;">(+0.75%)</span>',
                 '<strong>Giá vàng SJC:</strong> 76.98 triệu/lượng (bán ra)',
@@ -235,7 +269,6 @@
             const tickerElement = document.getElementById('financial-ticker');
             if (tickerElement) {
                 let currentDataIndex = 0;
-                // Hàm để cập nhật nội dung ticker
                 function updateTicker() {
                     tickerElement.classList.add('fading-out');
                     setTimeout(() => {
@@ -244,10 +277,58 @@
                         tickerElement.classList.remove('fading-out');
                     }, 500);
                 }
-                // Hiển thị thông tin đầu tiên và bắt đầu chu kỳ
                 tickerElement.innerHTML = financialData[0];
-                setInterval(updateTicker, 10000); // Đổi thông tin mỗi 10 giây
+                setInterval(updateTicker, 10000);
             }
+
+            // --- PHẦN 4: HIỂN THỊ BẢNG TIN TỨC THỜI SỰ (Code thêm mới) ---
+            const newsHeadlines = [
+                'Hội nghị thượng đỉnh G7 thảo luận về biến đổi khí hậu và an ninh năng lượng toàn cầu.',
+                'Tập đoàn công nghệ XYZ ra mắt chip AI thế hệ mới, hứa hẹn thay đổi ngành công nghiệp.',
+                'Căng thẳng thương mại gia tăng giữa hai cường quốc kinh tế sau vòng đàm phán thất bại.',
+                'Các nhà khoa học phát hiện một hành tinh mới có điều kiện giống Trái Đất trong hệ sao gần nhất.',
+                'Giá năng lượng tái tạo đạt mức thấp kỷ lục, thúc đẩy quá trình chuyển đổi xanh.',
+                'Thỏa thuận ngừng bắn lịch sử được ký kết tại khu vực Trung Đông sau nhiều tháng xung đột.',
+                'BREAKING: Ngân hàng Trung ương Châu Âu (ECB) bất ngờ tăng lãi suất cơ bản.',
+                'Việt Nam trở thành điểm đến hàng đầu cho các nhà đầu tư công nghệ tại Đông Nam Á.',
+                'Một loại vật liệu siêu bền mới được phát minh, có khả năng tự phục hồi.',
+                'Thị trường xe điện toàn cầu dự kiến tăng trưởng gấp đôi trong vòng 3 năm tới.',
+                'Startup về y tế từ xa huy động thành công 200 triệu USD trong vòng gọi vốn Series C.',
+                'Các quy định mới về quyền riêng tư dữ liệu được đề xuất, ảnh hưởng đến các Big Tech.',
+                'Phát hiện chấn động trong ngành khảo cổ học: tìm thấy một thành phố cổ bị lãng quên.',
+                'Thế vận hội Olympic mùa hè khai mạc với màn trình diễn công nghệ ánh sáng hoành tráng.',
+                'Tình trạng thiếu hụt chip bán dẫn toàn cầu có dấu hiệu hạ nhiệt.',
+                'Liên minh châu Phi (AU) công bố kế hoạch thành lập một khu vực thương mại tự do chung.',
+                'NASA xác nhận kế hoạch đưa người trở lại Mặt Trăng vào cuối thập kỷ này.',
+                'Lạm phát tại Mỹ có dấu hiệu chững lại, mang lại hy vọng cho thị trường chứng khoán.',
+                'Một tác phẩm nghệ thuật kỹ thuật số (NFT) vừa được bán với giá kỷ lục 15 triệu USD.',
+                'Các hãng hàng không công bố kế hoạch sử dụng nhiên liệu bay bền vững (SAF) trên diện rộng.',
+                'Nạn phá rừng Amazon đạt mức báo động, kêu gọi hành động khẩn cấp từ cộng đồng quốc tế.',
+                'Hệ thống giao thông thông minh ứng dụng AI được thử nghiệm thành công tại Singapore.',
+                'Dân số thế giới dự kiến đạt 8.5 tỷ người vào cuối năm nay.',
+                'Một loại vắc-xin cúm phổ thông mới cho thấy hiệu quả cao trong các thử nghiệm lâm sàng.',
+                'Cuộc đua không gian thương mại nóng lên với sự tham gia của nhiều công ty tư nhân mới.',
+                'An ninh mạng trở thành ưu tiên hàng đầu của các chính phủ sau loạt tấn công quy mô lớn.',
+                'Giải Nobel Hòa bình được trao cho một tổ chức hoạt động vì quyền của người tị nạn.',
+                'Kinh tế Ấn Độ được dự báo sẽ vượt qua Nhật Bản để trở thành nền kinh tế lớn thứ ba thế giới.',
+                'Trí tuệ nhân tạo tạo sinh (Generative AI) bắt đầu được ứng dụng trong ngành giáo dục.',
+                'Sự kiện thể thao World Cup Nữ phá vỡ mọi kỷ lục về lượng người xem.'
+            ];
+            const newsTickerElement = document.getElementById('news-ticker');
+            if (newsTickerElement) {
+                let currentNewsIndex = 0;
+                function updateNewsTicker() {
+                    newsTickerElement.classList.add('fading-out');
+                    setTimeout(() => {
+                        currentNewsIndex = (currentNewsIndex + 1) % newsHeadlines.length;
+                        newsTickerElement.innerHTML = `<strong>TIN NÓNG:</strong> ${newsHeadlines[currentNewsIndex]}`;
+                        newsTickerElement.classList.remove('fading-out');
+                    }, 500);
+                }
+                newsTickerElement.innerHTML = `<strong>TIN NÓNG:</strong> ${newsHeadlines[0]}`;
+                setInterval(updateNewsTicker, 10000);
+            }
+
         });
     </script>
 </body>
