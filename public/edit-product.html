@@ -248,6 +248,7 @@
     document.addEventListener('DOMContentLoaded', async () => {
         const urlParams = new URLSearchParams(window.location.search);
         const productId = urlParams.get('id');
+        const encodedProductId = encodeURIComponent(productId);
 
         if (!productId) {
             loadingOverlay.innerHTML = '<p style="color: red;">Lỗi: Không tìm thấy ID sản phẩm.</p>';
@@ -256,7 +257,7 @@
 
         try {
             const [productResponse, userResponse] = await Promise.all([
-                fetch(`/api/products/${productId}`),
+                fetch(`/api/products/${encodedProductId}`),
                 fetch('/api/me')
             ]);
 
