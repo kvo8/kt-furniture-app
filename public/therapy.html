@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trạm Sạc Năng Lượng Tâm Hồn</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .chat-container {
+            width: 100%;
+            max-width: 600px;
+            height: 80vh;
+            max-height: 700px;
+            background-color: white;
+            border-radius: 16px;
+            box-shadow: 0 12px 28px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .chat-header {
+            padding: 20px;
+            background-color: #6f42c1;
+            color: white;
+            text-align: center;
+        }
+        .chat-header h2 { margin: 0; font-size: 1.5em; }
+        .chat-header p { margin: 5px 0 0; opacity: 0.8; }
+        
+        .chat-log {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        .chat-message {
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+            max-width: 80%;
+        }
+        .ai-message { align-items: flex-start; }
+        .user-message { align-items: flex-end; margin-left: auto; }
+
+        .message-bubble {
+            padding: 12px 18px;
+            border-radius: 20px;
+            line-height: 1.5;
+        }
+        .ai-message .message-bubble {
+            background-color: #e4e6eb;
+            color: #050505;
+            border-bottom-left-radius: 4px;
+        }
+        .user-message .message-bubble {
+            background-color: #007bff;
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+        
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+        }
+        .typing-indicator span {
+            height: 8px;
+            width: 8px;
+            background-color: #ccc;
+            border-radius: 50%;
+            display: inline-block;
+            margin: 0 2px;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+        .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1.0); }
+        }
+
+        .user-options {
+            padding: 15px;
+            border-top: 1px solid #ddd;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+        .user-options button {
+            padding: 10px 15px;
+            font-size: 1em;
+            border: 1px solid #007bff;
+            background-color: #f0f8ff;
+            color: #007bff;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .user-options button:hover {
+            background-color: #007bff;
+            color: white;
+        }
+        .user-options button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .disclaimer {
+            text-align: center;
+            font-size: 12px;
+            color: #888;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="chat-container">
+        <div class="chat-header">
+            <h2>Dr. Gen Z</h2>
+            <p>Chuyên gia lắng nghe & "gỡ rối" tơ lòng</p>
+        </div>
+        <div class="chat-log" id="chat-log">
+            </div>
+        <div class="user-options" id="user-options">
+            </div>
+        <p class="disclaimer">Lưu ý: Đây là một AI mô phỏng cho mục đích giải trí và không thay thế cho tư vấn tâm lý chuyên nghiệp.</p>
+    </div>
+
+    <script>
+    const chatLog = document.getElementById('chat-log');
+    const userOptions = document.getElementById('user-options');
+
+    // "Cơ sở dữ liệu" các câu trả lời của AI
+    const responses = {
+        stress: {
+            analysis: "Hiểu rồi, stress giống như việc bạn cố gắng 'gánh team' nhưng mạng lại lag vậy. Cơ thể và tâm trí bạn đang phát tín hiệu 'SOS' đó.",
+            advice: "Hãy thử 'reset' lại hệ thống bằng một bản nhạc bạn yêu thích, hoặc đi dạo 5 phút xem. Đừng cố gắng giải quyết mọi thứ cùng lúc, hãy chia nhỏ vấn đề ra như cách bạn ăn một chiếc bánh pizza khổng lồ vậy - từng miếng một thôi!",
+            followUp: "Sau khi hít thở sâu, bạn cảm thấy đỡ hơn chút nào chưa, hay vẫn còn muốn 'bùng cháy'?"
+        },
+        anger: {
+            analysis: "Tức giận à? Cảm giác này giống như điện thoại báo pin yếu nhưng lại không tìm thấy sạc, rất khó chịu. Cơn giận là một cảm xúc bình thường, nó cho thấy có điều gì đó quan trọng với bạn đang bị ảnh hưởng.",
+            advice: "Thay vì 'quăng điện thoại', hãy thử viết ra 3 điều khiến bạn bực mình vào giấy rồi... vò nát nó. Năng lượng tiêu cực cần được giải tỏa một cách an toàn. Đếm từ 1 đến 10 cũng là một chiêu 'hack' kinh điển đó!",
+            followUp: "Bạn đã thấy 'hạ hỏa' hơn chưa, hay vẫn muốn tìm một 'cột thu lôi' để trút giận?"
+        },
+        sadness: {
+            analysis: "Buồn bã là một cơn mưa rào trong tâm hồn. Đôi khi nó cần thiết để gột rửa mọi thứ và làm cây cối xanh tươi trở lại. Cứ cho phép mình được yếu đuối một chút, không sao cả.",
+            advice: "Hãy tự thưởng cho mình một ly trà nóng hoặc xem một bộ phim hài. Nỗi buồn rất sợ sự ấm áp và tiếng cười. Trò chuyện với một người bạn thân cũng là một liều thuốc tuyệt vời.",
+            followUp: "Bạn có muốn chia sẻ thêm điều gì khiến mình phiền lòng không?"
+        },
+        love: {
+            analysis: "Ồ là la, 'dính' vào lưới tình rồi à? Cảm giác này giống như vừa trúng số độc đắc nhưng lại lo không biết tiêu tiền vào đâu. Vừa hạnh phúc, vừa bối rối!",
+            advice: "Cứ tận hưởng cảm giác 'trên mây' này đi! Tình yêu là một gia vị tuyệt vời của cuộc sống. Hãy cứ là chính mình, chân thành và đừng cố gắng trở thành một ai khác. Điều tuyệt vời nhất sẽ đến.",
+            followUp: "Bạn đang ở giai đoạn 'cảm nắng' hay đã 'yêu đậm sâu' rồi? Kể tôi nghe với!"
+        },
+        reset: {
+            analysis: "Tuyệt vời! Tôi rất vui vì đã có thể trò chuyện cùng bạn. Hãy nhớ rằng, mọi cảm xúc đều có giá trị của nó.",
+            advice: "Nếu cần một người lắng nghe, tôi luôn ở đây. Chúc bạn một ngày tốt lành và tràn đầy năng lượng tích cực!",
+            followUp: ""
+        }
+    };
+
+    // Hàm để thêm tin nhắn vào log
+    function addMessage(sender, text) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `chat-message ${sender}-message`;
+        messageDiv.innerHTML = `<div class="message-bubble">${text}</div>`;
+        chatLog.appendChild(messageDiv);
+        chatLog.scrollTop = chatLog.scrollHeight; // Tự động cuộn xuống
+    }
+
+    // Hàm hiển thị các lựa chọn ban đầu
+    function showInitialOptions() {
+        userOptions.innerHTML = `
+            <button data-issue="stress">Tôi đang stress...</button>
+            <button data-issue="anger">Tôi đang tức giận!</button>
+            <button data-issue="sadness">Tôi cảm thấy buồn...</button>
+            <button data-issue="love">Hình như tôi yêu rồi ❤️</button>
+        `;
+    }
+    
+    // Hàm hiển thị các lựa chọn cuối cùng
+    function showFinalOptions() {
+        userOptions.innerHTML = `
+            <button data-issue="reset">Cảm ơn, tôi ổn rồi!</button>
+        `;
+    }
+
+    // Hàm mô phỏng AI đang gõ
+    function showTypingIndicator() {
+        const typingDiv = document.createElement('div');
+        typingDiv.className = 'chat-message ai-message typing-indicator';
+        typingDiv.innerHTML = '<span></span><span></span><span></span>';
+        typingDiv.id = 'typing';
+        chatLog.appendChild(typingDiv);
+        chatLog.scrollTop = chatLog.scrollHeight;
+    }
+
+    // Hàm ẩn AI đang gõ
+    function hideTypingIndicator() {
+        const typingDiv = document.getElementById('typing');
+        if (typingDiv) {
+            chatLog.removeChild(typingDiv);
+        }
+    }
+
+    // Xử lý khi người dùng chọn một vấn đề
+    async function handleIssueSelection(issueKey) {
+        const buttons = userOptions.querySelectorAll('button');
+        buttons.forEach(button => button.disabled = true);
+
+        const userText = document.querySelector(`button[data-issue="${issueKey}"]`).textContent;
+        addMessage('user', userText);
+
+        const response = responses[issueKey];
+        if (!response) return;
+
+        showTypingIndicator();
+        await new Promise(resolve => setTimeout(resolve, 1500)); // Giả vờ suy nghĩ
+        hideTypingIndicator();
+        addMessage('ai', response.analysis);
+
+        if(response.advice) {
+            showTypingIndicator();
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            hideTypingIndicator();
+            addMessage('ai', response.advice);
+        }
+
+        if(response.followUp) {
+            showTypingIndicator();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            hideTypingIndicator();
+            addMessage('ai', response.followUp);
+        }
+
+        // Nếu là reset thì hiển thị lại lựa chọn ban đầu, ngược lại hiển thị lựa chọn cuối
+        if(issueKey === 'reset') {
+            showInitialOptions();
+        } else {
+            showFinalOptions();
+        }
+    }
+
+    // Lắng nghe sự kiện click trên các nút lựa chọn
+    userOptions.addEventListener('click', (event) => {
+        if (event.target.tagName === 'BUTTON') {
+            const issueKey = event.target.dataset.issue;
+            handleIssueSelection(issueKey);
+        }
+    });
+
+    // Bắt đầu cuộc trò chuyện
+    async function startChat() {
+        showTypingIndicator();
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        hideTypingIndicator();
+        addMessage('ai', "Xin chào bạn yêu! Tôi là Dr. Gen Z, chuyên gia 'bắt bệnh' cảm xúc đây. Hôm nay, có chuyện gì khiến 'ra-đa' của bạn rung rinh thế? 😉");
+        
+        showTypingIndicator();
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        hideTypingIndicator();
+        showInitialOptions();
+    }
+
+    // Chạy khi trang tải xong
+    startChat();
+
+    </script>
+</body>
+</html>

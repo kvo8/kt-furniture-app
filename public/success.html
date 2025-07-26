@@ -207,27 +207,36 @@
      * =================================================================
      * SCRIPT CHO TRANG SUCCESS.HTML - PHIÊN BẢN HOÀN THIỆN
      * =================================================================
+     * Chức năng:
+     * 1. Lấy Product ID từ URL của trình duyệt.
+     * 2. Gọi API đến server để lấy lại toàn bộ dữ liệu của sản phẩm vừa tạo.
+     * 3. Hiển thị tất cả thông tin một cách có tổ chức, chia theo nhóm logic.
+     * 4. Luôn hiển thị tất cả các mục, nếu dữ liệu trống sẽ hiển thị "N/A".
+     * 5. Tạo mã QR Code và Barcode cho sản phẩm.
+     * 6. Cung cấp các nút điều hướng tiện lợi cho người dùng.
      */
     document.addEventListener('DOMContentLoaded', () => {
-        // --- BƯỚC 1: KHỞI TẠO BIẾN ---
+        // --- BƯỚC 1: KHỞI TẠO BIẾN VÀ LẤY CÁC PHẦN TỬ DOM CẦN THIẾT ---
         const urlParams = new URLSearchParams(window.location.search);
         const productId = urlParams.get('id');
         const statusMessage = document.getElementById('status-message');
         const productReviewDiv = document.getElementById('product-review');
-        const detailsWrapper = document.getElementById('details-wrapper');
+        const detailsWrapper = document.getElementById('details-wrapper'); // Wrapper cho nội dung chi tiết
         
-        // --- BƯỚC 2: KIỂM TRA PRODUCT ID ---
+        // --- BƯỚC 2: KIỂM TRA SỰ TỒN TẠI CỦA PRODUCT ID ---
         if (!productId) {
             statusMessage.textContent = '❌ Lỗi: Không tìm thấy ID sản phẩm trong URL.';
             statusMessage.style.color = '#dc3545';
-            return;
+            return; // Dừng thực thi nếu không có ID
         }
 
         // --- BƯỚC 3: CẬP NHẬT GIAO DIỆN BAN ĐẦU ---
         statusMessage.textContent = `🎉 Thêm sản phẩm ${productId} thành công!`;
         productReviewDiv.style.display = 'block';
 
-        // --- BƯỚC 4: ĐỊNH NGHĨA NHÃN VÀ CẤU TRÚC ---
+        // --- BƯỚC 4: ĐỊNH NGHĨA NHÃN VÀ CẤU TRÚC DỮ LIỆU ---
+        
+        // `fieldLabels`: Một "từ điển" để chuyển các key trong dữ liệu (ví dụ: 'name_vi') thành nhãn thân thiện với người dùng.
         const fieldLabels = {
             name_vi: "Tên Sản Phẩm (VI)", name_en: "Product Name (EN)", collection_vi: "Bộ Sưu Tập (VI)", collection_en: "Collection (EN)", parent_id: "Mã Sản Phẩm Gốc",
             company: "Công ty", customer: "Khách hàng", dimensions: "Kích thước (D x R x C)", packed_dimensions: "KT đóng gói (D x R x C)",
@@ -241,6 +250,8 @@
             packed_weight_total: "Tổng cân nặng đóng thùng (Kg)", aluminum_supplier: "Nhà cung cấp nhôm", wicker_supplier: "Nhà cung cấp wicker", 
             stone_supplier: "Nhà cung cấp mặt đá", powder_coating_supplier: "Nhà cung cấp sơn tĩnh điện"
         };
+        
+        // `displayGroups`: Định nghĩa cấu trúc các nhóm và thứ tự các trường sẽ được hiển thị.
         const displayGroups = {
             "Thông tin chung & Khách hàng": ['name_vi', 'name_en', 'collection_vi', 'collection_en', 'parent_id', 'company', 'customer'],
             "Thông số kỹ thuật & Vật liệu": ['dimensions', 'packed_dimensions', 'material_vi', 'material_en', 'color_vi', 'color_en', 'fabric_vi', 'fabric_en', 'wicker_vi', 'wicker_en', 'aluminum_profile', 'hardware', 'cushion_details', 'pillow_details', 'specification'],
@@ -252,27 +263,81 @@
         };
 
         // --- BƯỚC 5: KHAI BÁO CÁC HÀM TIỆN ÍCH ---
-        const formatDimensions = (length, width, height) => { /* Giữ nguyên code của bạn */ };
-        const generateBarcode = (pId) => { /* Giữ nguyên code của bạn */ };
-        const generateQRCode = (pId) => { /* Giữ nguyên code của bạn */ };
-        const renderDetailsSection = (title, fields, data) => { /* Giữ nguyên code của bạn */ };
+
+        /** Hàm định dạng kích thước */
+        const formatDimensions = (length, width, height) => {
+            const dims = [length, width, height].filter(d => d != null && d !== '').join(' x ');
+            return dims ? `${dims} cm` : 'N/A';
+        };
+
+        /** Hàm tạo Barcode */
+        const generateBarcode = (pId) => {
+            if (pId) JsBarcode("#barcode-display", pId, { format: "CODE128", width: 2, height: 80, displayValue: true, margin: 10 });
+        };
+
+        /** Hàm tạo QR Code */
+        const generateQRCode = (pId) => {
+            const publicUrl = `${window.location.origin}/product-view.html?id=${pId}`;
+            const qr = qrcode(0, 'H'); // Mức độ sửa lỗi cao
+            qr.addData(publicUrl);
+            qr.make();
+            document.getElementById('qrcode-container').innerHTML = qr.createImgTag(8, 10);
+        };
+
+        /** * Hàm render một nhóm thông tin ra giao diện.
+         * Đây là hàm cốt lõi, nó sẽ tạo ra các khối HTML cho mỗi nhóm.
+         */
+        const renderDetailsSection = (title, fields, data) => {
+            const gridDiv = document.createElement('div');
+            gridDiv.className = 'product-details-grid';
+            
+            fields.forEach(key => {
+                const label = fieldLabels[key] || key;
+                let value = (key === 'dimensions') ? formatDimensions(data.length, data.width, data.height)
+                          : (key === 'packed_dimensions') ? formatDimensions(data.packed_length, data.packed_width, data.packed_height)
+                          : data[key];
+
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'detail-item';
+                
+                let contentHTML = `<strong>${label}:</strong>`;
+                if (Array.isArray(value)) { // Xử lý cho các trường là danh sách (ví dụ: URL file)
+                    contentHTML += (value.length > 0)
+                        ? `<ul>${value.map(item => {
+                              const url = (typeof item === 'object' && item.url) ? item.url : item;
+                              const name = (typeof item === 'object' && item.name) ? item.name : url.split('/').pop();
+                              return `<li><a href="${url}" target="_blank" rel="noopener noreferrer">${name}</a></li>`;
+                          }).join('')}</ul>`
+                        : `<span>N/A</span>`;
+                } else { // Xử lý cho các trường giá trị đơn
+                    contentHTML += (value != null && value !== '') ? `<span>${value}</span>` : `<span>N/A</span>`;
+                }
+                
+                itemDiv.innerHTML = contentHTML;
+                gridDiv.appendChild(itemDiv);
+            });
+            
+            if (gridDiv.hasChildNodes()) {
+                const sectionDiv = document.createElement('div');
+                sectionDiv.className = 'details-section';
+                sectionDiv.innerHTML = `<h3>${title}</h3>`;
+                sectionDiv.appendChild(gridDiv);
+                return sectionDiv;
+            }
+            return null;
+        };
         
-        // --- BƯỚC 6: HÀM CHÍNH - GỌI API VÀ KHỞI TẠO TRANG ---
+        // --- BƯỚC 6: HÀM CHÍNH - GỌI API VÀ KHỞI TẠO TOÀN BỘ TRANG ---
         const fetchAndDisplayProduct = async () => {
             try {
-                // ================================================================
-                // === THAY ĐỔI QUAN TRỌNG NẰM Ở ĐÂY ĐỂ SỬA LỖI 404 ===
-                // Mã hóa ID trước khi đưa vào URL
-                const encodedProductId = encodeURIComponent(productId);
-                // ================================================================
-
                 // Gọi API để lấy dữ liệu sản phẩm
-                const response = await fetch(`/api/products/${encodedProductId}`); // Sử dụng ID đã mã hóa
+                const response = await fetch(`/api/products/${productId}`);
                 if (!response.ok) throw new Error(`Lỗi từ server: ${response.status}`);
                 
                 const product = await response.json();
                 if (product.error) throw new Error(product.error);
 
+                // Xóa nội dung cũ trong wrapper và bắt đầu render
                 detailsWrapper.innerHTML = ''; 
                 for (const groupTitle in displayGroups) {
                     const sectionElement = renderDetailsSection(groupTitle, displayGroups[groupTitle], product);
@@ -281,11 +346,11 @@
                     }
                 }
                 
-                // Tạo mã QR và Barcode với ID gốc (chưa mã hóa)
+                // Tạo mã QR và Barcode
                 generateQRCode(productId);
                 generateBarcode(productId);
                 
-                // Thêm các nút hành động với ID gốc (chưa mã hóa)
+                // Thêm các nút hành động (Xem trang công khai, In mã vạch)
                 const actionButtons = document.querySelector('.action-buttons');
                 const publicUrl = `${window.location.origin}/product-view.html?id=${productId}`;
                 if (!actionButtons.querySelector('.view-public-btn')) {
@@ -306,6 +371,7 @@
                 }
 
             } catch (error) {
+                // Xử lý lỗi nếu không tải được dữ liệu
                 console.error('Lỗi khi tải chi tiết sản phẩm:', error);
                 detailsWrapper.innerHTML = `<h3 style="color: #dc3545;">Lỗi khi tải dữ liệu xem trước</h3><p>Chi tiết: ${error.message}</p>`;
             }
@@ -314,78 +380,6 @@
         // --- BƯỚC 7: GỌI HÀM CHÍNH ĐỂ BẮT ĐẦU ---
         fetchAndDisplayProduct();
     });
-
-    // --- ĐỊNH NGHĨA CHI TIẾT CÁC HÀM TIỆN ÍCH (ĐỂ CODE GỌN GÀNG HƠN) ---
-
-    function formatDimensions(length, width, height) {
-        const dims = [length, width, height].filter(d => d != null && d !== '').join(' x ');
-        return dims ? `${dims} cm` : 'N/A';
-    }
-
-    function generateBarcode(pId) {
-        if (pId) JsBarcode("#barcode-display", pId, { format: "CODE128", width: 2, height: 80, displayValue: true, margin: 10 });
-    }
-
-    function generateQRCode(pId) {
-        const publicUrl = `${window.location.origin}/product-view.html?id=${encodeURIComponent(pId)}`; // Mã hóa ID trong QR
-        const qr = qrcode(0, 'H');
-        qr.addData(publicUrl);
-        qr.make();
-        document.getElementById('qrcode-container').innerHTML = qr.createImgTag(8, 10);
-    }
-
-    function renderDetailsSection(title, fields, data) {
-        const fieldLabels = {
-            name_vi: "Tên Sản Phẩm (VI)", name_en: "Product Name (EN)", collection_vi: "Bộ Sưu Tập (VI)", collection_en: "Collection (EN)", parent_id: "Mã Sản Phẩm Gốc",
-            company: "Công ty", customer: "Khách hàng", dimensions: "Kích thước (D x R x C)", packed_dimensions: "KT đóng gói (D x R x C)",
-            material_vi: "Chất liệu (VI)", material_en: "Material (EN)", color_vi: "Màu sắc (VI)", color_en: "Color (EN)", fabric_vi: "Vải (VI)", fabric_en: "Fabric (EN)",
-            wicker_vi: "Dây (VI)", wicker_en: "Wicker (EN)", aluminum_profile: "Biên dạng nhôm", hardware: "Hardware", cushion_details: "Chi tiết nệm", pillow_details: "Chi tiết gối",
-            supplier: "Nhà cung cấp (Chung)", production_place: "Nơi sản xuất", specification: "Thông số (Chung)", other_details: "Chi tiết khác", created_by_name: "Người tạo",
-            imageUrls: "Danh sách URL Hình ảnh", drawingUrls: "Danh sách URL Bản vẽ", materialsUrls: "Danh sách URL Vật tư",
-            box_quantity: "Số lượng/hộp", origin_country: "Nơi sản xuất (Nội bộ)", cost_price: "Giá vốn (USD)",
-            aluminum_weight: "Định lượng nhôm (Kg)", wicker_weight: "Định lượng Wicker (Kg)", stone_weight: "Định lượng mặt đá (Kg)",
-            weaving_rope_weight: "Cân nặng dây đan (Kg)", lining_rope_weight: "Cân nặng dây lót (Kg)", product_weight: "Tổng cân nặng sản phẩm (Kg)",
-            packed_weight_total: "Tổng cân nặng đóng thùng (Kg)", aluminum_supplier: "Nhà cung cấp nhôm", wicker_supplier: "Nhà cung cấp wicker", 
-            stone_supplier: "Nhà cung cấp mặt đá", powder_coating_supplier: "Nhà cung cấp sơn tĩnh điện"
-        };
-        const gridDiv = document.createElement('div');
-        gridDiv.className = 'product-details-grid';
-        
-        fields.forEach(key => {
-            const label = fieldLabels[key] || key;
-            let value = (key === 'dimensions') ? formatDimensions(data.length, data.width, data.height)
-                        : (key === 'packed_dimensions') ? formatDimensions(data.packed_length, data.packed_width, data.packed_height)
-                        : data[key];
-
-            const itemDiv = document.createElement('div');
-            itemDiv.className = 'detail-item';
-            
-            let contentHTML = `<strong>${label}:</strong>`;
-            if (Array.isArray(value)) {
-                contentHTML += (value.length > 0)
-                    ? `<ul>${value.map(item => {
-                        const url = (typeof item === 'object' && item.url) ? item.url : item;
-                        const name = (typeof item === 'object' && item.name) ? item.name : url.split('/').pop();
-                        return `<li><a href="${url}" target="_blank" rel="noopener noreferrer">${name}</a></li>`;
-                    }).join('')}</ul>`
-                    : `<span>N/A</span>`;
-            } else {
-                contentHTML += (value != null && value !== '') ? `<span>${value}</span>` : `<span>N/A</span>`;
-            }
-            
-            itemDiv.innerHTML = contentHTML;
-            gridDiv.appendChild(itemDiv);
-        });
-        
-        if (gridDiv.hasChildNodes()) {
-            const sectionDiv = document.createElement('div');
-            sectionDiv.className = 'details-section';
-            sectionDiv.innerHTML = `<h3>${title}</h3>`;
-            sectionDiv.appendChild(gridDiv);
-            return sectionDiv;
-        }
-        return null;
-    }
     </script>
 </body>
 </html>
