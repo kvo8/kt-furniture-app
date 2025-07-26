@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Khám Phá Vận Mệnh Của Bạn</title>
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            max-width: 800px; 
+            margin: 20px auto; 
+            padding: 20px; 
+            background-color: #f0f2f5; 
+            color: #333;
+        }
+        .container {
+            background-color: white; 
+            padding: 25px 30px; 
+            border-radius: 12px; 
+            box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+        }
+        h1, h2 { 
+            text-align: center; 
+            color: #6f42c1; /* Tím mộng mơ */
+            border: none;
+        }
+        p.intro {
+            text-align: center;
+            font-size: 1.1rem;
+            color: #555;
+            margin-bottom: 30px;
+        }
+        .input-form {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+        .input-form select, .input-form input {
+            padding: 12px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+        .input-form button {
+            padding: 12px 30px;
+            font-size: 16px;
+            font-weight: bold;
+            color: white;
+            background-color: #6f42c1;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .input-form button:hover {
+            background-color: #59369b;
+        }
+        #result-container {
+            display: none;
+            margin-top: 30px;
+            border-top: 2px dashed #d1c4e9;
+            padding-top: 20px;
+        }
+        .result-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .result-card {
+            background: #fafafa;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .result-card h3 {
+            margin-top: 0;
+            color: #59369b;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        .result-card p {
+            line-height: 1.7;
+        }
+        .summary-card {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, #ede7f6, #d1c4e9);
+            text-align: center;
+        }
+        .summary-card ul {
+            list-style: none;
+            padding: 0;
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+        }
+        .summary-card li {
+            font-size: 1.1rem;
+            margin: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>🔮 Cánh Cửa Vũ Trụ 🔮</h1>
+        <p class="intro">Nhập ngày sinh của bạn để hé mở những bí mật về tính cách, sự nghiệp và tình duyên mà các vì sao đã sắp đặt.</p>
+        
+        <div class="input-form">
+            <select id="day"></select>
+            <select id="month"></select>
+            <input type="number" id="year" placeholder="Năm sinh (eg. 1995)" min="1920" max="2024">
+            <button id="submitBtn">Xem Kết Quả</button>
+        </div>
+
+        <div id="result-container">
+            <div class="result-card summary-card">
+                <h3>Tổng Quan Vận Mệnh</h3>
+                <ul id="summary-list"></ul>
+            </div>
+
+            <div class="result-grid">
+                <div class="result-card" id="personality-card"></div>
+                <div class="result-card" id="career-card"></div>
+                <div class="result-card" id="love-card"></div>
+                <div class="result-card" id="health-card"></div>
+                <div class="result-card" id="pros-card"></div>
+                <div class="result-card" id="cons-card"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const daySelect = document.getElementById('day');
+        const monthSelect = document.getElementById('month');
+        const yearInput = document.getElementById('year');
+        const submitBtn = document.getElementById('submitBtn');
+        const resultContainer = document.getElementById('result-container');
+
+        // --- Tạo tùy chọn cho ngày và tháng ---
+        for (let i = 1; i <= 31; i++) {
+            daySelect.innerHTML += `<option value="${i}">${i}</option>`;
+        }
+        const monthNames = ["Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6", "Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"];
+        monthNames.forEach((month, index) => {
+            monthSelect.innerHTML += `<option value="${index + 1}">${month}</option>`;
+        });
+
+        // --- CÁC HÀM TÍNH TOÁN ---
+
+        // Tính con giáp (Địa chi)
+        function getChineseZodiac(year) {
+            const animals = ['Thân', 'Dậu', 'Tuất', 'Hợi', 'Tý', 'Sửu', 'Dần', 'Mão', 'Thìn', 'Tỵ', 'Ngọ', 'Mùi'];
+            return animals[year % 12];
+        }
+
+        // Tính Thiên Can
+        function getThienCan(year) {
+            const can = ['Canh', 'Tân', 'Nhâm', 'Quý', 'Giáp', 'Ất', 'Bính', 'Đinh', 'Mậu', 'Kỷ'];
+            return can[year % 10];
+        }
+
+        // Tính cung hoàng đạo
+        function getWesternZodiac(day, month) {
+            const signs = [
+                { name: 'Ma Kết', start: [12, 22], end: [1, 19] },
+                { name: 'Bảo Bình', start: [1, 20], end: [2, 18] },
+                { name: 'Song Ngư', start: [2, 19], end: [3, 20] },
+                { name: 'Bạch Dương', start: [3, 21], end: [4, 19] },
+                { name: 'Kim Ngưu', start: [4, 20], end: [5, 20] },
+                { name: 'Song Tử', start: [5, 21], end: [6, 21] },
+                { name: 'Cự Giải', start: [6, 22], end: [7, 22] },
+                { name: 'Sư Tử', start: [7, 23], end: [8, 22] },
+                { name: 'Xử Nữ', start: [8, 23], end: [9, 22] },
+                { name: 'Thiên Bình', start: [9, 23], end: [10, 23] },
+                { name: 'Bọ Cạp', start: [10, 24], end: [11, 21] },
+                { name: 'Nhân Mã', start: [11, 22], end: [12, 21] }
+            ];
+            for (const sign of signs) {
+                if ((month === sign.start[0] && day >= sign.start[1]) || (month === sign.end[0] && day <= sign.end[1])) {
+                    return sign.name;
+                }
+            }
+        }
+
+        // Tính Ngũ hành nạp âm và Mệnh
+        function getNguHanh(can, chi) {
+            const menhLookup = {
+                "Giáp Tý": "Hải Trung Kim", "Ất Sửu": "Hải Trung Kim",
+                "Bính Dần": "Lư Trung Hỏa", "Đinh Mão": "Lư Trung Hỏa",
+                "Mậu Thìn": "Đại Lâm Mộc", "Kỷ Tỵ": "Đại Lâm Mộc",
+                "Canh Ngọ": "Lộ Bàng Thổ", "Tân Mùi": "Lộ Bàng Thổ",
+                "Nhâm Thân": "Kiếm Phong Kim", "Quý Dậu": "Kiếm Phong Kim",
+                "Giáp Tuất": "Sơn Đầu Hỏa", "Ất Hợi": "Sơn Đầu Hỏa",
+                "Bính Tý": "Giản Hạ Thủy", "Đinh Sửu": "Giản Hạ Thủy",
+                "Mậu Dần": "Thành Đầu Thổ", "Kỷ Mão": "Thành Đầu Thổ",
+                "Canh Thìn": "Bạch Lạp Kim", "Tân Tỵ": "Bạch Lạp Kim",
+                "Nhâm Ngọ": "Dương Liễu Mộc", "Quý Mùi": "Dương Liễu Mộc",
+                "Giáp Thân": "Tuyền Trung Thủy", "Ất Dậu": "Tuyền Trung Thủy",
+                "Bính Tuất": "Ốc Thượng Thổ", "Đinh Hợi": "Ốc Thượng Thổ",
+                "Mậu Tý": "Tích Lịch Hỏa", "Kỷ Sửu": "Tích Lịch Hỏa",
+                "Canh Dần": "Tùng Bách Mộc", "Tân Mão": "Tùng Bách Mộc",
+                "Nhâm Thìn": "Trường Lưu Thủy", "Quý Tỵ": "Trường Lưu Thủy",
+                "Giáp Ngọ": "Sa Trung Kim", "Ất Mùi": "Sa Trung Kim",
+                "Bính Thân": "Sơn Hạ Hỏa", "Đinh Dậu": "Sơn Hạ Hỏa",
+                "Mậu Tuất": "Bình Địa Mộc", "Kỷ Hợi": "Bình Địa Mộc",
+                "Canh Tý": "Bích Thượng Thổ", "Tân Sửu": "Bích Thượng Thổ",
+                "Nhâm Dần": "Kim Bạch Kim", "Quý Mão": "Kim Bạch Kim",
+                "Giáp Thìn": "Phú Đăng Hỏa", "Ất Tỵ": "Phú Đăng Hỏa",
+                "Bính Ngọ": "Thiên Hà Thủy", "Đinh Mùi": "Thiên Hà Thủy",
+                "Mậu Thân": "Đại Trạch Thổ", "Kỷ Dậu": "Đại Trạch Thổ",
+                "Canh Tuất": "Thoa Xuyến Kim", "Tân Hợi": "Thoa Xuyến Kim",
+                "Nhâm Tý": "Tang Đố Mộc", "Quý Sửu": "Tang Đố Mộc",
+                "Giáp Dần": "Đại Khe Thủy", "Ất Mão": "Đại Khe Thủy",
+                "Bính Thìn": "Sa Trung Thổ", "Đinh Tỵ": "Sa Trung Thổ",
+                "Mậu Ngọ": "Thiên Thượng Hỏa", "Kỷ Mùi": "Thiên Thượng Hỏa",
+                "Canh Thân": "Thạch Lựu Mộc", "Tân Dậu": "Thạch Lựu Mộc",
+                "Nhâm Tuất": "Đại Hải Thủy", "Quý Hợi": "Đại Hải Thủy"
+            };
+            const napAm = menhLookup[`${can} ${chi}`] || "Không xác định";
+            let menh = "Không xác định";
+            if (napAm.includes("Kim")) menh = "Kim";
+            else if (napAm.includes("Mộc")) menh = "Mộc";
+            else if (napAm.includes("Thủy")) menh = "Thủy";
+            else if (napAm.includes("Hỏa")) menh = "Hỏa";
+            else if (napAm.includes("Thổ")) menh = "Thổ";
+            return { napAm, menh };
+        }
+
+        // --- "DATABASE" THÔNG TIN TÍNH CÁCH ---
+        const data = {
+            menh: {
+                "Kim": {
+                    tinhCach: "Người mệnh Kim có tính cách cương trực, quyết đoán, và có khả năng lãnh đạo. Họ là người trọng nghĩa khinh tài, luôn bảo vệ người yếu thế. Đôi khi hơi cứng nhắc và độc đoán.",
+                    ngheNghiep: "Phù hợp với các ngành nghề liên quan đến kim loại, máy móc, tài chính, ngân hàng, hoặc các vị trí quản lý, lãnh đạo.",
+                    tinhDuyen: "Trong tình yêu, họ mạnh mẽ và có phần chiếm hữu. Khi đã yêu, họ rất chung thủy và sẵn sàng hy sinh vì đối phương."
+                },
+                "Mộc": {
+                    tinhCach: "Người mệnh Mộc linh hoạt, phóng khoáng, và có lòng trắc ẩn. Họ giàu ý tưởng sáng tạo và giỏi giao tiếp. Nhược điểm là đôi khi thiếu kiên định, dễ thay đổi.",
+                    ngheNghiep: "Thích hợp với các lĩnh vực như giáo dục, nghệ thuật, viết lách, thiết kế, nông nghiệp, và các công việc liên quan đến gỗ, giấy.",
+                    tinhDuyen: "Họ lãng mạn và tinh tế trong tình yêu. Họ biết cách quan tâm và tạo ra sự bất ngờ cho nửa kia."
+                },
+                "Thủy": {
+                    tinhCach: "Người mệnh Thủy thông minh, khéo léo trong giao tiếp và có khả năng thuyết phục người khác. Họ nhạy cảm và có trực giác tốt. Tuy nhiên, họ cũng dễ bị tổn thương và hay suy nghĩ nhiều.",
+                    ngheNghiep: "Hợp với các ngành nghề cần giao tiếp nhiều như tư vấn, ngoại giao, thương mại, du lịch, vận tải biển.",
+                    tinhDuyen: "Họ dịu dàng và sâu sắc trong tình yêu. Mối quan hệ của họ thường rất bền chặt và đầy cảm xúc."
+                },
+                "Hỏa": {
+                    tinhCach: "Người mệnh Hỏa nhiệt tình, sôi nổi, và đầy tham vọng. Họ có tinh thần phiêu lưu, mạo hiểm và luôn tràn đầy năng lượng. Đôi khi hơi nóng nảy và thiếu kiên nhẫn.",
+                    ngheNghiep: "Thành công trong các lĩnh vực cần sự sáng tạo và nhiệt huyết như kinh doanh, marketing, nghệ thuật biểu diễn, ẩm thực, điện tử.",
+                    tinhDuyen: "Tình yêu của họ nồng cháy và đầy đam mê. Họ yêu hết mình nhưng cũng dễ ghen tuông."
+                },
+                "Thổ": {
+                    tinhCach: "Người mệnh Thổ điềm đạm, vững chắc và đáng tin cậy. Họ có tính kiên trì, có trách nhiệm và luôn giữ chữ tín. Nhược điểm là đôi khi hơi chậm chạp và bảo thủ.",
+                    ngheNghiep: "Phù hợp với các ngành nghề liên quan đến đất đai, bất động sản, xây dựng, nông nghiệp, hoặc các công việc đòi hỏi sự ổn định và kiên nhẫn.",
+                    tinhDuyen: "Họ là người bạn đời chung thủy và là chỗ dựa vững chắc cho gia đình. Tình yêu của họ không phô trương nhưng rất bền vững."
+                }
+            },
+            cungHoangDao: {
+                "Bạch Dương": {
+                    uuDiem: "Năng động, dũng cảm, tiên phong, lạc quan.",
+                    nhuocDiem: "Nóng nảy, thiếu kiên nhẫn, bốc đồng.",
+                    sucKhoe: "Cần chú ý các vấn đề về đầu và mặt. Nên giữ tinh thần thoải mái, tránh căng thẳng."
+                },
+                 "Kim Ngưu": {
+                    uuDiem: "Kiên định, đáng tin cậy, thực tế, có gu thẩm mỹ tốt.",
+                    nhuocDiem: "Bướng bỉnh, cứng đầu, có xu hướng vật chất.",
+                    sucKhoe: "Dễ gặp các vấn đề về cổ, họng. Cần chú ý chế độ ăn uống để tránh tăng cân."
+                },
+                 "Song Tử": {
+                    uuDiem: "Thông minh, linh hoạt, ham học hỏi, giỏi giao tiếp.",
+                    nhuocDiem: "Hay thay đổi, thiếu tập trung, khó đoán.",
+                    sucKhoe: "Chú ý đến hệ hô hấp, tay và vai. Cần các hoạt động giúp thư giãn thần kinh."
+                },
+                 "Cự Giải": {
+                    uuDiem: "Giàu tình cảm, giàu trí tưởng tượng, trung thành, biết quan tâm.",
+                    nhuocDiem: "Nhạy cảm quá mức, tâm trạng thất thường, hay hoài niệm.",
+                    sucKhoe: "Hệ tiêu hóa khá nhạy cảm. Cần ăn uống điều độ và tránh stress."
+                },
+                 "Sư Tử": {
+                    uuDiem: "Hào phóng, tự tin, sáng tạo, có tố chất lãnh đạo.",
+                    nhuocDiem: "Kiêu ngạo, thích là trung tâm, cứng đầu.",
+                    sucKhoe: "Cần quan tâm đến tim mạch và lưng. Tránh làm việc quá sức."
+                },
+                 "Xử Nữ": {
+                    uuDiem: "Tỉ mỉ, cẩn thận, thông minh, khiêm tốn.",
+                    nhuocDiem: "Cầu toàn, hay lo lắng, khó tính.",
+                    sucKhoe: "Hệ tiêu hóa cần được chăm sóc kỹ. Nên tập yoga hoặc thiền để giảm stress."
+                },
+                 "Thiên Bình": {
+                    uuDiem: "Công bằng, duyên dáng, hòa đồng, có khiếu nghệ thuật.",
+                    nhuocDiem: "Do dự, thiếu quyết đoán, sợ cô đơn.",
+                    sucKhoe: "Chú ý đến vùng thận và lưng. Cần uống đủ nước và giữ cân bằng trong cuộc sống."
+                },
+                 "Bọ Cạp": {
+                    uuDiem: "Sắc sảo, quyết đoán, đam mê, có sức hút bí ẩn.",
+                    nhuocDiem: "Hay ghen, đa nghi, thù dai.",
+                    sucKhoe: "Cần chú ý các vấn đề liên quan đến cơ quan sinh sản và hệ bài tiết."
+                },
+                 "Nhân Mã": {
+                    uuDiem: "Lạc quan, yêu tự do, hài hước, triết lý.",
+                    nhuocDiem: "Thiếu kiên nhẫn, thẳng thắn đến mức làm tổn thương người khác.",
+                    sucKhoe: "Chú ý vùng hông, đùi và gan. Nên hoạt động thể chất thường xuyên."
+                },
+                 "Ma Kết": {
+                    uuDiem: "Có trách nhiệm, kỷ luật, kiên nhẫn, có hoài bão.",
+                    nhuocDiem: "Nghiêm khắc, bi quan, khó tha thứ.",
+                    sucKhoe: "Cần chú ý xương khớp, đặc biệt là đầu gối. Tránh làm việc quá tải."
+                },
+                 "Bảo Bình": {
+                    uuDiem: "Độc đáo, nhân đạo, độc lập, thông minh.",
+                    nhuocDiem: "Lập dị, xa cách, khó đoán.",
+                    sucKhoe: "Chú ý hệ tuần hoàn và mắt cá chân. Cần không gian riêng để nạp lại năng lượng."
+                },
+                 "Song Ngư": {
+                    uuDiem: "Giàu lòng trắc ẩn, nghệ sĩ, lãng mạn, trực giác tốt.",
+                    nhuocDiem: "Mơ mộng, dễ bị ảnh hưởng, sợ đối mặt thực tế.",
+                    sucKhoe: "Chú ý bàn chân và hệ miễn dịch. Cần tránh các chất kích thích và ngủ đủ giấc."
+                }
+            }
+        };
+
+        // --- XỬ LÝ SỰ KIỆN CLICK ---
+        submitBtn.addEventListener('click', () => {
+            const day = parseInt(daySelect.value);
+            const month = parseInt(monthSelect.value);
+            const year = parseInt(yearInput.value);
+
+            if (!year || year < 1920 || year > 2024) {
+                alert("Vui lòng nhập một năm sinh hợp lệ (từ 1920 đến 2024).");
+                return;
+            }
+
+            // Tính toán
+            const birthDate = new Date(year, month - 1, day);
+            const age = new Date().getFullYear() - year;
+            const chineseZodiac = getChineseZodiac(year);
+            const thienCan = getThienCan(year);
+            const westernZodiac = getWesternZodiac(day, month);
+            const { napAm, menh } = getNguHanh(thienCan, chineseZodiac);
+            
+            // Lấy dữ liệu từ "database"
+            const menhData = data.menh[menh] || {};
+            const zodiacData = data.cungHoangDao[westernZodiac] || {};
+
+            // Hiển thị kết quả
+            document.getElementById('summary-list').innerHTML = `
+                <li><strong>Tuổi:</strong> ${age}</li>
+                <li><strong>Năm sinh:</strong> ${thienCan} ${chineseZodiac}</li>
+                <li><strong>Cung Hoàng Đạo:</strong> ${westernZodiac}</li>
+                <li><strong>Mệnh:</strong> ${menh} (${napAm})</li>
+            `;
+            document.getElementById('personality-card').innerHTML = `<h3>Tính Cách</h3><p>${menhData.tinhCach || "Thông tin đang được cập nhật."}</p>`;
+            document.getElementById('career-card').innerHTML = `<h3>Sự Nghiệp</h3><p>${menhData.ngheNghiep || "Thông tin đang được cập nhật."}</p>`;
+            document.getElementById('love-card').innerHTML = `<h3>Tình Duyên</h3><p>${menhData.tinhDuyen || "Thông tin đang được cập nhật."}</p>`;
+            document.getElementById('health-card').innerHTML = `<h3>Sức Khỏe</h3><p>${zodiacData.sucKhoe || "Thông tin đang được cập nhật."}</p>`;
+            document.getElementById('pros-card').innerHTML = `<h3>Ưu điểm</h3><p>${zodiacData.uuDiem || "Thông tin đang được cập nhật."}</p>`;
+            document.getElementById('cons-card').innerHTML = `<h3>Khuyết điểm</h3><p>${zodiacData.nhuocDiem || "Thông tin đang được cập nhật."}</p>`;
+
+            resultContainer.style.display = 'block';
+        });
+    });
+    </script>
+</body>
+</html>
