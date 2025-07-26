@@ -346,7 +346,7 @@
                     }
                     const productId = target.dataset.id;
                     if (confirm(`Bạn có chắc muốn xóa sản phẩm mã "${productId}"?`)) {
-                        fetch(`/api/products/${productId}`, { method: 'DELETE' })
+                        fetch(`/api/products/${encodeURIComponent(productId)}`, { method: 'DELETE' })
                         .then(res => res.ok ? (alert('Xóa thành công!'), loadProducts(), updateNotifications()) : alert(`Xóa thất bại: ${res.status}`))
                         .catch(err => alert('Lỗi mạng!'));
                     }
