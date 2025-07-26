@@ -177,24 +177,24 @@
     const loadingOverlay = document.getElementById('loading');
     let currentUser = null;
 
-    // --- CẤU HÌNH PHÂN QUYỀN (ĐÃ CẬP NHẬT) ---
+    // --- CẤU HÌNH PHÂN QUYỀN ---
+    // Giữ nguyên đối tượng PERMISSIONS để các vai trò khác vẫn hoạt động bình thường
     const PERMISSIONS = {
-        // --- VAI TRÒ MỚI: KT01SL (Sales) ---
         'KT01SL': [
             'name_vi', 'name_en', 'collection_vi', 'collection_en',
             'color_vi', 'color_en', 'fabric_vi', 'fabric_en', 'wicker_vi', 'wicker_en', 
             'material_vi', 'material_en', 'aluminum_profile', 'production_place'
         ],
-        'KT01KT': [ // Kỹ thuật
+        'KT01KT': [
             'color_vi', 'color_en', 'fabric_vi', 'fabric_en', 'wicker_vi', 'wicker_en', 
             'material_vi', 'material_en', 'aluminum_profile', 'production_place',
             'length', 'width', 'height', 'other_details',
             'imageUrls', 'drawingUrls'
         ],
-        'KT01VT': [ // Vật tư
+        'KT01VT': [
             'aluminum_supplier', 'wicker_supplier', 'stone_supplier', 'materialsUrls'
         ],
-        'KT01SX': [ // Sản xuất
+        'KT01SX': [
             'packed_length', 'packed_width', 'packed_height',
             'box_quantity', 'origin_country', 'cost_price', 'hardware', 'cushion_details',
             'pillow_details', 'aluminum_weight', 'wicker_weight', 'stone_weight',
@@ -206,27 +206,28 @@
     function applyPermissions(user) {
         if (!user || !user.employeeId) return;
 
-        // BƯỚC 1: XỬ LÝ QUYỀN SỬA MÃ SẢN PHẨM (ID)
         const productIdField = form.querySelector('[name="id"]');
-        const canEditIdRoles = ['KT01IT', 'KT01SL'];
-        if (productIdField && canEditIdRoles.includes(user.employeeId)) {
+        
+        // Chỉ IT và Sales mới được sửa ID sản phẩm
+        if (productIdField && ['KT01IT', 'KT01SL'].includes(user.employeeId)) {
             productIdField.readOnly = false;
             productIdField.style.backgroundColor = 'var(--card-bg-color)';
             productIdField.style.color = 'var(--text-color)';
-            // Cập nhật lại label để người dùng biết là có thể sửa
             productIdField.previousElementSibling.textContent = 'Mã Sản Phẩm / Product ID (Có thể sửa)';
         }
 
-        // BƯỚC 2: XỬ LÝ CÁC TRƯỜNG CÒN LẠI
-        if (user.employeeId === 'KT01IT') {
-            console.log("Admin logged in. Full access granted.");
-            return; // Admin không cần kiểm tra gì thêm
+        // =========================================================================
+        // === THAY ĐỔI QUAN TRỌNG NẰM Ở ĐÂY ===
+        // Nếu user là IT hoặc Sales (KT01SL), cho phép toàn quyền và không cần kiểm tra gì thêm.
+        if (['KT01IT', 'KT01SL'].includes(user.employeeId)) {
+            console.log(`User role ${user.employeeId} has full access. Bypassing field restrictions.`);
+            return; 
         }
+        // =========================================================================
 
         const userRole = user.employeeId;
         const allowedFields = new Set(PERMISSIONS[userRole] || []);
 
-        // Duyệt qua tất cả các phần tử có thể nhập liệu trong form
         const allFields = form.querySelectorAll('input, textarea, select, button.popup-upload-btn');
         allFields.forEach(field => {
             let fieldName = field.name;
@@ -234,10 +235,8 @@
                 fieldName = field.dataset.target;
             }
 
-            // Bỏ qua trường ID vì đã được xử lý riêng ở trên
             if (fieldName === 'id') return;
 
-            // Nếu trường không nằm trong danh sách được phép, vô hiệu hóa nó
             if (!allowedFields.has(fieldName)) {
                 field.disabled = true;
                 field.title = 'Bạn không có quyền sửa trường này. Vui lòng liên hệ bộ phận có thẩm quyền.';
@@ -245,7 +244,7 @@
         });
     }
 
-    // --- HÀM KHỞI TẠO TRANG ---
+    // --- CÁC HÀM CÒN LẠI GIỮ NGUYÊN ---
     document.addEventListener('DOMContentLoaded', async () => {
         const urlParams = new URLSearchParams(window.location.search);
         const productId = urlParams.get('id');
@@ -262,12 +261,15 @@
             ]);
 
             if (!productResponse.ok) throw new Error(`Lỗi tải sản phẩm: ${productResponse.status}`);
-            if (!userResponse.ok) throw new Error(`Lỗi xác thực người dùng: ${userResponse.status}`);
+            if (!userResponse.ok) {
+                // Nếu lỗi xác thực, chuyển về trang chủ ngay
+                window.location.href = '/';
+                return;
+            }
 
             const product = await productResponse.json();
             currentUser = await userResponse.json();
-
-            // Điền dữ liệu sản phẩm vào form
+            
             for (const key in product) {
                 const field = form.querySelector(`[name="${key}"]`);
                 if (field) {
@@ -281,7 +283,6 @@
                 }
             }
             
-            // Áp dụng quyền hạn sau khi đã điền form
             applyPermissions(currentUser);
             
             loadingOverlay.style.display = 'none';
@@ -292,8 +293,6 @@
         }
     });
 
-
-    // --- HÀM XỬ LÝ SUBMIT FORM ---
     form.addEventListener('submit', async function(event) {
         event.preventDefault();
         submitButton.disabled = true;
@@ -303,18 +302,22 @@
             const formData = new FormData(this);
             const data = {};
             
-            // Chỉ thu thập dữ liệu từ những trường người dùng có quyền sửa (không bị disabled)
             formData.forEach((value, key) => {
                 const field = form.querySelector(`[name="${key}"]`);
+                // Chỉ thu thập dữ liệu từ những trường không bị vô hiệu hóa
                 if (field && !field.disabled) {
                     data[key] = value;
                 }
             });
             
-            // Nếu người dùng không có quyền sửa ID, ID sẽ không có trong `data`. 
-            // Chúng ta phải luôn đảm bảo ID gốc được gửi đi để server biết cập nhật sản phẩm nào.
+            const originalProductId = form.querySelector('[name="id"]').value;
+            // Dù ID có được sửa hay không, ta luôn dùng ID gốc để xác định sản phẩm cần UPDATE
+            const endpointId = originalProductId; 
+
+            // Nếu người dùng sửa ID, giá trị mới sẽ nằm trong 'data.id'
+            // Nếu không, 'data.id' sẽ là undefined. Ta cần đảm bảo ID luôn có mặt.
             if (data.id === undefined) {
-                 data.id = form.querySelector('[name="id"]').value;
+                 data.id = originalProductId;
             }
 
             function getFileNameFromUrl(url) {
@@ -325,7 +328,8 @@
                     return url.split('/').pop() || 'File';
                 }
             }
-
+            
+            // Xử lý các trường URL nếu chúng được phép sửa
             if (data.imageUrls !== undefined) {
                 data.imageUrls = (data.imageUrls || '').split('\n').map(link => link.trim()).filter(Boolean);
             }
@@ -336,7 +340,7 @@
                 data.materialsUrls = (data.materialsUrls || '').split('\n').map(link => link.trim()).filter(Boolean).map(link => ({ name: getFileNameFromUrl(link), url: link }));
             }
 
-            const response = await fetch(`/api/products/${data.id}`, {
+            const response = await fetch(`/api/products/${endpointId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data),
@@ -361,7 +365,6 @@
         }
     });
 
-    // --- HÀM MỞ CỬA SỔ UPLOAD POPUP ---
     document.querySelectorAll('.popup-upload-btn').forEach(button => {
         button.addEventListener('click', () => {
             const targetId = button.dataset.target;
