@@ -24,21 +24,35 @@
         }
 
         .nav-links a { 
-            display: inline-block; 
-            margin: 10px; 
-            font-size: 18px;
-            padding: 12px 25px;
-            background-color: #007bff; 
-            color: white; 
-            text-decoration: none; 
-            border-radius: 5px;
-            transition: background-color 0.2s;
+            /* --- Kích thước & Font chữ --- */
+            display: inline-block;
+            padding: 18px 40px;     /* Tăng mạnh padding để nút to và rộng hơn */
+            margin: 10px;
+            font-size: 1.2rem;      /* Tăng kích thước chữ cho dễ đọc */
+            font-weight: 700;       /* Chữ đậm, rõ ràng */
+            text-decoration: none;
+            text-transform: uppercase; /* Viết hoa toàn bộ cho cảm giác quan trọng */
+            letter-spacing: 1px;    /* Tăng khoảng cách giữa các chữ */
+
+            /* --- Màu sắc & Hiệu ứng Highlights --- */
+            color: #ffffff;         /* Màu chữ trắng */
+            /* Tạo dải màu gradient cho nút thêm sinh động */
+            background: linear-gradient(45deg, #0d6efd, #0a58ca); 
+            border: none;           /* Bỏ viền mặc định */
+            border-radius: 50px;    /* Bo góc tròn cho mềm mại, hiện đại */
+            /* Đổ bóng để nút nổi lên khỏi nền */
+            box-shadow: 0 5px 15px rgba(13, 110, 253, 0.4); 
+            
+            /* --- Hiệu ứng chuyển động & Tương tác --- */
+            transition: all 0.3s ease-in-out; /* Giúp mọi thay đổi đều mượt mà */
         }
 
         .nav-links a:hover {
-            background-color: #0056b3;
+            transform: translateY(-3px); /* Nút sẽ nhích lên một chút */
+            box-shadow: 0 8px 25px rgba(13, 110, 253, 0.5); /* Bóng đổ sẽ đậm và rộng hơn */
+            filter: brightness(1.1);      /* Nút sẽ sáng lên một chút */
+            background: linear-gradient(45deg, #0d6efd, #0a58ca); /* Giữ lại gradient khi hover */
         }
-        
         .dashboard-image-container {
             margin-top: 50px;
         }
