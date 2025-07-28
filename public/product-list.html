@@ -50,37 +50,62 @@ tr:hover { background-color: rgba(128, 128, 128, 0.1); }
 .edit-btn { background-color: var(--success-color); }
 .delete-btn { background-color: var(--danger-color); }
 
-/* [ĐÃ CẬP NHẬT] CSS cho thanh điều hướng */
-.nav-links {
+/* [THAY ĐỔI LỚN] Bố cục thanh điều hướng và tìm kiếm */
+
+/* Style cho khu vực tìm kiếm và icon ở trên cùng */
+.top-controls {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end; /* Đẩy các item về bên phải */
     align-items: center;
-    padding: 10px 20px;
-    background-color: var(--card-bg-color);
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    margin-bottom: 20px;
-    border-bottom: none; 
-    padding-bottom: 10px;
+    gap: 20px; /* Khoảng cách giữa các item */
+    margin-bottom: 15px; /* Khoảng cách với thanh menu bên dưới */
 }
-/* [ĐÃ CẬP NHẬT] CSS cho các liên kết bên trong thanh điều hướng */
-.nav-links-left a {
-    color: var(--text-muted-color);
+
+/* Style cho thanh chứa các liên kết điều hướng */
+.main-nav {
+    display: flex;
+    flex-wrap: wrap; /* Cho phép các mục xuống dòng nếu không đủ chỗ */
+    gap: 10px; /* Khoảng cách giữa các nút menu */
+    background-color: var(--card-bg-color);
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    margin-bottom: 20px;
+}
+
+/* Style cho từng nút bấm trong menu (đúng theo ý bạn) */
+.main-nav a {
+    color: var(--text-color);
+    background-color: var(--bg-color); /* Nền cho mỗi mục */
+    border: 1px solid var(--border-color); /* Thêm viền nhẹ */
     text-decoration: none;
     font-weight: 500;
-    font-size: 16px;
-    padding: 8px 15px;
+    font-size: 15px;
+    padding: 10px 18px; /* Tăng padding để nút to hơn */
     border-radius: 8px;
-    transition: background-color 0.3s, color 0.3s;
-    margin-right: 5px;
+    transition: background-color 0.3s, color 0.3s, transform 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
-/* [ĐÃ THÊM MỚI] Hiệu ứng khi di chuột vào liên kết */
-.nav-links-left a:hover {
-    background-color: rgba(13, 110, 253, 0.1);
-    color: var(--primary-color);
+
+/* Hiệu ứng khi di chuột vào nút menu */
+.main-nav a:hover {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+    transform: translateY(-2px); /* Hiệu ứng nhấc lên một chút */
 }
-.nav-links-right { display: flex; align-items: center; gap: 20px; }
-#search-input { background-color: var(--card-bg-color); color: var(--text-color); border: 1px solid var(--border-color); }
+
+/* Style cho ô tìm kiếm */
+#search-input { 
+    background-color: var(--card-bg-color); 
+    color: var(--text-color); 
+    border: 1px solid var(--border-color);
+    border-radius: 8px; /* Bo tròn ô tìm kiếm */
+    padding: 10px 15px !important; /* Ghi đè style inline */
+    font-size: 15px !important; /* Ghi đè style inline */
+}
 
 /* === CSS CHO CÁC TÍNH NĂNG KHÁC === */
 .reviews-btn { background-color: var(--secondary-color); } 
@@ -132,44 +157,42 @@ input:checked + .slider:before { transform: translateX(24px); }
     </script>
 </head>
 <body class="dark-mode"> <h1>Quản lý Sản phẩm</h1>
-    <div class="nav-links">
-        <div class="nav-links-left">
-            <a href="/dashboard.html">Về Dashboard</a>
-            <a href="/new-product.html" id="add-product-link">Thêm Sản phẩm Mới</a>
-            <a href="/announcement.html" id="announcement-link">Bảng Tin Thông Báo</a>
-            <a href="/employee-info.html" id="employee-info-link">Quản Lý Nhân Viên</a>
-            <a href="/message.html">Tin Nhắn Nội Bộ</a>
-            <a href="/therapy.html">Tư Vấn Tâm Lý 🧠</a>
 
-        </div>
+    <div class="top-controls">
+        <input type="text" id="search-input" placeholder="Tìm kiếm..." style="padding: 10px; font-size: 16px; border-radius: 5px;">
         
-        <div class="nav-links-right">
-            <input type="text" id="search-input" placeholder="Tìm kiếm..." style="padding: 10px; font-size: 16px; border-radius: 5px;">
-            
-            <div class="theme-switcher">
-                <span>☀️</span>
-                <label class="switch">
-                    <input type="checkbox" id="theme-toggle">
-                    <span class="slider round"></span>
-                </label>
-                <span>🌙</span>
-            </div>
+        <div class="theme-switcher">
+            <span>☀️</span>
+            <label class="switch">
+                <input type="checkbox" id="theme-toggle">
+                <span class="slider round"></span>
+            </label>
+            <span>🌙</span>
+        </div>
 
-            <div class="notification-area">
-                <button id="notification-bell">
-                    <span>🔔</span>
-                    <span id="notification-badge"></span>
-                </button>
-                <div id="notification-dropdown" class="notification-dropdown">
-                    <h4>Tin nhắn mới</h4>
-                    <ul id="message-list" class="notification-list"></ul>
-                    <h4>Thông báo mới</h4>
-                    <ul id="announcement-list" class="notification-list"></ul>
-                    <h4>Hoạt động gần đây</h4>
-                    <ul id="activity-list" class="notification-list"></ul>
-                </div>
+        <div class="notification-area">
+            <button id="notification-bell">
+                <span>🔔</span>
+                <span id="notification-badge"></span>
+            </button>
+            <div id="notification-dropdown" class="notification-dropdown">
+                <h4>Tin nhắn mới</h4>
+                <ul id="message-list" class="notification-list"></ul>
+                <h4>Thông báo mới</h4>
+                <ul id="announcement-list" class="notification-list"></ul>
+                <h4>Hoạt động gần đây</h4>
+                <ul id="activity-list" class="notification-list"></ul>
             </div>
         </div>
+    </div>
+
+    <div class="main-nav">
+        <a href="/dashboard.html">Về Dashboard</a>
+        <a href="/new-product.html" id="add-product-link">Thêm Sản phẩm Mới</a>
+        <a href="/announcement.html" id="announcement-link">Bảng Tin Thông Báo</a>
+        <a href="/employee-info.html" id="employee-info-link">Quản Lý Nhân Viên</a>
+        <a href="/message.html">Tin Nhắn Nội Bộ</a>
+        <a href="/therapy.html">Tư Vấn Tâm Lý 🧠</a>
     </div>
     
     <table>
