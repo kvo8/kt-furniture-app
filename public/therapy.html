@@ -3,17 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trạm Sạc Năng Lượng Tâm Hồn 2.0</title>
+    <title>Dr. Gen Z - Vũ Trụ Chữa Lành ✨</title>
     <style>
         :root {
-            --primary-color: #6f42c1;
-            --user-bubble-color: #007bff;
-            --ai-bubble-color: #e4e6eb;
-            --background-color: #f0f2f5;
-            --container-bg-color: white;
-            --text-primary-color: #050505;
-            --text-secondary-color: #65676b;
+            --primary-color: #7c3aed; /* Tím đậm hơn */
+            --user-bubble-color: #2563eb; /* Xanh dương */
+            --ai-bubble-color: #f3e8ff; /* Tím rất nhạt */
+            --background-color: #faf5ff; /* Nền tím nhạt hơn */
+            --container-bg-color: #ffffff;
+            --text-primary-color: #1f2937;
+            --text-secondary-color: #6b7280;
+            --font-family: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
+
+        @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;700&display=swap');
 
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
@@ -21,7 +24,7 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: var(--font-family);
             background-color: var(--background-color);
             margin: 0;
             display: flex;
@@ -33,26 +36,27 @@
 
         .chat-container {
             width: 100%;
-            max-width: 650px;
-            height: 90vh;
-            max-height: 800px;
+            max-width: 700px; /* To hơn xíu */
+            height: 95vh;
+            max-height: 850px;
             background-color: var(--container-bg-color);
-            border-radius: 16px;
-            box-shadow: 0 12px 28px rgba(0,0,0,0.12);
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(124, 58, 237, 0.15);
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            border: 1px solid #e9d5ff;
         }
 
         .chat-header {
-            padding: 20px;
-            background: linear-gradient(135deg, var(--primary-color), #8a63d2);
+            padding: 20px 25px;
+            background: linear-gradient(135deg, var(--primary-color), #a78bfa);
             color: white;
             text-align: center;
             flex-shrink: 0;
         }
-        .chat-header h2 { margin: 0; font-size: 1.6em; }
-        .chat-header p { margin: 5px 0 0; opacity: 0.9; }
+        .chat-header h2 { margin: 0; font-size: 1.8em; font-weight: 700; }
+        .chat-header p { margin: 5px 0 0; opacity: 0.9; font-weight: 400; font-style: italic;}
 
         .chat-log {
             flex-grow: 1;
@@ -60,225 +64,262 @@
             overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 12px;
         }
         .chat-message {
             margin-bottom: 5px;
             display: flex;
             flex-direction: column;
             max-width: 85%;
-            animation: fadeIn 0.4s ease-out forwards;
+            animation: fadeIn 0.5s cubic-bezier(0.25, 1, 0.5, 1) forwards;
         }
         .ai-message { align-items: flex-start; }
         .user-message { align-items: flex-end; margin-left: auto; }
 
         .message-bubble {
-            padding: 12px 18px;
-            border-radius: 20px;
-            line-height: 1.5;
+            padding: 14px 20px;
+            border-radius: 22px;
+            line-height: 1.6;
+            font-size: 1.05em;
         }
         .ai-message .message-bubble {
             background-color: var(--ai-bubble-color);
             color: var(--text-primary-color);
-            border-bottom-left-radius: 4px;
+            border-bottom-left-radius: 6px;
         }
         .user-message .message-bubble {
             background-color: var(--user-bubble-color);
             color: white;
-            border-bottom-right-radius: 4px;
+            border-bottom-right-radius: 6px;
+        }
+        
+        /* Kiểu tin nhắn đặc biệt */
+        .quote-bubble {
+            background-color: #ffffff;
+            border-left: 4px solid var(--primary-color);
+            border-radius: 8px;
+            padding: 15px;
+            font-style: italic;
+            color: #4b5563;
         }
 
         .typing-indicator {
-            display: flex;
-            align-items: center;
-            padding: 10px;
+            display: flex; align-items: center; padding: 10px;
         }
         .typing-indicator span {
-            height: 8px; width: 8px; background-color: #B0B3B8;
-            border-radius: 50%; display: inline-block; margin: 0 2px;
+            height: 9px; width: 9px; background-color: #d8b4fe;
+            border-radius: 50%; display: inline-block; margin: 0 3px;
             animation: bounce 1.4s infinite ease-in-out both;
         }
         .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
         .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
         @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1.0); } }
 
-        .chat-footer {
-            flex-shrink: 0;
-            border-top: 1px solid #ddd;
-        }
-        .user-options {
-            padding: 15px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            justify-content: center;
-        }
+        .chat-footer { flex-shrink: 0; border-top: 1px solid #e9d5ff; }
+
+        .user-options { padding: 15px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;}
         .user-options button {
-            padding: 10px 15px;
-            font-size: 1em;
-            border: 1px solid #ccc;
-            background-color: var(--container-bg-color);
-            color: var(--text-primary-color);
-            border-radius: 20px;
-            cursor: pointer;
-            transition: all 0.2s;
+            padding: 10px 18px; font-size: 1em;
+            border: 1px solid #d8b4fe; background-color: #faf5ff;
+            color: var(--primary-color); border-radius: 20px;
+            cursor: pointer; transition: all 0.2s ease; font-family: var(--font-family); font-weight: 500;
         }
         .user-options button:hover {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-            color: white;
-            transform: translateY(-2px);
+            background-color: var(--primary-color); border-color: var(--primary-color);
+            color: white; transform: translateY(-2px); box-shadow: 0 4px 10px rgba(124, 58, 237, 0.2);
         }
         .user-options button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
+            opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none;
         }
         
-        #chat-input-form {
-            display: flex;
-            padding: 10px;
-            gap: 10px;
-            background-color: #f9f9f9;
-        }
+        #chat-input-form { display: flex; padding: 12px; gap: 10px; background-color: #f9f5ff; }
         #chat-input {
-            flex-grow: 1;
-            border: 1px solid #ccc;
-            border-radius: 20px;
-            padding: 10px 15px;
-            font-size: 1em;
+            flex-grow: 1; border: 1px solid #e9d5ff; border-radius: 20px; padding: 12px 18px;
+            font-size: 1em; font-family: var(--font-family);
         }
-        #chat-input:focus { outline: none; border-color: var(--primary-color); }
+        #chat-input:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 2px #d8b4fe;}
         #send-button {
-            border: none;
-            background-color: var(--primary-color);
-            color: white;
-            border-radius: 50%;
-            width: 44px; height: 44px;
-            font-size: 1.5em;
-            cursor: pointer;
-            transition: background-color 0.2s;
+            border: none; background-color: var(--primary-color); color: white; border-radius: 50%;
+            width: 48px; height: 48px; font-size: 1.6em; cursor: pointer; transition: all 0.2s ease;
         }
-        #send-button:hover { background-color: #59359a; }
+        #send-button:hover { background-color: #6d28d9; transform: scale(1.1); }
 
-        .disclaimer { text-align: center; font-size: 12px; color: var(--text-secondary-color); padding: 10px 15px 15px; background-color: #f9f9f9;}
+        .disclaimer { text-align: center; font-size: 12px; color: var(--text-secondary-color); padding: 0 15px 15px; background-color: #f9f5ff;}
     </style>
 </head>
 <body>
 
     <div class="chat-container">
         <div class="chat-header">
-            <h2>Dr. Gen Z</h2>
-            <p>Chuyên gia lắng nghe & "gỡ rối" tơ lòng</p>
+            <h2>Dr. Gen Z 🔮</h2>
+            <p>"Check" tần số cảm xúc, "gỡ rối" tơ lòng</p>
         </div>
         <div class="chat-log" id="chat-log"></div>
         <div class="chat-footer">
             <div class="user-options" id="user-options"></div>
             <form id="chat-input-form">
-                <input type="text" id="chat-input" placeholder="Hoặc chia sẻ thêm ở đây...">
+                <input type="text" id="chat-input" placeholder="Gõ gì đó dzô đây nè cưng...">
                 <button type="submit" id="send-button">➤</button>
             </form>
-            <p class="disclaimer">Lưu ý: Đây là một AI mô phỏng và không thay thế cho tư vấn tâm lý chuyên nghiệp.</p>
+            <p class="disclaimer">Lưu ý nho nhỏ: Tui là AI thui, hổng thay thế chuyên gia tâm lý thiệt được đâu nha! 😉</p>
         </div>
     </div>
 
-    <script>
+<script>
     const chatLog = document.getElementById('chat-log');
     const userOptions = document.getElementById('user-options');
     const inputForm = document.getElementById('chat-input-form');
     const textInput = document.getElementById('chat-input');
 
-    // Cây hội thoại phức tạp hơn
+    // Cây hội thoại phiên bản "phức tạp, sâu sắc, mlem mlem"
     const conversationTree = {
         start: {
-            message: "Xin chào bạn yêu! Tôi là Dr. Gen Z, chuyên gia 'bắt bệnh' cảm xúc đây. Hôm nay, có chuyện gì khiến 'ra-đa' của bạn rung rinh thế? 😉",
+            message: "Hello bé iu! Tui là Dr. Gen Z, 'chiêm tinh gia' cảm xúc của bồ đây. Lại đây mình 'check' tần số năng lượng vũ trụ, coi nay sao mà 'tụt mood' dzữ dzậy hén? 🤙",
             options: [
-                { text: "Tôi đang stress...", next: 'stress_intro' },
-                { text: "Cảm thấy mất động lực", next: 'motivation_intro' },
-                { text: "Tâm trạng hơi buồn...", next: 'sadness_intro' },
-                { text: "Chuyện tình cảm 'toang'", next: 'love_intro' }
+                { text: "Ét o ét, tui bị dí...", next: 'stress_intro' },
+                { text: "Mông lung quá sếp ơi", next: 'future_intro' },
+                { text: "Chuyện tình cảm 'toang'", next: 'love_intro' },
+                { text: "Tự nhiên thấy 'trống rỗng'", next: 'emptiness_intro' }
             ]
         },
+        // --- Nhánh 1: Stress ---
         stress_intro: {
-            message: "Stress à? Tôi hiểu, cảm giác như 'gánh team' 24/7 mà không có KPI. Cụ thể hơn, bạn đang stress về chuyện gì thế?",
+            message: "Ái chà, bị 'dí' hả? Deadline dí, sếp dí, hay 'bà hàng xóm' dí dzậy cưng? Kể tui nghe coi 'thế lực' nào đang làm bé áp lực nè?",
             options: [
-                { text: "Áp lực công việc", next: 'stress_work' },
-                { text: "Chuyện học hành", next: 'stress_study' },
-                { text: "Áp lực từ gia đình", next: 'stress_family' },
-                { text: "Quay lại", next: 'start' }
+                { text: "Áp lực công việc đó bà", next: 'stress_work' },
+                { text: "Học hành như 'trái phá'", next: 'stress_study' },
+                { text: "Peer pressure á trời!", next: 'future_peer_pressure' }, // Nối qua nhánh tương lai
+                { text: "Thôi, hong có gì đâu...", next: 'start' }
             ]
         },
         stress_work: {
-            message: "Deadline dí sát nút, sếp thì khó tính, đồng nghiệp thì 'toxic'... quen quá rồi. Để 'xả stress' hiệu quả, bạn hãy thử hít một hơi thật sâu và thở ra từ từ. Nó giúp 'hạ nhiệt' cho bộ não của bạn đó.",
-            options: [ { text: "Cảm ơn Dr. Gen Z!", next: 'final_thanks' } ]
-        },
-        stress_study: {
-            message: "Núi bài tập và những kỳ thi bất tận, thật là một 'kiếp nạn'. Đừng cố gắng 'cày' một lúc. Hãy áp dụng quy tắc Pomodoro: học 25 phút, nghỉ 5 phút. Nó sẽ giúp bạn 'hack' não và học hiệu quả hơn nhiều.",
-            options: [ { text: "Cảm ơn Dr. Gen Z!", next: 'final_thanks' } ]
-        },
-        stress_family: {
-            message: "Kỳ vọng của gia đình đôi khi nặng như 'gánh tạ'. Hãy nhớ rằng, bạn có giá trị riêng của mình. Thử tìm một thời điểm thích hợp để nhẹ nhàng chia sẻ cảm xúc của mình với bố mẹ xem sao. Giao tiếp là chìa khóa đó.",
-            options: [ { text: "Cảm ơn Dr. Gen Z!", next: 'final_thanks' } ]
-        },
-        motivation_intro: {
-            message: "Mất động lực giống như điện thoại hết pin vậy, chẳng muốn làm gì cả. Bạn có cảm thấy kiệt sức hay chỉ đơn giản là không còn hứng thú với mọi thứ?",
+            message: [
+                "U là trời, công việc thì lúc nào cũng như 'sóng thần' ập tới ha. Tui nghe mùi 'burnout' đâu đây rùi đó nha.",
+                "Bé có cảm thấy quá tải với task, hay là mệt mỏi với môi trường làm việc hơn?"
+            ],
             options: [
-                { text: "Tôi cảm thấy kiệt sức", next: 'motivation_burnout' },
-                { text: "Mất hết hứng thú", next: 'motivation_bored' },
-                { text: "Quay lại", next: 'start' }
+                { text: "Em ngập trong deadline", next: 'stress_work_deadline' },
+                { text: "Môi trường 'toxic' quá", next: 'stress_work_toxic' },
             ]
         },
-        motivation_burnout: {
-            message: "Kiệt sức (burnout) là tín hiệu 'cầu cứu' của cơ thể. Bạn cần 'sạc pin' ngay lập tức! Hãy cho phép mình nghỉ ngơi thực sự, không check mail, không lướt mạng xã hội. Một giấc ngủ ngon có thể тạo ra phép màu.",
-            options: [ { text: "Cảm ơn Dr. Gen Z!", next: 'final_thanks' } ]
+        stress_work_deadline: {
+            message: {
+                type: 'quote',
+                text: "“Bé ơi đừng cố 'gánh team' một mình. Thử 'chia để trị' đi, xé nhỏ công việc ra như cách mình ăn bánh tráng trộn dzậy á, mỗi lần một miếng thui, từ từ rùi cũng hết bịch to. 😉”"
+            },
+            options: [ { text: "Keo quá chị ơi!", next: 'final_thanks' } ]
         },
-        motivation_bored: {
-            message: "Mất hứng thú có thể là do bạn đang lặp lại những điều cũ kỹ. Hãy thử một thứ gì đó hoàn toàn mới: đọc một thể loại sách khác, đi một con đường lạ, hoặc học một kỹ năng không liên quan gì đến công việc. Nó sẽ 'F5' lại tâm trí bạn.",
-            options: [ { text: "Cảm ơn Dr. Gen Z!", next: 'final_thanks' } ]
+        stress_work_toxic: {
+            message: "Môi trường 'toxic' thì phải bật chế độ 'tàng hình' liền! Hạn chế drama, đeo tai nghe vô và tập trung vào việc của mình thui. Năng lượng của mình quý lắm, hong có để cho mấy chuyện 'trời ơi đất hỡi' hút cạn được, nghe chưa!",
+            options: [ { text: "Dạ em hiểu rùi!", next: 'final_thanks' } ]
         },
-        sadness_intro: {
-            message: "Buồn bã là một đám mây xám. Nhưng sau cơn mưa trời lại sáng. Cứ cho phép mình được buồn, được khóc nếu muốn. Đó là một cách chữa lành rất tự nhiên.",
-            options: [ { text: "Cảm ơn Dr. Gen Z!", next: 'final_thanks' } ]
+        stress_study: {
+            message: "Học bài hong dzô đúng hong? Cảm giác chữ nghĩa nó 'đá' mình ra khỏi đầu. Đừng lo, ai cũng có lúc như dzậy á. Thử đổi gió, ra quán cafe học hay rủ bạn học chung đi. Có 'đồng bọn' tự nhiên có động lực liền à!",
+            options: [ { text: "Ý hay á bà!", next: 'final_thanks' } ]
         },
-        love_intro: {
-            message: "Ôi chuyện tình cảm, phức tạp như thuật toán của TikTok vậy. 'Va' phải 'red flag' hay sao thế?",
+
+        // --- Nhánh 2: Tương lai mông lung ---
+        future_intro: {
+            message: "Mông lung về tương lai là cái 'mood' chung của Gen Z tụi mình mà. Giống như đứng giữa một rừng lựa chọn mà hổng biết đi đường nào. Cưng đang lo về chuyện gì nhất?",
             options: [
-                { text: "Đúng rồi, toang thật sự!", next: 'love_redflag' },
-                { text: "Chỉ là hơi 'cảm nắng'", next: 'love_crush' },
-                 { text: "Quay lại", next: 'start' }
+                { text: "Sợ thua kém bạn bè", next: 'future_peer_pressure' },
+                { text: "Hổng biết mình thích gì", next: 'future_passion' },
+                { text: "Sợ '30 tuổi vẫn loser'", next: 'future_success' }
+            ]
+        },
+        future_peer_pressure: {
+            message: [
+                "Trời đất ơi, đừng có nhìn vào cái 'highlight reel' trên mạng xã hội của người ta rùi 'tự hủy' nha cưng!",
+                "Ai cũng có con đường riêng, 'tốc độ' riêng hết á. Người ta đi máy bay, mình đi xe đạp thì mình ngắm cảnh chill chill. Miễn là mình không dừng lại là 'hết nước chấm' rùi! ✌️"
+            ],
+            options: [ { text: "Ok la, em sẽ chill!", next: 'final_thanks' } ]
+        },
+        future_passion: {
+            message: "Hong biết mình thích gì thì mình cứ thử! Thử đi, thử lẹ! Đăng ký một lớp học vẽ, đi làm tình nguyện, đọc một cuốn sách lạ hoắc... 'Đam mê' hổng có tự nhiên rớt xuống đầu đâu, mình phải đi 'săn' nó đó bé iu.",
+            options: [ { text: "Ok, em đi 'săn' liền!", next: 'final_thanks' } ]
+        },
+        future_success: {
+            message: {
+                type: 'quote',
+                text: "“'Thành công' đâu phải là cái đích đến, nó là cả cái hành trình 'trầy da tróc vảy' mà cưng. Cứ sống tử tế, nỗ lực mỗi ngày, là cưng đã thành công trong 'vũ trụ' của riêng mình rùi đó. Iu! ❤️”"
+            },
+            options: [ { text: "Nghe thấm quá bà...", next: 'final_thanks' } ]
+        },
+
+        // --- Nhánh 3: Tình cảm ---
+        love_intro: {
+            message: "Rồi, tới công chuyện tình cảm! 'Tín hiệu vũ trụ' báo về là dạo này 'tần số tình iu' của bé hổng ổn định lắm. Sao nè, kể tui nghe liền!",
+            options: [
+                { text: "Mới 'dính' red flag...", next: 'love_redflag' },
+                { text: "Crush hong 'báo' lại em", next: 'love_crush' },
+                { text: "Tình yêu 'bình yên' quá...", next: 'love_stable' }
             ]
         },
         love_redflag: {
-            message: "Gặp 'red flag' thì phải 'quay xe' ngay và luôn! Đừng tiếc. Bạn xứng đáng với một người tôn trọng và yêu thương bạn. 'Block' đi cho nhẹ lòng, rồi tự thưởng cho mình một bữa thật ngon nhé!",
-            options: [ { text: "Cảm ơn Dr. Gen Z!", next: 'final_thanks' } ]
+            message: "Gặp 'cờ đỏ' là phải 'chạy ngay đi' trước khi 'trời tối' nha cưng! Đừng có 'tự chữa lành' cho người ta, mình phải iu bản thân mình trước. 'Block' lẹ cho nhẹ cái đầu, rùi đi ăn lẩu ha!",
+            options: [ { text: "Ok, đi ăn lẩu liền!", next: 'final_thanks' } ]
         },
         love_crush: {
-            message: "'Cảm nắng' là một cảm giác thật tuyệt! Cứ tận hưởng đi. Đừng quá lo lắng về kết quả, hãy trân trọng những rung động trong sáng này. Biết đâu 'happy ending' đang chờ bạn thì sao?",
-            options: [ { text: "Cảm ơn Dr. Gen Z!", next: 'final_thanks' } ]
+            message: "Crush hong 'báo' thì mình 'báo' người khác! Lmao, đùa thui. Nhưng mà nè, giá trị của mình hong có phụ thuộc vào một tin nhắn 'seen' đâu. Mình vẫn 'cháy', vẫn 'keo lỳ' mà. Rắc 'thính' chỗ khác coi, biết đâu 'cá' to hơn! 😉",
+            options: [ { text: "Chí lý, em đi rắc thính!", next: 'final_thanks' } ]
         },
+        love_stable: {
+            message: "Ủa, 'bình yên' là cái mà bao nhiêu người mơ ước đó trời! Đừng có thấy nó bình yên rùi tưởng nó 'nhạt'. Thử tạo bất ngờ cho nhau đi, một buổi hẹn hò 'bất ổn' xíu, hay viết một lá thư tay sến súa. 'Gia vị' là do mình tự thêm vô mà!",
+            options: [ { text: "Hay á, để em thử!", next: 'final_thanks' } ]
+        },
+        
+        // --- Nhánh 4: Trống rỗng ---
+        emptiness_intro: {
+            message: "Tui hiểu cái cảm giác 'trống rỗng' này. Nó hong phải buồn, cũng hong phải vui, nó cứ lưng chừng, lơ lửng... Giống như điện thoại còn 50% pin mà hong biết xài để làm gì.",
+            message_2: "Bé có muốn thử 'khám phá' cái sự trống rỗng này, hay là muốn tìm cách 'lấp đầy' nó?",
+            options: [
+                { text: "Thử 'khám phá' nó xem", next: 'emptiness_explore' },
+                { text: "Làm gì đó để hết trống rỗng!", next: 'emptiness_fill' },
+            ]
+        },
+        emptiness_explore: {
+            message: "Dũng cảm đó! Thử ngồi yên, nhắm mắt lại, và 'lắng nghe' sự trống rỗng đó. Nó đang muốn nói gì với cưng? Có phải cưng đang thiếu một sự kết nối, với thiên nhiên, với mọi người, hay với chính bản thân mình?",
+            options: [ { text: "Em sẽ thử lắng nghe...", next: 'final_thanks' } ]
+        },
+        emptiness_fill: {
+            message: "Okie, 'chiến dịch lấp đầy' bắt đầu! Dọn dẹp lại phòng. Nghe một playlist nhạc 'cháy' hết cỡ. Ra ngoài đi dạo và nhìn ngắm mọi thứ xung quanh. Những hành động nhỏ xíu lại có sức mạnh 'chữa lành' cực lớn đó nha.",
+            options: [ { text: "Em đi dọn phòng liền!", next: 'final_thanks' } ]
+        },
+
+        // --- Kết thúc và Fallback ---
         final_thanks: {
-            message: "Không có gì! Tôi rất vui vì đã có thể lắng nghe. Hãy nhớ, mọi cảm xúc đều đáng được trân trọng. Cần 'sạc năng lượng' thì cứ tìm tôi nhé!",
+            message: "Iu bé! Nhớ nha, tui luôn ở đây, trong cái 'vũ trụ' này, để 'check' tần số với cưng. Chúc bé một ngày thiệt 'keo' và đừng quên tự 'sạc pin' cho mình nha! 💖",
             options: [ { text: "Trò chuyện lại từ đầu", next: 'start' } ]
         },
         text_fallback: {
-            message: "Cảm ơn bạn đã chia sẻ. Tôi đang lắng nghe đây. Việc nói ra được cảm xúc của mình đã là một bước rất dũng cảm rồi.",
-            options: [] // Sẽ hiển thị lại các nút cũ
+            message: "Trùi ui, dzậy luôn á hả? Tui đang nghe chăm chú lắm nè. Cứ xả ra hết đi cho nhẹ lòng, bé iu.",
+            options: [] 
         }
     };
 
-    let currentNodeKey = 'start'; // Theo dõi vị trí hiện tại trong cây hội thoại
+    let currentNodeKey = 'start'; 
 
-    // ----- CÁC HÀM XỬ LÝ -----
-
-    const addMessage = (sender, text) => {
+    const addMessage = (sender, messageData) => {
         const messageDiv = document.createElement('div');
         messageDiv.className = `chat-message ${sender}-message`;
-        messageDiv.innerHTML = `<div class="message-bubble">${text}</div>`;
+        
+        const bubble = document.createElement('div');
+        bubble.className = 'message-bubble';
+
+        if (typeof messageData === 'object' && messageData.type === 'quote') {
+            bubble.classList.add('quote-bubble');
+            bubble.innerHTML = messageData.text; // Dùng innerHTML để render emoji
+        } else {
+            bubble.innerHTML = messageData;
+        }
+
+        messageDiv.appendChild(bubble);
         chatLog.appendChild(messageDiv);
         chatLog.scrollTop = chatLog.scrollHeight;
     };
 
     const showTypingIndicator = () => {
+        if (document.getElementById('typing')) return;
         const typingDiv = document.createElement('div');
         typingDiv.className = 'chat-message ai-message typing-indicator';
         typingDiv.innerHTML = '<span></span><span></span><span></span>';
@@ -289,16 +330,15 @@
 
     const hideTypingIndicator = () => {
         const typingDiv = document.getElementById('typing');
-        if (typingDiv) chatLog.removeChild(typingDiv);
+        if (typingDiv) typingDiv.remove();
     };
 
     const setOptions = (options) => {
         userOptions.innerHTML = '';
-        if (!options) return;
-
+        if (!options || options.length === 0) return;
         options.forEach(option => {
             const button = document.createElement('button');
-            button.textContent = option.text;
+            button.innerHTML = option.text;
             button.dataset.next = option.next;
             userOptions.appendChild(button);
         });
@@ -309,28 +349,24 @@
         const node = conversationTree[nodeKey];
         if (!node) return;
 
-        // Xử lý tin nhắn của AI
-        const messages = Array.isArray(node.message) ? node.message : [node.message];
+        const messages = [];
+        if(node.message) messages.push(node.message);
+        if(node.message_2) messages.push(node.message_2);
+
         for (const msg of messages) {
             showTypingIndicator();
-            await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 500));
+            await new Promise(resolve => setTimeout(resolve, 1200 + Math.random() * 800));
             hideTypingIndicator();
             addMessage('ai', msg);
         }
-
-        // Hiển thị các lựa chọn mới
         setOptions(node.options);
     };
 
     const handleOptionClick = (event) => {
         if (event.target.tagName !== 'BUTTON') return;
-        
-        const userChoiceText = event.target.textContent;
+        const userChoiceText = event.target.innerHTML;
         const nextNodeKey = event.target.dataset.next;
-
-        // Vô hiệu hóa các nút hiện tại
         userOptions.querySelectorAll('button').forEach(btn => btn.disabled = true);
-
         addMessage('user', userChoiceText);
         processAiTurn(nextNodeKey);
     };
@@ -339,29 +375,20 @@
         event.preventDefault();
         const userText = textInput.value.trim();
         if (!userText) return;
-
         addMessage('user', userText);
         textInput.value = '';
-
-        // Phản hồi chung của AI
         const fallbackNode = conversationTree['text_fallback'];
         showTypingIndicator();
         await new Promise(resolve => setTimeout(resolve, 1500));
         hideTypingIndicator();
         addMessage('ai', fallbackNode.message);
-
-        // Hiển thị lại các nút của node hiện tại để người dùng tiếp tục
         setOptions(conversationTree[currentNodeKey].options);
     };
 
-    // ----- KHỞI CHẠY -----
-    
     userOptions.addEventListener('click', handleOptionClick);
     inputForm.addEventListener('submit', handleTextInput);
-
-    // Bắt đầu cuộc trò chuyện
     processAiTurn('start');
 
-    </script>
+</script>
 </body>
 </html>
