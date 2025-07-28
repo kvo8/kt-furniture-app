@@ -151,6 +151,82 @@ tr:hover { background-color: rgba(128, 128, 128, 0.1); }
 .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
 input:checked + .slider { background-color: var(--primary-color); }
 input:checked + .slider:before { transform: translateX(24px); }
+/* === [THÊM MỚI] CSS CHO TRỢ LÝ AI === */
+        #ai-fab {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border-radius: 50%;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            cursor: pointer;
+            z-index: 1010;
+            transition: transform 0.3s ease;
+        }
+        #ai-fab:hover { transform: scale(1.1); }
+        
+        #ai-chat-modal {
+            position: fixed;
+            bottom: 100px;
+            right: 30px;
+            width: 400px;
+            height: 600px;
+            background-color: var(--card-bg-color);
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            z-index: 1009;
+            display: flex; /* Sẽ được JS đổi thành 'flex' */
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        .ai-chat-header { padding: 15px; background-color: var(--header-bg); color: white; flex-shrink: 0; }
+        .ai-chat-header h3 { margin: 0; font-size: 1.2rem; }
+        .ai-chat-header p { font-size: 0.8rem; color: #ccc; margin: 4px 0 0; }
+        
+        .ai-chat-log { flex-grow: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px;}
+
+        .ai-chat-message { max-width: 90%; line-height: 1.5; padding: 10px 15px; border-radius: 12px; }
+        .ai-chat-message.user { background-color: var(--primary-color); color: white; align-self: flex-end; border-bottom-right-radius: 4px;}
+        .ai-chat-message.ai { background-color: var(--bg-color); color: var(--text-color); border: 1px solid var(--border-color); align-self: flex-start; border-bottom-left-radius: 4px;}
+        .ai-chat-message.ai strong { color: var(--primary-color); }
+        .ai-chat-message ul { padding-left: 20px; margin: 5px 0 0 0; }
+        
+        .ai-chat-options button {
+            background: transparent; border: 1px solid var(--primary-color); color: var(--primary-color);
+            padding: 8px 12px; border-radius: 20px; cursor: pointer; margin: 5px 5px 0 0;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        .ai-chat-options button:hover { background-color: var(--primary-color); color: white; }
+
+        #ai-chat-form { display: flex; align-items: center; padding: 10px; border-top: 1px solid var(--border-color); flex-shrink: 0;}
+        #ai-chat-input { flex-grow: 1; border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; background-color: var(--bg-color); color: var(--text-color); }
+        #ai-chat-form button[type="submit"] { background: var(--primary-color); color: white; border: none; border-radius: 8px; padding: 0 15px; margin-left: 8px; cursor: pointer; height: 42px;}
+
+        /* Style cho nút micro */
+        #ai-mic-button {
+            background: transparent; color: var(--text-muted-color); border: 1px solid var(--border-color);
+            border-radius: 8px; padding: 0 12px; margin-right: 8px; cursor: pointer; font-size: 1.2rem;
+            height: 42px; transition: all 0.2s ease;
+        }
+        #ai-mic-button:hover { border-color: var(--primary-color); color: var(--primary-color); }
+        #ai-mic-button.is-listening {
+            background-color: var(--danger-color); color: white; border-color: var(--danger-color); animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
+        }
     </style>
     
     <script>
@@ -222,12 +298,17 @@ input:checked + .slider:before { transform: translateX(24px); }
         let allProducts = [];
         let currentUser = null;
 
-        function renderProducts(products) {
+      function renderProducts(products, highlightId = null) {
             const tableBody = document.getElementById('product-table-body');
             tableBody.innerHTML = '';
             if (products && products.length > 0) {
                 products.forEach((product, index) => {
                     const row = document.createElement('tr');
+                    if (product.id === highlightId) {
+                        row.style.backgroundColor = 'var(--warning-color)';
+                        row.style.transition = 'background-color 2s';
+                        setTimeout(() => { row.style.backgroundColor = ''; }, 2000);
+                    }
                     row.innerHTML = `
                         <td>${index + 1}</td>
                         <td>${product.id || 'N/A'}</td>
@@ -508,6 +589,198 @@ input:checked + .slider:before { transform: translateX(24px); }
         }
 
         document.addEventListener('DOMContentLoaded', initializePage);
+        // =======================================================
+        // === [THÊM MỚI] TOÀN BỘ LOGIC CỦA TRỢ LÝ AI ==========
+        // =======================================================
+        function initializeAIAssistant() {
+            const fab = document.getElementById('ai-fab');
+            const modal = document.getElementById('ai-chat-modal');
+            const form = document.getElementById('ai-chat-form');
+            const input = document.getElementById('ai-chat-input');
+            const chatLog = document.getElementById('ai-chat-log');
+            const micButton = document.getElementById('ai-mic-button');
+
+            fab.addEventListener('click', () => {
+                const isHidden = modal.style.display === 'none' || modal.style.display === '';
+                modal.style.display = isHidden ? 'flex' : 'none';
+                if (isHidden && chatLog.children.length === 0) {
+                    addAiMessage("Xin chào. Tôi là Trợ lý AI. Tôi có thể hỗ trợ bạn như thế nào?", getInitialOptions());
+                }
+            });
+
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const userQuery = input.value.trim();
+                if (!userQuery) return;
+                
+                addUserMessage(userQuery);
+                input.value = '';
+                
+                handleUserQuery(userQuery);
+            });
+
+            // --- LOGIC NHẬN DẠNG GIỌNG NÓI ---
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (SpeechRecognition) {
+                const recognition = new SpeechRecognition();
+                recognition.continuous = false;
+                recognition.lang = 'vi-VN';
+                recognition.interimResults = false;
+
+                micButton.addEventListener('click', () => {
+                    micButton.classList.contains('is-listening') ? recognition.stop() : recognition.start();
+                });
+
+                recognition.onstart = () => {
+                    micButton.classList.add('is-listening');
+                    input.placeholder = "Đang lắng nghe...";
+                };
+
+                recognition.onend = () => {
+                    micButton.classList.remove('is-listening');
+                    input.placeholder = "Nhập yêu cầu của bạn...";
+                };
+
+                recognition.onerror = (event) => addAiMessage("Lỗi nhận dạng giọng nói: " + event.error);
+
+                recognition.onresult = (event) => {
+                    const transcript = event.results[0][0].transcript;
+                    input.value = transcript;
+                    form.dispatchEvent(new Event('submit')); 
+                };
+            } else {
+                micButton.style.display = 'none'; // Ẩn nút nếu không được hỗ trợ
+            }
+
+            // --- CÁC HÀM XỬ LÝ TIN NHẮN ---
+            function addMessage(content, type) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `ai-chat-message ${type}`;
+                messageDiv.innerHTML = content;
+                chatLog.appendChild(messageDiv);
+                chatLog.scrollTop = chatLog.scrollHeight;
+                
+                if (type === 'ai') {
+                    messageDiv.querySelectorAll('.ai-chat-options button').forEach(btn => {
+                        btn.addEventListener('click', () => {
+                            const query = btn.getAttribute('data-query');
+                            addUserMessage(btn.textContent);
+                            handleUserQuery(query);
+                        });
+                    });
+                }
+            }
+            function addUserMessage(text) { addMessage(text, 'user'); }
+            function addAiMessage(text, optionsHTML = '') { addMessage(text + (optionsHTML ? `<div class="ai-chat-options">${optionsHTML}</div>` : ''), 'ai'); }
+
+            function getInitialOptions() {
+                return [
+                    { text: "Tìm kiếm sản phẩm", query: "help_search" },
+                    { text: "Phân tích dữ liệu", query: "help_analyze" },
+                    { text: "Giải thích chức năng", query: "help_explain" },
+                ].map(opt => `<button data-query="${opt.query}">${opt.text}</button>`).join('');
+            }
+
+            // --- "BỘ NÃO" CỦA AI ---
+            function handleUserQuery(query) {
+                query = query.toLowerCase();
+                
+                // 1. Lệnh gợi ý
+                if (query === "help_search") return addAiMessage("Vui lòng nhập yêu cầu tìm kiếm. Ví dụ: 'Tìm sản phẩm outdoor', 'Liệt kê sản phẩm của Khoi', 'Sản phẩm mới nhất'.");
+                if (query === "help_analyze") return addAiMessage("Vui lòng chọn loại phân tích:", [{ text: "Có bao nhiêu sản phẩm?", query: "đếm tất cả sản phẩm" }, { text: "Ai tạo nhiều sản phẩm nhất?", query: "phân tích người tạo" }].map(o => `<button data-query="${o.query}">${o.text}</button>`).join(''));
+                if (query === "help_explain") return addAiMessage("Bạn muốn giải thích về chức năng nào?", [{ text: "Nút 'Xem QR' để làm gì?", query: "giải thích xem qr" }, { text: "Làm sao để xóa sản phẩm?", query: "giải thích xóa" }].map(o => `<button data-query="${o.query}">${o.text}</button>`).join(''));
+
+                // 2. Lệnh phân tích
+                if (query.includes("đếm") && query.includes("sản phẩm")) return addAiMessage(`Hệ thống ghi nhận tổng cộng <strong>${allProducts.length}</strong> sản phẩm.`);
+                if (query.includes("phân tích người tạo") || query.includes("tạo nhiều nhất")) {
+                    const counts = allProducts.reduce((acc, p) => { acc[p.created_by_name] = (acc[p.created_by_name] || 0) + 1; return acc; }, {});
+                    const topCreator = Object.entries(counts).sort((a,b) => b[1] - a[1])[0];
+                    return addAiMessage(`Phân tích cho thấy <strong>${topCreator[0]}</strong> là người tạo nhiều sản phẩm nhất với <strong>${topCreator[1]}</strong> sản phẩm.`);
+                }
+                
+                // 3. Lệnh giải thích
+                if (query.includes("giải thích xem qr")) return addAiMessage("Chức năng 'Xem QR' tạo ra một mã QR Code duy nhất cho mỗi sản phẩm. Người dùng có thể quét mã này bằng thiết bị di động để nhanh chóng truy cập trang chi tiết sản phẩm.");
+                if (query.includes("giải thích xóa")) {
+                    let response = "Để xóa một sản phẩm, nhấn vào nút 'Xóa' màu đỏ ở hàng tương ứng. Một hộp thoại xác nhận sẽ hiện ra.";
+                    response += (currentUser && currentUser.employeeId === 'KT01IT') ? "<br>Tài khoản của bạn <strong>có quyền</strong> thực hiện hành động này." : "<br>Lưu ý: Chỉ có quản trị viên (ID: KT01IT) mới có quyền thực hiện hành động này.";
+                    return addAiMessage(response);
+                }
+
+                // 4. Lệnh tìm kiếm
+                if (query.includes("mới nhất")) {
+                    const latest = [...allProducts].sort((a,b) => new Date(b.created_at) - new Date(a.created_at))[0];
+                    if(latest) {
+                        renderProducts(allProducts, latest.id);
+                        return addAiMessage(`Sản phẩm mới nhất là <strong>${latest.name_vi}</strong> (Mã: ${latest.id}), được tạo bởi <strong>${latest.created_by_name}</strong>. Sản phẩm đã được làm nổi bật trên bảng.`);
+                    }
+                    return addAiMessage("Không tìm thấy sản phẩm nào.");
+                }
+                
+                let match = query.match(/(?:tìm|liệt kê|cho xem)\s(?:sản phẩm|sp)\s(.*)/i);
+                if (match) {
+                    const keyword = match[1].trim();
+                    const results = allProducts.filter(p => p.name_vi.toLowerCase().includes(keyword) || p.id.toLowerCase().includes(keyword) || p.created_by_name.toLowerCase().includes(keyword));
+                    if (results.length > 0) {
+                        renderProducts(results);
+                        let resultText = `Đã tìm thấy <strong>${results.length}</strong> sản phẩm khớp với từ khóa '${keyword}'. Danh sách trên bảng đã được cập nhật.`;
+                        return addAiMessage(resultText);
+                    }
+                    return addAiMessage(`Không tìm thấy sản phẩm nào khớp với từ khóa '${keyword}'.`);
+                }
+                
+                // Fallback
+                addAiMessage("Yêu cầu không hợp lệ. Vui lòng thử lại hoặc chọn một trong các gợi ý.", getInitialOptions());
+            }
+        }
+
+        // --- Cập nhật hàm initializePage để gọi AI ---
+        async function initializePage() {
+            try {
+                const response = await fetch('/api/me');
+                if (!response.ok) {
+                    window.location.href = '/login.html';
+                    return;
+                }
+                currentUser = await response.json();
+                
+                // Dùng await để đảm bảo loadProducts hoàn thành trước khi khởi tạo AI
+                await new Promise(resolve => {
+                    fetch('/api/products')
+                        .then(res => res.ok ? res.json() : Promise.reject(res))
+                        .then(data => {
+                            allProducts = data.products || data || [];
+                            renderProducts(allProducts);
+                            resolve(); // Báo hiệu đã xong
+                        })
+                        .catch(error => {
+                            document.getElementById('product-table-body').innerHTML = `<tr><td colspan="6" style="text-align:center; color: red;">Không thể tải danh sách sản phẩm.</td></tr>`;
+                            resolve(); // Vẫn resolve để trang không bị treo
+                        });
+                });
+                
+                applyTheme(currentUser.theme);
+                // updateNotifications(); // Bạn có thể bật lại nếu cần
+                attachEventListeners();
+                applyNavigationPermissions();
+                initializeAIAssistant(); // Khởi tạo AI sau khi có dữ liệu
+            } catch (error) {
+                console.error("Lỗi khởi tạo trang:", error);
+                window.location.href = '/login.html';
+            }
+        }
     </script>
+    <button id="ai-fab" title="Trợ lý AI">🤖</button>
+    <div id="ai-chat-modal" style="display: none;">
+        <div class="ai-chat-header">
+            <h3>Trợ lý AI Quản lý Sản phẩm</h3>
+            <p>Sẵn sàng phân tích và hỗ trợ dữ liệu</p>
+        </div>
+        <div class="ai-chat-log" id="ai-chat-log"></div>
+        <form id="ai-chat-form">
+            <button type="button" id="ai-mic-button" title="Ghi âm yêu cầu">🎙️</button>
+            <input type="text" id="ai-chat-input" placeholder="Nhập yêu cầu của bạn..." autocomplete="off">
+            <button type="submit">Gửi</button>
+        </form>
+    </div>
 </body>
 </html>
