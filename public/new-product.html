@@ -4,63 +4,87 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Thêm Sản Phẩm Mới</title>
-    
     <link rel="stylesheet" href="/css/style.css">
     
     <style>
-        /* --- Định dạng cho nút submit khi bị vô hiệu hóa (disabled) --- */
-        /* Mục đích: Cung cấp phản hồi trực quan cho người dùng rằng nút không thể được nhấn. */
-        button[type="submit"]:disabled {
-            background-color: #5a6268; /* Màu nền xám hơn */
-            border-color: #5a6268;     /* Màu viền tương ứng */
-            cursor: not-allowed;       /* Biểu tượng con trỏ chuột bị cấm */
-            opacity: 0.65;             /* Giảm độ mờ để trông bị vô hiệu hóa */
-        }
-        
-        /* --- Mục này bạn có trong code gốc nên mình giữ lại --- */
-        /* Định dạng cho khu vực hiển thị trạng thái upload (hiện đang không dùng) */
-        .upload-status {
-            margin-top: 15px;
-            padding: 10px;
-            background-color: #e9f7fe;
-            border-left: 4px solid #007bff;
-            font-style: italic;
-            color: #333;
-            display: none; /* Mặc định ẩn đi */
-            text-align: left;
-        }
+        /* === [THÊM MỚI] - CSS để làm đẹp Header === */
+header {
+    text-align: center; /* Đảm bảo mọi thứ trong header đều canh giữa */
+    padding-bottom: 25px;
+    margin-bottom: 30px;
+    border-bottom: 1px solid var(--border-color); /* Thêm đường kẻ ngang tinh tế */
+}
 
-        /* --- Định dạng cho các nút Upload kiểu popup --- */
-        /* Mục đích: Tạo một nút bấm nằm đè lên trên ô textarea để tiết kiệm không gian. */
-        .form-group-with-button {
-            position: relative; /* Đặt làm gốc cho các phần tử con có position: absolute */
+header h1 {
+    font-size: 2.8rem; /* Tăng nhẹ kích thước chữ */
+    font-weight: 700;  /* Chữ đậm hơn */
+    margin-bottom: 10px;
+    
+    /* --- Hiệu ứng Gradient và Highlight --- */
+    /* Tạo dải màu gradient từ các biến màu có sẵn của bạn */
+    background: linear-gradient(45deg, var(--primary-color), var(--info-color));
+    
+    /* Áp dụng gradient làm màu cho chữ */
+    color: transparent; /* Ẩn màu chữ gốc */
+    -webkit-background-clip: text;
+    background-clip: text;
+    
+    /* Thêm bóng mờ nhẹ để chữ nổi bật hơn */
+    text-shadow: 2px 2px 8px rgba(0,0,0,0.1);
+}
+        :root {
+            --bg-color: #f8f9fa; --card-bg-color: #ffffff; --text-color: #212529;
+            --text-muted-color: #6c757d; --border-color: #dee2e6; --primary-color: #007bff;
+            --input-bg: #fff; --input-readonly-bg: #e9ecef; --button-disabled-bg: #5a6268;
         }
-        .form-group-with-button textarea {
-            /* Tạo không gian trống bên phải trong ô textarea để đặt nút bấm vào đó */
-            padding-right: 120px !important;
+        body.dark-mode {
+            --bg-color: #121212; --card-bg-color: #1e1e1e; --text-color: #e0e0e0;
+            --text-muted-color: #888; --border-color: #444; --primary-color: #0d6efd;
+            --input-bg: #2b2b2b; --input-readonly-bg: #343a40; --button-disabled-bg: #495057;
         }
-        .popup-upload-btn {
-            position: absolute; /* Định vị trí tuyệt đối so với .form-group-with-button */
-            top: 50%;           /* Đặt ở giữa theo chiều dọc */
-            right: 10px;        /* Cách lề phải 10px */
-            transform: translateY(-50%); /* Kỹ thuật canh giữa theo chiều dọc một cách chính xác */
-            padding: 8px 12px;
-            background-color: #17a2b8; /* Màu xanh lam cho khác biệt */
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: background-color 0.2s; /* Hiệu ứng chuyển màu nền mượt mà khi di chuột */
-        }
-        .popup-upload-btn:hover {
-             background-color: #138496; /* Đổi sang màu nền đậm hơn khi di chuột qua */
-        }
+        body { background-color: var(--bg-color); color: var(--text-color); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        .container { background-color: var(--card-bg-color); }
+        header p, .form-group label, .form-section > p, .nav-link a { color: var(--text-muted-color); }
+        h1, h2 { color: var(--text-color); border-bottom-color: var(--border-color); }
+        .form-group input, .form-group textarea, .form-group select { background-color: var(--input-bg); color: var(--text-color); border: 1px solid var(--border-color); }
+        .form-section { border-top: 1px solid var(--border-color); }
+        button[type="submit"]:disabled { background-color: var(--button-disabled-bg); border-color: var(--button-disabled-bg); cursor: not-allowed; opacity: 0.65; }
+        .id-prefix span { background-color: var(--input-readonly-bg); border-color: var(--border-color); }
+        hr.full-width { grid-column: 1 / -1; border: 0; height: 1px; background-color: var(--border-color); margin: 10px 0; }
+        .form-group-with-button { position: relative; }
+        .form-group-with-button textarea { padding-right: 120px !important; }
+        .popup-upload-btn { position: absolute; top: 50%; right: 10px; transform: translateY(-50%); padding: 8px 12px; background-color: #17a2b8; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: background-color 0.2s; }
+        .popup-upload-btn:hover { background-color: #138496; }
+        .theme-switcher { position: absolute; top: 20px; right: 20px; display: flex; align-items: center; gap: 8px; z-index: 10; }
+        .theme-switcher span { font-size: 1.2rem; }
+        .switch { position: relative; display: inline-block; width: 50px; height: 26px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 26px; }
+        .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--primary-color); }
+        input:checked + .slider:before { transform: translateX(24px); }
     </style>
+    
+    <script>
+      (function() {
+        try {
+            const theme = localStorage.getItem('theme');
+            if (theme === 'dark') document.documentElement.classList.add('dark-mode');
+        } catch(e) {}
+      })();
+    </script>
 </head>
-<body>
+<body class="dark-mode">
+    <div class="theme-switcher">
+        <span>☀️</span>
+        <label class="switch">
+            <input type="checkbox" id="theme-toggle">
+            <span class="slider round"></span>
+        </label>
+        <span>🌙</span>
+    </div>
+
     <div class="container">
-        
         <header>
             <h1>Thêm Sản Phẩm Mới / Add New Product</h1>
             <p>Điền đầy đủ các thông tin dưới đây và nhấn "Lưu" để tạo sản phẩm mới.</p>
@@ -86,6 +110,7 @@
                     <div class="form-group"><label for="collection_en">Collection (EN)</label><input type="text" id="collection_en" name="collection_en"></div>
                 </div>
             </section>
+
             <section class="form-section">
                 <h2>Chi Tiết Vật Liệu & Sản Xuất</h2>
                 <div class="form-grid">
@@ -102,6 +127,7 @@
                     <div class="form-group"><label for="production_place">Nơi sản xuất</label><select id="production_place" name="production_place"><option value="KT">KT</option><option value="Minh Tien">Minh Tiến</option><option value="Other">Khác</option></select></div>
                 </div>
             </section>
+
             <section class="form-section">
                 <h2>Thông Tin Thương Mại & Kỹ Thuật</h2>
                 <div class="form-grid">
@@ -110,195 +136,64 @@
                     <div class="form-group full-width"><label for="specification">Thông số</label><input type="text" id="specification" name="specification"></div>
                 </div>
             </section>
+
             <section class="form-section">
                 <h2>Kích Thước & Chi Tiết Khác</h2>
                 <div class="form-grid">
-                    <div class="form-group"><label for="length">Chiều dài (cm)</label><input type="number" id="length" step="0.01" min="0" name="length" placeholder="Ví dụ: 120.5"></div>
-                    <div class="form-group"><label for="width">Chiều rộng (cm)</label><input type="number" id="width" step="0.01" min="0" name="width" placeholder="Ví dụ: 80"></div>
-                    <div class="form-group"><label for="height">Chiều cao (cm)</label><input type="number" id="height" step="0.01" min="0" name="height" placeholder="Ví dụ: 75.2"></div>
-                    <div class="form-group"><label for="packed_length">Chiều dài đóng gói (cm)</label><input type="number" id="packed_length" step="0.01" min="0" name="packed_length"></div>
-                    <div class="form-group"><label for="packed_width">Chiều rộng đóng gói (cm)</label><input type="number" id="packed_width" step="0.01" min="0" name="packed_width"></div>
-                    <div class="form-group"><label for="packed_height">Chiều cao đóng gói (cm)</label><input type="number" id="packed_height" step="0.01" min="0" name="packed_height"></div>
-                    <div class="form-group full-width"><label for="other_details">Các chi tiết khác</label><textarea id="other_details" name="other_details" rows="4" placeholder="Ghi chú thêm về sản phẩm..."></textarea></div>
+                    <div class="form-group"><label>Chiều dài (cm)</label><input type="number" step="0.01" name="length" placeholder="Ví dụ: 120.5"></div>
+                    <div class="form-group"><label>Chiều rộng (cm)</label><input type="number" step="0.01" name="width" placeholder="Ví dụ: 80"></div>
+                    <div class="form-group"><label>Chiều cao (cm)</label><input type="number" step="0.01" name="height" placeholder="Ví dụ: 75.2"></div>
+                    <div class="form-group"><label>Chiều dài đóng gói (cm)</label><input type="number" step="0.01" name="packed_length"></div>
+                    <div class="form-group"><label>Chiều rộng đóng gói (cm)</label><input type="number" step="0.01" name="packed_width"></div>
+                    <div class="form-group"><label>Chiều cao đóng gói (cm)</label><input type="number" step="0.01" name="packed_height"></div>
+                    <div class="form-group full-width"><label>Các chi tiết khác</label><textarea name="other_details" rows="4" placeholder="Ghi chú thêm về sản phẩm..."></textarea></div>
                 </div>
             </section>
+            
             <section class="form-section">
                 <h2>Thông Số Kỹ Thuật & Cân Nặng (Nội bộ)</h2>
                 <div class="form-grid">
-                    <div class="form-group"><label for="box_quantity">Số lượng/hộp</label><input type="text" id="box_quantity" name="box_quantity"></div>
-                    <div class="form-group"><label for="origin_country">Nơi sản xuất (Nội bộ)</label><input type="text" id="origin_country" name="origin_country"></div>
-                    <div class="form-group"><label for="cost_price">Giá vốn</label><input type="number" id="cost_price" step="0.01" min="0" name="cost_price"></div>
-                    <div class="form-group"><label for="hardware">Hardware</label><input type="text" id="hardware" name="hardware"></div>
-                    <div class="form-group"><label for="cushion_details">Nệm</label><input type="text" id="cushion_details" name="cushion_details"></div>
-                    <div class="form-group"><label for="pillow_details">Gối</label><input type="text" id="pillow_details" name="pillow_details"></div>
+                    <div class="form-group"><label>Số lượng/hộp</label><input type="text" name="box_quantity"></div>
+                    <div class="form-group"><label>Nơi sản xuất</label><input type="text" name="origin_country"></div>
+                    <div class="form-group"><label>Giá vốn</label><input type="number" step="0.01" name="cost_price"></div>
+                    <div class="form-group"><label>Hardware</label><input type="text" name="hardware"></div>
+                    <div class="form-group"><label>Nệm</label><input type="text" name="cushion_details"></div>
+                    <div class="form-group"><label>Gối</label><input type="text" name="pillow_details"></div>
                     <hr class="full-width">
-                    <div class="form-group"><label for="aluminum_weight">Định lượng nhôm (Kg)</label><input type="number" id="aluminum_weight" step="0.01" min="0" name="aluminum_weight"></div>
-                    <div class="form-group"><label for="wicker_weight">Định lượng Wicker (Kg)</label><input type="number" id="wicker_weight" step="0.01" min="0" name="wicker_weight"></div>
-                    <div class="form-group"><label for="stone_weight">Định lượng mặt đá (Kg)</label><input type="number" id="stone_weight" step="0.01" min="0" name="stone_weight"></div>
-                    <div class="form-group"><label for="weaving_rope_weight">Cân nặng dây đan (Kg)</label><input type="number" id="weaving_rope_weight" step="0.01" min="0" name="weaving_rope_weight"></div>
-                    <div class="form-group"><label for="lining_rope_weight">Cân nặng dây lót (Kg)</label><input type="number" id="lining_rope_weight" step="0.01" min="0" name="lining_rope_weight"></div>
-                    <div class="form-group"><label for="product_weight">Tổng cân nặng sản phẩm (Kg)</label><input type="number" id="product_weight" step="0.01" min="0" name="product_weight"></div>
-                    <div class="form-group"><label for="packed_weight_total">Tổng cân nặng đóng thùng (Kg)</label><input type="number" id="packed_weight_total" step="0.01" min="0" name="packed_weight_total"></div>
+                    <div class="form-group"><label>Định lượng nhôm (Kg)</label><input type="number" step="0.01" name="aluminum_weight"></div>
+                    <div class="form-group"><label>Định lượng Wicker (Kg)</label><input type="number" step="0.01" name="wicker_weight"></div>
+                    <div class="form-group"><label>Định lượng mặt đá (Kg)</label><input type="number" step="0.01" name="stone_weight"></div>
+                    <div class="form-group"><label>Cân nặng dây đan (Kg)</label><input type="number" step="0.01" name="weaving_rope_weight"></div>
+                    <div class="form-group"><label>Cân nặng dây lót (Kg)</label><input type="number" step="0.01" name="lining_rope_weight"></div>
+                    <div class="form-group"><label>Tổng cân nặng sản phẩm (Kg)</label><input type="number" step="0.01" name="product_weight"></div>
+                    <div class="form-group"><label>Tổng cân nặng đóng thùng (Kg)</label><input type="number" step="0.01" name="packed_weight_total"></div>
                     <hr class="full-width">
-                    <div class="form-group"><label for="aluminum_supplier">Nhà cung cấp nhôm</label><input type="text" id="aluminum_supplier" name="aluminum_supplier"></div>
-                    <div class="form-group"><label for="wicker_supplier">Nhà cung cấp wicker</label><input type="text" id="wicker_supplier" name="wicker_supplier"></div>
-                    <div class="form-group"><label for="stone_supplier">Nhà cung cấp mặt đá</label><input type="text" id="stone_supplier" name="stone_supplier"></div>
-                    <div class="form-group"><label for="powder_coating_supplier">Nhà cung cấp sơn tĩnh điện</label><input type="text" id="powder_coating_supplier" name="powder_coating_supplier"></div>
+                    <div class="form-group"><label>Nhà cung cấp nhôm</label><input type="text" name="aluminum_supplier"></div>
+                    <div class="form-group"><label>Nhà cung cấp wicker</label><input type="text" name="wicker_supplier"></div>
+                    <div class="form-group"><label>Nhà cung cấp mặt đá</label><input type="text" name="stone_supplier"></div>
+                    <div class="form-group"><label>Nhà cung cấp sơn tĩnh điện</label><input type="text" name="powder_coating_supplier"></div>
                 </div>
             </section>
+
             <section class="form-section">
                 <h2>Tệp Đính Kèm</h2>
-                <p style="font-style: italic; margin-bottom: 15px;">
-                    Nhấn nút "Upload" bên cạnh mỗi ô để mở công cụ tải file. Các link sẽ tự động được điền vào.
-                </p>
-                <div class="form-group full-width form-group-with-button"><label for="imageUrls">Danh sách URL Hình ảnh sản phẩm</label><textarea id="imageUrls" name="imageUrls" rows="5" placeholder="Các link ảnh sẽ tự động xuất hiện ở đây sau khi upload..."></textarea><button type="button" class="popup-upload-btn" data-target="imageUrls">Upload Ảnh</button></div>
-                <div class="form-group full-width form-group-with-button"><label for="drawingUrls">Danh sách URL Bản vẽ (PDF)</label><textarea id="drawingUrls" name="drawingUrls" rows="5" placeholder="Các link bản vẽ sẽ tự động xuất hiện ở đây sau khi upload..."></textarea><button type="button" class="popup-upload-btn" data-target="drawingUrls">Upload Bản Vẽ</button></div>
-                <div class="form-group full-width form-group-with-button"><label for="materialsUrls">Danh sách URL Vật tư</label><textarea id="materialsUrls" name="materialsUrls" rows="5" placeholder="Các link vật tư sẽ tự động xuất hiện ở đây sau khi upload..."></textarea><button type="button" class="popup-upload-btn" data-target="materialsUrls">Upload Vật Tư</button></div>
+                <p style="font-style: italic; margin-bottom: 15px;">Nhấn nút "Upload" bên cạnh mỗi ô để mở công cụ tải file. Các link sẽ tự động được điền vào.</p>
+                <div class="form-group full-width form-group-with-button"><label for="imageUrls">Danh sách URL Hình ảnh sản phẩm</label><textarea id="imageUrls" name="imageUrls" rows="5" placeholder="Các link ảnh..."></textarea><button type="button" class="popup-upload-btn" data-target="imageUrls">Upload Ảnh</button></div>
+                <div class="form-group full-width form-group-with-button"><label for="drawingUrls">Danh sách URL Bản vẽ (PDF)</label><textarea id="drawingUrls" name="drawingUrls" rows="5" placeholder="Các link bản vẽ..."></textarea><button type="button" class="popup-upload-btn" data-target="drawingUrls">Upload Bản Vẽ</button></div>
+                <div class="form-group full-width form-group-with-button"><label for="materialsUrls">Danh sách URL Vật tư</label><textarea id="materialsUrls" name="materialsUrls" rows="5" placeholder="Các link vật tư..."></textarea><button type="button" class="popup-upload-btn" data-target="materialsUrls">Upload Vật Tư</button></div>
             </section>
+            
             <div class="form-actions">
                 <button type="submit" id="submit-button">Lưu và Xem lại</button>
             </div>
-            </form>
+        </form>
+        
         <nav class="nav-link">
             <a href="/product-list.html" title="Quay về trang danh sách sản phẩm">Quay về danh sách sản phẩm</a>
         </nav>
     </div>
 
-    <script>
-        // --- LOGIC CHÍNH: XỬ LÝ SỰ KIỆN SUBMIT FORM ---
-        
-        // Lấy tham chiếu đến phần tử form trong HTML bằng ID
-        const mainForm = document.getElementById('product-form'); 
-        
-        // Gán một hàm xử lý sự kiện 'submit' cho form.
-        // 'async function(event)' cho biết đây là một hàm bất đồng bộ, cho phép sử dụng 'await'.
-        mainForm.addEventListener('submit', async function(event) {
-            
-            // Ngăn chặn hành vi mặc định của form là tải lại trang.
-            // Điều này cho phép chúng ta kiểm soát hoàn toàn việc gửi dữ liệu bằng JavaScript.
-            event.preventDefault();
-            
-            // Lấy tham chiếu đến nút submit để có thể thay đổi trạng thái của nó
-            const submitButton = document.getElementById('submit-button');
-            
-            // ---- BẮT ĐẦU QUÁ TRÌNH GỬI DỮ LIỆU ----
-            
-            // Vô hiệu hóa nút submit để ngăn người dùng nhấn nhiều lần trong khi đang xử lý
-            submitButton.disabled = true;
-            submitButton.textContent = 'Đang lưu...'; // Thay đổi văn bản trên nút để thông báo cho người dùng
-
-            // Sử dụng khối try...catch để xử lý lỗi một cách an toàn.
-            // Nếu có lỗi xảy ra trong khối 'try', chương trình sẽ nhảy đến khối 'catch'.
-            try {
-                // ---- BƯỚC 1: THU THẬP VÀ XỬ LÝ DỮ LIỆU ----
-                
-                // Tạo một đối tượng FormData từ form. 
-                // FormData sẽ tự động thu thập tất cả dữ liệu từ các trường input có thuộc tính 'name'.
-                const formData = new FormData(mainForm);
-                
-                // Chuyển đổi đối tượng FormData thành một đối tượng JavaScript thông thường (key-value).
-                const data = Object.fromEntries(formData.entries());
-
-                // Xử lý và kiểm tra Mã Sản Phẩm
-                const idSuffixInput = document.getElementById('product-id-suffix');
-                const idSuffixValue = idSuffixInput.value.trim(); // Lấy giá trị và xóa khoảng trắng thừa
-                if (!idSuffixValue) {
-                    // Nếu mã sản phẩm bị bỏ trống, tạo ra một lỗi để dừng quá trình.
-                    throw new Error("Mã sản phẩm không được để trống.");
-                }
-                // Tạo mã sản phẩm đầy đủ bằng cách ghép chuỗi 'KT' với giá trị người dùng nhập vào.
-                data.id = 'KT' + idSuffixValue;
-                
-                /**
-                 * Hàm nội bộ tiện ích để trích xuất tên file từ một URL đầy đủ.
-                 * @param {string} url - URL của file.
-                 * @returns {string} Tên file được trích xuất.
-                 */
-                function getFileNameFromUrl(url) {
-                    try {
-                        const path = new URL(url).pathname;
-                        return decodeURIComponent(path.substring(path.lastIndexOf('/') + 1));
-                    } catch (e) {
-                        return url.split('/').pop() || 'File không tên';
-                    }
-                }
-
-                // Xử lý các URL từ các ô textarea:
-                // 1. Tách chuỗi thành một mảng các dòng (dựa vào ký tự xuống dòng '\n').
-                // 2. Với mỗi link, loại bỏ khoảng trắng thừa ở đầu và cuối (trim).
-                // 3. Lọc ra các dòng rỗng mà người dùng có thể vô tình tạo ra (filter(Boolean)).
-                data.imageUrls = (data.imageUrls || '').split('\n').map(link => link.trim()).filter(Boolean);
-                // Đối với bản vẽ và vật tư, chuyển thành object có cấu trúc { name, url }
-                data.drawingUrls = (data.drawingUrls || '').split('\n').map(link => link.trim()).filter(Boolean).map(link => ({ name: getFileNameFromUrl(link), url: link }));
-                data.materialsUrls = (data.materialsUrls || '').split('\n').map(link => link.trim()).filter(Boolean).map(link => ({ name: getFileNameFromUrl(link), url: link }));
-
-                // ---- BƯỚC 2: GỬI DỮ LIỆU LÊN SERVER ----
-                
-                // Gửi dữ liệu đến server bằng API 'fetch'
-                const response = await fetch('/api/products', {
-                    method: 'POST', // Phương thức gửi dữ liệu là POST (tạo mới)
-                    headers: { 'Content-Type': 'application/json' }, // Khai báo rằng nội dung gửi đi là JSON
-                    body: JSON.stringify(data), // Chuyển đổi đối tượng JavaScript thành chuỗi JSON
-                });
-
-                // Nếu yêu cầu không thành công (status code không phải 2xx), thì xử lý lỗi.
-                if (!response.ok) {
-                    let errorMessage = `Lỗi từ server: ${response.status}`;
-                    try {
-                        const errorResult = await response.json(); // Thử đọc lỗi dạng JSON
-                        errorMessage = errorResult.error || JSON.stringify(errorResult);
-                    } catch (e) {
-                        const textError = await response.text(); // Nếu không được, đọc lỗi dạng văn bản
-                        if (textError) errorMessage = textError;
-                    }
-                    throw new Error(errorMessage); // Ném lỗi để khối catch bắt được
-                }
-                
-                // ---- BƯỚC 3: XỬ LÝ KHI THÀNH CÔNG ----
-                
-                // Nếu thành công, đọc kết quả trả về từ server
-                const result = await response.json();
-                alert(result.message || 'Thao tác thành công!');
-                
-                // Chuyển hướng người dùng đến trang thành công với ID sản phẩm mới
-                window.location.href = `/success.html?id=${result.id}`;
-
-            } catch (error) {
-                // ---- BƯỚC 4: XỬ LÝ KHI CÓ LỖI XẢY RA ----
-                
-                // Nếu có bất kỳ lỗi nào xảy ra trong khối 'try', nó sẽ được bắt ở đây
-                console.error("Lỗi khi submit form:", error); // Ghi lỗi ra console để debug
-                alert('Có lỗi xảy ra: ' + error.message); // Hiển thị thông báo lỗi cho người dùng
-                
-                // Kích hoạt lại nút submit để người dùng có thể thử lại
-                submitButton.disabled = false;
-                submitButton.textContent = 'Lưu và Xem lại';
-            }
-        });
-
-        // --- LOGIC PHỤ: MỞ CỬA SỔ UPLOAD POPUP ---
-        
-        // Lấy tất cả các nút có class 'popup-upload-btn' và lặp qua từng nút
-        document.querySelectorAll('.popup-upload-btn').forEach(button => {
-            // Gán một sự kiện 'click' cho mỗi nút
-            button.addEventListener('click', () => {
-                
-                // Lấy ID của textarea mục tiêu từ thuộc tính 'data-target' của nút
-                const targetId = button.dataset.target;
-                
-                // Tạo URL cho cửa sổ popup, truyền targetId qua query string để trang upload biết cần cập nhật ô nào
-                const url = `/upload.html?target=${targetId}`;
-                
-                // Các thông số để canh giữa cửa sổ popup trên màn hình
-                const popupWidth = 800;
-                const popupHeight = 700;
-                const left = (screen.width / 2) - (popupWidth / 2);
-                const top = (screen.height / 2) - (popupHeight / 2);
-
-                // Mở trang upload.html trong một cửa sổ popup mới
-                window.open(url, 'uploadWindow', `width=${popupWidth},height=${popupHeight},top=${top},left=${left},scrollbars=yes`);
-            });
-        });
-    </script>
+    <script src="/js/theme-manager.js"></script>
+    <script src="/js/new-product-logic.js"></script>
 </body>
 </html>
