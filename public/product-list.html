@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Danh Sách Sản Phẩm - Bảng Điều Khiển</title>
-    
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <style>
         /* === CSS BIẾN MÀU CHO THEME === */
         /* === CSS BIẾN MÀU CHO THEME === */
@@ -45,7 +45,44 @@ h1 {
     text-fill-color: transparent;
     text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
 }
+/* === [THÊM MỚI] CSS CHO CÁC NÚT VÀ MODAL SCANNER === */
+.scanner-controls {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-bottom: 15px;
+}
 
+.scanner-controls button {
+    padding: 12px 25px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+#scan-qr-btn {
+    background-color: var(--info-color);
+    color: white;
+}
+#scan-qr-btn:hover {
+    background-color: #138496;
+    transform: translateY(-2px);
+}
+
+#scan-barcode-btn {
+    background-color: var(--secondary-color);
+    color: white;
+}
+#scan-barcode-btn:hover {
+    background-color: #5a32a3;
+    transform: translateY(-2px);
+}
 table { width: 100%; border-collapse: collapse; margin-top: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); background-color: var(--card-bg-color); border-radius: 8px; overflow: hidden; }
 th, td { border-bottom: 1px solid var(--border-color); padding: 12px 15px; text-align: left; vertical-align: middle; }
 thead th { background-color: var(--header-bg); color: white; font-weight: bold; }
@@ -269,7 +306,14 @@ input:checked + .slider:before { transform: translateX(24px); }
             </div>
         </div>
     </div>
-
+<div class="scanner-controls">
+        <button id="scan-qr-btn">
+            📷 Quét mã QR
+        </button>
+        <button id="scan-barcode-btn">
+            ║█║ Quét Barcode
+        </button>
+    </div>
     <div class="main-nav">
         <a href="/dashboard.html">Về Dashboard</a>
         <a href="/new-product.html" id="add-product-link">Thêm Sản phẩm Mới</a>
@@ -293,7 +337,16 @@ input:checked + .slider:before { transform: translateX(24px); }
             <div id="reviewsList"></div>
         </div>
     </div>
-
+<div id="scanner-modal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2 id="scanner-title">Camera Scanner</h2>
+                <span class="close-button" id="scanner-close-btn">&times;</span>
+            </div>
+            <div id="scanner-container" style="width: 100%; height: 350px; margin-top: 15px;"></div>
+            <p id="scanner-result" style="text-align: center; font-weight: bold; margin-top: 15px;">Hướng camera vào mã...</p>
+        </div>
+    </div>
     <script>
         let allProducts = [];
         let currentUser = null;
@@ -607,7 +660,83 @@ input:checked + .slider:before { transform: translateX(24px); }
                     addAiMessage("Xin chào. Tôi là Trợ lý AI. Tôi có thể hỗ trợ bạn như thế nào?", getInitialOptions());
                 }
             });
+// =======================================================
+// === [THÊM MỚI] LOGIC CHO CAMERA SCANNER ================
+// =======================================================
+function initializeScanner() {
+    const qrButton = document.getElementById('scan-qr-btn');
+    const barcodeButton = document.getElementById('scan-barcode-btn');
+    const scannerModal = document.getElementById('scanner-modal');
+    const scannerCloseBtn = document.getElementById('scanner-close-btn');
+    const scannerTitle = document.getElementById('scanner-title');
+    const scannerResult = document.getElementById('scanner-result');
 
+    let html5QrCode = null;
+
+    // Hàm để khởi động scanner
+    const startScanner = (type) => {
+        scannerTitle.textContent = type === 'QR' ? 'Quét mã QR Code' : 'Quét Barcode';
+        scannerResult.textContent = 'Hướng camera vào mã...';
+        scannerModal.style.display = 'block';
+
+        html5QrCode = new Html5Qrcode("scanner-container");
+        const config = {
+            fps: 10,
+            qrbox: { width: 250, height: 250 }
+        };
+
+        // Chọn camera và bắt đầu quét
+        html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess, onScanFailure)
+            .catch(err => {
+                scannerResult.textContent = 'Lỗi: Không thể khởi động camera. Vui lòng cấp quyền truy cập.';
+                console.error("Lỗi khởi động camera:", err);
+            });
+    };
+
+    // Hàm để dừng scanner
+    const stopScanner = () => {
+        if (html5QrCode && html5QrCode.isScanning) {
+            html5QrCode.stop().then(() => {
+                console.log("Đã dừng quét mã.");
+            }).catch(err => {
+                console.error("Lỗi khi dừng quét:", err);
+            });
+        }
+        scannerModal.style.display = 'none';
+    };
+
+    // Hàm xử lý khi quét thành công
+    const onScanSuccess = (decodedText, decodedResult) => {
+        scannerResult.textContent = `Đã quét thành công: ${decodedText}`;
+        stopScanner();
+
+        // Tìm sản phẩm có mã vừa quét
+        const foundProduct = allProducts.find(p => p.id === decodedText);
+        
+        if (foundProduct) {
+            // Nếu tìm thấy, mở trang chi tiết sản phẩm ở tab mới
+            window.open(`/product-view.html?id=${foundProduct.id}`, '_blank');
+        } else {
+            // Nếu không tìm thấy, thông báo cho người dùng
+            alert(`Không tìm thấy sản phẩm nào có mã: ${decodedText}`);
+        }
+    };
+    
+    // Hàm xử lý khi quét thất bại (thường có thể bỏ qua)
+    const onScanFailure = (error) => {
+        // console.warn(`Lỗi quét mã = ${error}`);
+    };
+
+    // Gán sự kiện cho các nút
+    qrButton.addEventListener('click', () => startScanner('QR'));
+    barcodeButton.addEventListener('click', () => startScanner('Barcode'));
+    scannerCloseBtn.addEventListener('click', stopScanner);
+    window.addEventListener('click', (event) => {
+        if (event.target == scannerModal) {
+            stopScanner();
+        }
+    });
+}
             form.addEventListener('submit', (e) => {
                 e.preventDefault();
                 const userQuery = input.value.trim();
@@ -763,6 +892,7 @@ input:checked + .slider:before { transform: translateX(24px); }
                 attachEventListeners();
                 applyNavigationPermissions();
                 initializeAIAssistant(); // Khởi tạo AI sau khi có dữ liệu
+                 initializeScanner();  
             } catch (error) {
                 console.error("Lỗi khởi tạo trang:", error);
                 window.location.href = '/login.html';
