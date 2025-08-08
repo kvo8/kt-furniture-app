@@ -68,31 +68,35 @@
         <p>Thay đổi thông tin và nhấn "Lưu Thay Đổi" để cập nhật.</p>
 
         <form id="edit-form" style="display: none;">
-            <div class="form-section">
-                <h2>Thông Tin Chung</h2>
-                <div class="form-grid">
-                    <div class="form-group full-width"><label>Mã Sản Phẩm / Product ID</label><input type="text" name="id" readonly style="background-color: #e9ecef;"></div>
-                    <div class="form-group"><label>Tên Sản Phẩm (VI)</label><input type="text" name="name_vi" required></div>
-                    <div class="form-group"><label>Product Name (EN)</label><input type="text" name="name_en" required></div>
-                    <div class="form-group"><label>Bộ Sưu Tập (VI)</label><input type="text" name="collection_vi"></div>
-                    <div class="form-group"><label>Collection (EN)</label><input type="text" name="collection_en"></div>
-                </div>
+            <div class="form-grid">
+    <div class="form-group full-width"><label>Mã Sản Phẩm / Product ID</label><input type="text" name="id" readonly style="background-color: #e9ecef;"></div>
+    <div class="form-group"><label>Tên Sản Phẩm (VI)</label><input type="text" name="name_vi" required></div>
+    <div class="form-group"><label>Product Name (EN)</label><input type="text" name="name_en" required></div>
+    <div class="form-group"><label>产品名称 (ZH)</label><input type="text" name="name_zh"></div>
+    <div class="form-group"><label>Bộ Sưu Tập (VI)</label><input type="text" name="collection_vi"></div>
+    <div class="form-group"><label>Collection (EN)</label><input type="text" name="collection_en"></div>
+    <div class="form-group"><label>系列 (ZH)</label><input type="text" name="collection_zh"></div>
+</div>
             </div>
 
             <div class="form-section">
                 <h2>Chi Tiết Vật Liệu & Sản Xuất</h2>
                 <div class="form-grid">
-                    <div class="form-group"><label>Màu sắc (VI)</label><input type="text" name="color_vi"></div>
-                    <div class="form-group"><label>Color (EN)</label><input type="text" name="color_en"></div>
-                    <div class="form-group"><label>Vải (VI)</label><input type="text" name="fabric_vi"></div>
-                    <div class="form-group"><label>Fabric (EN)</label><input type="text" name="fabric_en"></div>
-                    <div class="form-group"><label>Dây (VI)</label><input type="text" name="wicker_vi"></div>
-                    <div class="form-group"><label>Wicker (EN)</label><input type="text" name="wicker_en"></div>
-                    <div class="form-group"><label>Chất liệu (VI)</label><input type="text" name="material_vi"></div>
-                    <div class="form-group"><label>Material (EN)</label><input type="text" name="material_en"></div>
-                    <div class="form-group full-width"><label>Biên dạng nhôm</label><input type="text" name="aluminum_profile"></div>
-                    <div class="form-group"><label>Nơi sản xuất</label><select name="production_place"><option value="KT">KT</option><option value="Minh Tien">Minh Tiến</option><option value="Other">Khác</option></select></div>
-                </div>
+    <div class="form-group"><label>Màu sắc (VI)</label><input type="text" name="color_vi"></div>
+    <div class="form-group"><label>Color (EN)</label><input type="text" name="color_en"></div>
+    <div class="form-group"><label>颜色 (ZH)</label><input type="text" name="color_zh"></div>
+    <div class="form-group"><label>Vải (VI)</label><input type="text" name="fabric_vi"></div>
+    <div class="form-group"><label>Fabric (EN)</label><input type="text" name="fabric_en"></div>
+    <div class="form-group"><label>面料 (ZH)</label><input type="text" name="fabric_zh"></div>
+    <div class="form-group"><label>Dây (VI)</label><input type="text" name="wicker_vi"></div>
+    <div class="form-group"><label>Wicker (EN)</label><input type="text" name="wicker_en"></div>
+    <div class="form-group"><label>藤编 (ZH)</label><input type="text" name="wicker_zh"></div>
+    <div class="form-group"><label>Chất liệu (VI)</label><input type="text" name="material_vi"></div>
+    <div class="form-group"><label>Material (EN)</label><input type="text" name="material_en"></div>
+    <div class="form-group"><label>材料 (ZH)</label><input type="text" name="material_zh"></div>
+    <div class="form-group full-width"><label>Biên dạng nhôm</label><input type="text" name="aluminum_profile"></div>
+    <div class="form-group"><label>Nơi sản xuất</label><select name="production_place"><option value="KT">KT</option><option value="Minh Tien">Minh Tiến</option><option value="Other">Khác</option></select></div>
+</div>
             </div>
             
             <div class="form-section">
@@ -111,11 +115,12 @@
             <div class="form-section">
                 <h2>Thông Tin Thương Mại & Kỹ Thuật</h2>
                 <div class="form-grid">
-                     <div class="form-group"><label>Công ty</label><input type="text" name="company"></div>
-                     <div class="form-group"><label>Khách hàng</label><input type="text" name="customer"></div>
-                     <div class="form-group"><label>Nhà cung cấp</label><input type="text" name="supplier"></div>
-                     <div class="form-group full-width"><label>Thông số</label><input type="text" name="specification"></div>
-                </div>
+    <div class="form-group"><label>Công ty</label><input type="text" name="company"></div>
+    <div class="form-group"><label>Khách hàng</label><input type="text" name="customer"></div>
+    <div class="form-group"><label>Nhà cung cấp</label><input type="text" name="supplier"></div>
+    <div class="form-group"><label>Thông số</label><input type="text" name="specification"></div>
+    <div class="form-group"><label>规格 (ZH)</label><input type="text" name="specification_zh"></div>
+</div>
             </div>
             
             <div class="form-section">
@@ -180,27 +185,29 @@
     // --- CẤU HÌNH PHÂN QUYỀN ---
     // Giữ nguyên đối tượng PERMISSIONS để các vai trò khác vẫn hoạt động bình thường
     const PERMISSIONS = {
-        'KT01SL': [
-            'name_vi', 'name_en', 'collection_vi', 'collection_en',
-            'color_vi', 'color_en', 'fabric_vi', 'fabric_en', 'wicker_vi', 'wicker_en', 
-            'material_vi', 'material_en', 'aluminum_profile', 'production_place'
-        ],
-        'KT01KT': [
-            'color_vi', 'color_en', 'fabric_vi', 'fabric_en', 'wicker_vi', 'wicker_en', 
-            'material_vi', 'material_en', 'aluminum_profile', 'production_place',
-            'length', 'width', 'height', 'other_details',
-            'imageUrls', 'drawingUrls'
-        ],
-        'KT01VT': [
-            'aluminum_supplier', 'wicker_supplier', 'stone_supplier', 'materialsUrls'
-        ],
-        'KT01SX': [
-            'packed_length', 'packed_width', 'packed_height',
-            'box_quantity', 'origin_country', 'cost_price', 'hardware', 'cushion_details',
-            'pillow_details', 'aluminum_weight', 'wicker_weight', 'stone_weight',
-            'weaving_rope_weight', 'lining_rope_weight', 'product_weight', 'packed_weight_total'
-        ]
-    };
+    'KT01SL': [
+        // Bổ sung các trường tiếng Trung
+        'name_vi', 'name_en', 'name_zh', 'collection_vi', 'collection_en', 'collection_zh', 'specification_zh',
+        'color_vi', 'color_en', 'color_zh', 'fabric_vi', 'fabric_en', 'fabric_zh', 'wicker_vi', 'wicker_en', 'wicker_zh',
+        'material_vi', 'material_en', 'material_zh', 'aluminum_profile', 'production_place'
+    ],
+    'KT01KT': [
+        // Bổ sung các trường tiếng Trung
+        'color_vi', 'color_en', 'color_zh', 'fabric_vi', 'fabric_en', 'fabric_zh', 'wicker_vi', 'wicker_en', 'wicker_zh',
+        'material_vi', 'material_en', 'material_zh', 'aluminum_profile', 'production_place',
+        'length', 'width', 'height', 'other_details', 'specification_zh',
+        'imageUrls', 'drawingUrls'
+    ],
+    'KT01VT': [
+        'aluminum_supplier', 'wicker_supplier', 'stone_supplier', 'materialsUrls'
+    ],
+    'KT01SX': [
+        'packed_length', 'packed_width', 'packed_height',
+        'box_quantity', 'origin_country', 'cost_price', 'hardware', 'cushion_details',
+        'pillow_details', 'aluminum_weight', 'wicker_weight', 'stone_weight',
+        'weaving_rope_weight', 'lining_rope_weight', 'product_weight', 'packed_weight_total'
+    ]
+};
 
     // --- HÀM ÁP DỤNG PHÂN QUYỀN (ĐÃ CẬP NHẬT) ---
     function applyPermissions(user) {
