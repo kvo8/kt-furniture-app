@@ -5,108 +5,228 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Danh Sách Sản Phẩm - Bảng Điều Khiển</title>
     
-    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-    
     <style>
         /* === CSS BIẾN MÀU CHO THEME === */
-        :root {
-            --bg-color: #f0f7ff;
-            --card-bg-color: #ffffff; 
-            --text-color: #212529;
-            --text-muted-color: #6c757d; 
-            --border-color: #dee2e6; 
-            --primary-color: #007bff;
-            --header-bg: #343a40; 
-            --success-color: #28a745; 
-            --danger-color: #dc3545;
-            --info-color: #17a2b8; 
-            --warning-color: #ffc107; 
-            --secondary-color: #6f42c1;
+        /* === CSS BIẾN MÀU CHO THEME === */
+:root {
+    --bg-color: #f0f7ff; /* Màu nền xanh da trời nhạt */
+    --card-bg-color: #ffffff; 
+    --text-color: #212529;
+    --text-muted-color: #6c757d; 
+    --border-color: #dee2e6; 
+    --primary-color: #007bff;
+    --header-bg: #343a40; 
+    --success-color: #28a745; 
+    --danger-color: #dc3545;
+    --info-color: #17a2b8; 
+    --warning-color: #ffc107; 
+    --secondary-color: #6f42c1;
+}
+body.dark-mode {
+    --bg-color: #121212; --card-bg-color: #1e1e1e; --text-color: #e0e0e0;
+    --text-muted-color: #888; --border-color: #444; --primary-color: #0d6efd;
+    --header-bg: #212529; --success-color: #20c997; --danger-color: #fd7e14;
+    --info-color: #0dcaf0; --warning-color: #ffc107; --secondary-color: #845ef7;
+}
+
+/* === CSS CƠ BẢN (Đã cập nhật) === */
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; max-width: 1400px; margin: auto; padding: 20px; background-color: var(--bg-color); color: var(--text-color); transition: background-color 0.3s, color 0.3s; }
+
+/* [ĐÃ CẬP NHẬT] CSS cho tiêu đề H1 */
+h1 {
+    text-align: center;
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 25px;
+    background: linear-gradient(45deg, var(--primary-color), var(--info-color));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-fill-color: transparent;
+    text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+table { width: 100%; border-collapse: collapse; margin-top: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); background-color: var(--card-bg-color); border-radius: 8px; overflow: hidden; }
+th, td { border-bottom: 1px solid var(--border-color); padding: 12px 15px; text-align: left; vertical-align: middle; }
+thead th { background-color: var(--header-bg); color: white; font-weight: bold; }
+tr:nth-child(even) { background-color: rgba(128, 128, 128, 0.05); }
+tr:hover { background-color: rgba(128, 128, 128, 0.1); }
+.actions a, .actions button { display: inline-block; text-decoration: none; cursor: pointer; padding: 6px 12px; border: none; border-radius: 4px; margin: 2px; color: white; font-size: 14px; transition: opacity 0.2s; min-width: 80px; text-align: center; font-weight: 500;}
+.actions a:hover, .actions button:hover { opacity: 0.8; }
+.details-btn { background-color: var(--info-color); }
+.qr-btn { background-color: var(--warning-color); color: black; }
+.edit-btn { background-color: var(--success-color); }
+.delete-btn { background-color: var(--danger-color); }
+
+/* [THAY ĐỔI LỚN] Bố cục thanh điều hướng và tìm kiếm */
+
+/* Style cho khu vực tìm kiếm và icon ở trên cùng */
+.top-controls {
+    display: flex;
+    justify-content: flex-end; /* Đẩy các item về bên phải */
+    align-items: center;
+    gap: 20px; /* Khoảng cách giữa các item */
+    margin-bottom: 15px; /* Khoảng cách với thanh menu bên dưới */
+}
+
+/* Style cho thanh chứa các liên kết điều hướng */
+.main-nav {
+    display: flex;
+    flex-wrap: wrap; /* Cho phép các mục xuống dòng nếu không đủ chỗ */
+    gap: 10px; /* Khoảng cách giữa các nút menu */
+    background-color: var(--card-bg-color);
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    margin-bottom: 20px;
+}
+
+/* Style cho từng nút bấm trong menu (đúng theo ý bạn) */
+.main-nav a {
+    color: var(--text-color);
+    background-color: var(--bg-color); /* Nền cho mỗi mục */
+    border: 1px solid var(--border-color); /* Thêm viền nhẹ */
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 15px;
+    padding: 10px 18px; /* Tăng padding để nút to hơn */
+    border-radius: 8px;
+    transition: background-color 0.3s, color 0.3s, transform 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Hiệu ứng khi di chuột vào nút menu */
+.main-nav a:hover {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+    transform: translateY(-2px); /* Hiệu ứng nhấc lên một chút */
+}
+
+/* Style cho ô tìm kiếm */
+#search-input { 
+    background-color: var(--card-bg-color); 
+    color: var(--text-color); 
+    border: 1px solid var(--border-color);
+    border-radius: 8px; /* Bo tròn ô tìm kiếm */
+    padding: 10px 15px !important; /* Ghi đè style inline */
+    font-size: 15px !important; /* Ghi đè style inline */
+}
+
+/* === CSS CHO CÁC TÍNH NĂNG KHÁC === */
+.reviews-btn { background-color: var(--secondary-color); } 
+.barcode-btn { background-color: #c442ac; } 
+.modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6); }
+.modal-content { background-color: var(--card-bg-color); color: var(--text-color); margin: 10% auto; padding: 20px; border: 1px solid var(--border-color); width: 60%; max-width: 700px; border-radius: 8px; box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2); }
+.modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; }
+.modal-header h2 { margin: 0; border-bottom: none; padding-bottom: 0; font-size: 1.5rem; }
+.close-button { color: var(--text-muted-color); font-size: 28px; font-weight: bold; cursor: pointer; }
+#reviewsList { margin-top: 15px; max-height: 400px; overflow-y: auto; }
+.review-item { border-bottom: 1px solid var(--border-color); padding: 10px 0; }
+.review-author { font-weight: bold; }
+.review-rating { color: #f9ca24; }
+
+/* === CSS CHO CHUÔNG THÔNG BÁO === */
+.notification-area { position: relative; display: inline-block; }
+#notification-bell { font-size: 24px; background: none; border: none; cursor: pointer; position: relative; padding: 5px; color: var(--text-color); }
+#notification-badge { position: absolute; top: 0px; right: 0px; padding: 2px 5px; border-radius: 50%; background-color: var(--danger-color); color: white; font-size: 10px; font-weight: bold; display: none; }
+.notification-dropdown { display: none; position: absolute; right: 0; top: 120%; background-color: var(--card-bg-color); min-width: 350px; max-width: 400px; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2); z-index: 1001; border-radius: 8px; border: 1px solid var(--border-color); max-height: 500px; overflow-y: auto; }
+.notification-dropdown h4 { padding: 10px 15px; margin: 0; background-color: var(--bg-color); border-bottom: 1px solid var(--border-color); font-size: 1rem; color: var(--text-color); }
+.notification-list { list-style: none; padding: 0; margin: 0; }
+.notification-item { padding: 12px 15px; border-bottom: 1px solid var(--border-color); cursor: pointer; transition: background-color 0.2s; }
+.notification-item:hover { background-color: rgba(128, 128, 128, 0.1); }
+.notification-item:last-child { border-bottom: none; }
+.notification-item p, .notification-item small { margin: 0; line-height: 1.4; }
+.notification-item small { font-size: 0.75rem; color: var(--text-muted-color); }
+.no-notifications { padding: 20px; text-align: center; color: var(--text-muted-color); cursor: default; }
+
+/* CSS cho nút gạt theme */
+.theme-switcher { display: flex; align-items: center; gap: 8px; }
+.theme-switcher span { font-size: 1.2rem; }
+.switch { position: relative; display: inline-block; width: 50px; height: 26px; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 26px; }
+.slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+input:checked + .slider { background-color: var(--primary-color); }
+input:checked + .slider:before { transform: translateX(24px); }
+/* === [THÊM MỚI] CSS CHO TRỢ LÝ AI === */
+        #ai-fab {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border-radius: 50%;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            cursor: pointer;
+            z-index: 1010;
+            transition: transform 0.3s ease;
         }
-        body.dark-mode {
-            --bg-color: #121212; --card-bg-color: #1e1e1e; --text-color: #e0e0e0;
-            --text-muted-color: #888; --border-color: #444; --primary-color: #0d6efd;
-            --header-bg: #212529; --success-color: #20c997; --danger-color: #fd7e14;
-            --info-color: #0dcaf0; --warning-color: #ffc107; --secondary-color: #845ef7;
-        }
-
-        /* === CSS CƠ BẢN === */
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; max-width: 1400px; margin: auto; padding: 20px; background-color: var(--bg-color); color: var(--text-color); transition: background-color 0.3s, color 0.3s; }
-
-        h1 {
-            text-align: center; font-size: 2.5rem; font-weight: 700; margin-bottom: 25px;
-            background: linear-gradient(45deg, var(--primary-color), var(--info-color));
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            background-clip: text; text-fill-color: transparent;
-            text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
-        }
-        
-        /* === CSS BẢNG SẢN PHẨM === */
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); background-color: var(--card-bg-color); border-radius: 8px; overflow: hidden; }
-        th, td { border-bottom: 1px solid var(--border-color); padding: 12px 15px; text-align: left; vertical-align: middle; }
-        thead th { background-color: var(--header-bg); color: white; font-weight: bold; }
-        tr:nth-child(even) { background-color: rgba(128, 128, 128, 0.05); }
-        tr:hover { background-color: rgba(128, 128, 128, 0.1); }
-        .actions a, .actions button { display: inline-block; text-decoration: none; cursor: pointer; padding: 6px 12px; border: none; border-radius: 4px; margin: 2px; color: white; font-size: 14px; transition: opacity 0.2s; min-width: 80px; text-align: center; font-weight: 500;}
-        .actions a:hover, .actions button:hover { opacity: 0.8; }
-        .details-btn { background-color: var(--info-color); }
-        .qr-btn { background-color: var(--warning-color); color: black; }
-        .edit-btn { background-color: var(--success-color); }
-        .delete-btn { background-color: var(--danger-color); }
-        .reviews-btn { background-color: var(--secondary-color); } 
-        .barcode-btn { background-color: #c442ac; } 
-        
-        /* === CSS THANH ĐIỀU KHIỂN & THANH ĐIỀU HƯỚNG === */
-        .top-controls { display: flex; justify-content: flex-end; align-items: center; gap: 20px; margin-bottom: 15px; }
-        #search-input { background-color: var(--card-bg-color); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px 15px !important; font-size: 15px !important; }
-        .main-nav { display: flex; flex-wrap: wrap; gap: 10px; background-color: var(--card-bg-color); padding: 15px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-bottom: 20px; }
-        .main-nav a { color: var(--text-color); background-color: var(--bg-color); border: 1px solid var(--border-color); text-decoration: none; font-weight: 500; font-size: 15px; padding: 10px 18px; border-radius: 8px; transition: background-color 0.3s, color 0.3s, transform 0.2s; display: flex; align-items: center; justify-content: center; }
-        .main-nav a:hover { background-color: var(--primary-color); color: white; border-color: var(--primary-color); transform: translateY(-2px); }
-
-        /* === CSS CHO CÁC NÚT VÀ MODAL SCANNER === */
-        .scanner-controls { display: flex; gap: 15px; justify-content: center; margin-bottom: 15px; }
-        .scanner-controls button { padding: 12px 25px; font-size: 1.1rem; font-weight: 600; border: none; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; gap: 8px; }
-        #scan-qr-btn { background-color: var(--info-color); color: white; }
-        #scan-qr-btn:hover { background-color: #138496; transform: translateY(-2px); }
-        #scan-barcode-btn { background-color: var(--secondary-color); color: white; }
-        #scan-barcode-btn:hover { background-color: #5a32a3; transform: translateY(-2px); }
-
-        /* === CSS CHO MODAL & CÁC TÍNH NĂNG PHỤ === */
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6); }
-        .modal-content { background-color: var(--card-bg-color); color: var(--text-color); margin: 10% auto; padding: 20px; border: 1px solid var(--border-color); width: 60%; max-width: 700px; border-radius: 8px; box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2); }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; }
-        .modal-header h2 { margin: 0; border-bottom: none; padding-bottom: 0; font-size: 1.5rem; }
-        .close-button { color: var(--text-muted-color); font-size: 28px; font-weight: bold; cursor: pointer; }
-        
-        .theme-switcher { display: flex; align-items: center; gap: 8px; }
-        .switch { position: relative; display: inline-block; width: 50px; height: 26px; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 26px; }
-        .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
-        input:checked + .slider { background-color: var(--primary-color); }
-        input:checked + .slider:before { transform: translateX(24px); }
-        
-        /* === CSS CHO TRỢ LÝ AI === */
-        #ai-fab { position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; background: linear-gradient(45deg, var(--primary-color), var(--secondary-color)); color: white; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; font-size: 28px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); cursor: pointer; z-index: 1010; transition: transform 0.3s ease; }
         #ai-fab:hover { transform: scale(1.1); }
-        #ai-chat-modal { display: none; position: fixed; bottom: 100px; right: 30px; width: 400px; height: 600px; background-color: var(--card-bg-color); border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 1009; flex-direction: column; overflow: hidden; border: 1px solid var(--border-color); }
+        
+        #ai-chat-modal {
+            position: fixed;
+            bottom: 100px;
+            right: 30px;
+            width: 400px;
+            height: 600px;
+            background-color: var(--card-bg-color);
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            z-index: 1009;
+            display: flex; /* Sẽ được JS đổi thành 'flex' */
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
         .ai-chat-header { padding: 15px; background-color: var(--header-bg); color: white; flex-shrink: 0; }
         .ai-chat-header h3 { margin: 0; font-size: 1.2rem; }
         .ai-chat-header p { font-size: 0.8rem; color: #ccc; margin: 4px 0 0; }
+        
         .ai-chat-log { flex-grow: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px;}
+
         .ai-chat-message { max-width: 90%; line-height: 1.5; padding: 10px 15px; border-radius: 12px; }
         .ai-chat-message.user { background-color: var(--primary-color); color: white; align-self: flex-end; border-bottom-right-radius: 4px;}
         .ai-chat-message.ai { background-color: var(--bg-color); color: var(--text-color); border: 1px solid var(--border-color); align-self: flex-start; border-bottom-left-radius: 4px;}
         .ai-chat-message.ai strong { color: var(--primary-color); }
-        .ai-chat-options button { background: transparent; border: 1px solid var(--primary-color); color: var(--primary-color); padding: 8px 12px; border-radius: 20px; cursor: pointer; margin: 5px 5px 0 0; transition: background-color 0.2s, color 0.2s; }
+        .ai-chat-message ul { padding-left: 20px; margin: 5px 0 0 0; }
+        
+        .ai-chat-options button {
+            background: transparent; border: 1px solid var(--primary-color); color: var(--primary-color);
+            padding: 8px 12px; border-radius: 20px; cursor: pointer; margin: 5px 5px 0 0;
+            transition: background-color 0.2s, color 0.2s;
+        }
         .ai-chat-options button:hover { background-color: var(--primary-color); color: white; }
+
         #ai-chat-form { display: flex; align-items: center; padding: 10px; border-top: 1px solid var(--border-color); flex-shrink: 0;}
         #ai-chat-input { flex-grow: 1; border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; background-color: var(--bg-color); color: var(--text-color); }
         #ai-chat-form button[type="submit"] { background: var(--primary-color); color: white; border: none; border-radius: 8px; padding: 0 15px; margin-left: 8px; cursor: pointer; height: 42px;}
-        #ai-mic-button { background: transparent; color: var(--text-muted-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 0 12px; margin-right: 8px; cursor: pointer; font-size: 1.2rem; height: 42px; transition: all 0.2s ease; }
+
+        /* Style cho nút micro */
+        #ai-mic-button {
+            background: transparent; color: var(--text-muted-color); border: 1px solid var(--border-color);
+            border-radius: 8px; padding: 0 12px; margin-right: 8px; cursor: pointer; font-size: 1.2rem;
+            height: 42px; transition: all 0.2s ease;
+        }
         #ai-mic-button:hover { border-color: var(--primary-color); color: var(--primary-color); }
-        #ai-mic-button.is-listening { background-color: var(--danger-color); color: white; border-color: var(--danger-color); animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); } 100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); } }
+        #ai-mic-button.is-listening {
+            background-color: var(--danger-color); color: white; border-color: var(--danger-color); animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
+        }
     </style>
     
     <script>
@@ -120,27 +240,34 @@
       })();
     </script>
 </head>
-<body class="dark-mode">
-    <h1>Quản lý Sản phẩm</h1>
+<body class="dark-mode"> <h1>Quản lý Sản phẩm</h1>
 
     <div class="top-controls">
         <input type="text" id="search-input" placeholder="Tìm kiếm..." style="padding: 10px; font-size: 16px; border-radius: 5px;">
+        
         <div class="theme-switcher">
             <span>☀️</span>
-            <label class="switch"><input type="checkbox" id="theme-toggle"><span class="slider round"></span></label>
+            <label class="switch">
+                <input type="checkbox" id="theme-toggle">
+                <span class="slider round"></span>
+            </label>
             <span>🌙</span>
         </div>
+
         <div class="notification-area">
             <button id="notification-bell">
-                <span>🔔</span><span id="notification-badge"></span>
+                <span>🔔</span>
+                <span id="notification-badge"></span>
             </button>
-            <div id="notification-dropdown" class="notification-dropdown"></div>
+            <div id="notification-dropdown" class="notification-dropdown">
+                <h4>Tin nhắn mới</h4>
+                <ul id="message-list" class="notification-list"></ul>
+                <h4>Thông báo mới</h4>
+                <ul id="announcement-list" class="notification-list"></ul>
+                <h4>Hoạt động gần đây</h4>
+                <ul id="activity-list" class="notification-list"></ul>
+            </div>
         </div>
-    </div>
-
-    <div class="scanner-controls">
-        <button id="scan-qr-btn">📷 Quét mã QR</button>
-        <button id="scan-barcode-btn">║█║ Quét Barcode</button>
     </div>
 
     <div class="main-nav">
@@ -166,40 +293,12 @@
             <div id="reviewsList"></div>
         </div>
     </div>
-    
-    <div id="scanner-modal" class="modal">
-        <div class="modal-content" style="max-width: 500px;">
-            <div class="modal-header">
-                <h2 id="scanner-title">Camera Scanner</h2>
-                <span class="close-button" id="scanner-close-btn">&times;</span>
-            </div>
-            <div id="scanner-container" style="width: 100%; height: 350px; margin-top: 15px;"></div>
-            <p id="scanner-result" style="text-align: center; font-weight: bold; margin-top: 15px;">Hướng camera vào mã...</p>
-        </div>
-    </div>
-
-    <button id="ai-fab" title="Trợ lý AI">🤖</button>
-    <div id="ai-chat-modal" style="display: none;">
-        <div class="ai-chat-header">
-            <h3>Trợ lý AI Quản lý Sản phẩm</h3>
-            <p>Sẵn sàng phân tích và hỗ trợ dữ liệu</p>
-        </div>
-        <div class="ai-chat-log" id="ai-chat-log"></div>
-        <form id="ai-chat-form">
-            <button type="button" id="ai-mic-button" title="Ghi âm yêu cầu">🎙️</button>
-            <input type="text" id="ai-chat-input" placeholder="Nhập yêu cầu của bạn..." autocomplete="off">
-            <button type="submit">Gửi</button>
-        </form>
-    </div>
 
     <script>
-        // === KHAI BÁO BIẾN TOÀN CỤC ===
         let allProducts = [];
         let currentUser = null;
 
-        // === ĐỊNH NGHĨA CÁC HÀM ===
-
-        function renderProducts(products, highlightId = null) {
+      function renderProducts(products, highlightId = null) {
             const tableBody = document.getElementById('product-table-body');
             tableBody.innerHTML = '';
             if (products && products.length > 0) {
@@ -231,9 +330,8 @@
                 tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Không có sản phẩm nào.</td></tr>';
             }
         }
-        
+
         async function showReviews(productId, productName) {
-            // (Hàm này giữ nguyên, không cần rút gọn)
             const modal = document.getElementById('reviewsModal');
             const modalProductName = document.getElementById('modalProductName');
             const reviewsListDiv = document.getElementById('reviewsList');
@@ -249,7 +347,7 @@
                     let reviewsHtml = '';
                     data.reviews.forEach(review => {
                         const stars = '⭐'.repeat(review.rating) + '☆'.repeat(5 - review.rating);
-                        reviewsHtml += `<div class="review-item"><p><b>Tên:</b> ${review.author_name}</p><p><b>Đánh giá:</b> ${stars}</p><p><b>Bình luận:</b> ${review.comment || '<i>Không có</i>'}</p><p><small>${new Date(review.created_at).toLocaleString('vi-VN')}</small></p></div>`;
+                        reviewsHtml += `<div class="review-item"><p class="review-author">Tên: ${review.author_name}</p><p class="review-rating">Đánh giá: ${stars}</p><p>Bình luận: ${review.comment || '<i>Không có</i>'}</p><p><small>${new Date(review.created_at).toLocaleString('vi-VN')}</small></p></div>`;
                     });
                     reviewsListDiv.innerHTML = reviewsHtml;
                 } else {
@@ -259,19 +357,18 @@
                 reviewsListDiv.innerHTML = '<p style="color: red;">Không thể tải danh sách đánh giá.</p>';
             }
         }
-
+        
         function applyTheme(theme) {
-            const body = document.body;
             const toggle = document.getElementById('theme-toggle');
             if (theme === 'dark') {
-                body.classList.add('dark-mode');
-                if(toggle) toggle.checked = true;
+                document.body.classList.add('dark-mode');
+                if (toggle) toggle.checked = true;
             } else {
-                body.classList.remove('dark-mode');
-                if(toggle) toggle.checked = false;
+                document.body.classList.remove('dark-mode');
+                if (toggle) toggle.checked = false;
             }
         }
-        
+
         async function saveThemePreference(theme) {
             if (!currentUser) return;
             try {
@@ -284,6 +381,103 @@
             } catch (error) { console.error("Lỗi khi lưu theme:", error); }
         }
 
+        function loadProducts() {
+            fetch('/api/products')
+                .then(res => res.ok ? res.json() : Promise.reject(res))
+                .then(data => {
+                    allProducts = data.products || data || [];
+                    renderProducts(allProducts);
+                })
+                .catch(error => {
+                    document.getElementById('product-table-body').innerHTML = `<tr><td colspan="6" style="text-align:center; color: red;">Không thể tải danh sách sản phẩm.</td></tr>`;
+                });
+        }
+
+        // === START: HÀM updateNotifications() ĐÃ ĐƯỢC CẬP NHẬT HOÀN CHỈNH ===
+        async function updateNotifications() {
+            const messageListEl = document.getElementById('message-list');
+            const announcementListEl = document.getElementById('announcement-list');
+            const activityListEl = document.getElementById('activity-list');
+            const badgeEl = document.getElementById('notification-badge');
+
+            try {
+                // Bước 1: Gọi API tổng hợp
+                const response = await fetch('/api/notifications');
+                if (!response.ok) {
+                    throw new Error(`Lỗi server: ${response.status}`);
+                }
+                const data = await response.json();
+
+                // Bước 2: Xử lý tin nhắn chưa đọc
+                const unreadMessages = data.unread_messages || [];
+                if (unreadMessages.length > 0) {
+                    messageListEl.innerHTML = unreadMessages.map(msg => `
+                        <li class="notification-item" title="Click để xem" onclick="readMessage(${msg.id})">
+                            <p><strong>Từ: ${msg.sender_name}</strong></p>
+                            <p>${msg.title}</p>
+                            <small>${new Date(msg.created_at).toLocaleString('vi-VN')}</small>
+                        </li>
+                    `).join('');
+                } else {
+                    messageListEl.innerHTML = '<li class="no-notifications">Không có tin nhắn mới.</li>';
+                }
+
+                // Bước 3: Xử lý bài đăng mới
+                const newAnnouncements = data.new_announcements || [];
+                if (newAnnouncements.length > 0) {
+                    announcementListEl.innerHTML = newAnnouncements.map(ann => `
+                        <li class="notification-item" title="Click để xem" onclick="goToAnnouncement(${ann.id})">
+                            <p><strong>${ann.author_name}</strong> đã đăng một thông báo mới.</p>
+                            <small>${new Date(ann.created_at).toLocaleString('vi-VN')}</small>
+                        </li>
+                    `).join('');
+                } else {
+                    announcementListEl.innerHTML = '<li class="no-notifications">Không có thông báo mới.</li>';
+                }
+
+                // Bước 4: Xử lý hoạt động gần đây (giữ nguyên)
+                const recentActivities = data.recent_activities || [];
+                if (recentActivities.length > 0) {
+                     activityListEl.innerHTML = recentActivities.slice(0, 5).map(act => `
+                        <li class="notification-item" style="cursor:default;">
+                            <p>${act.details}</p>
+                            <small>Bởi: <strong>${act.user_name}</strong> - ${new Date(act.created_at).toLocaleString('vi-VN')}</small>
+                        </li>
+                    `).join('');
+                } else {
+                    activityListEl.innerHTML = '<li class="no-notifications">Không có hoạt động nào.</li>';
+                }
+
+                // Bước 5: Cập nhật huy hiệu (badge)
+                const totalUnread = unreadMessages.length + newAnnouncements.length;
+                if (totalUnread > 0) {
+                    badgeEl.textContent = totalUnread;
+                    badgeEl.style.display = 'block';
+                } else {
+                    badgeEl.style.display = 'none';
+                }
+
+            } catch (error) {
+                console.error("Lỗi khi tải thông báo:", error);
+                messageListEl.innerHTML = '<li class="no-notifications" style="color:red;">Lỗi tải thông báo.</li>';
+                announcementListEl.innerHTML = '';
+                activityListEl.innerHTML = '';
+            }
+        }
+        // === END: HÀM updateNotifications() ===
+
+        // Hàm hỗ trợ để chuyển hướng khi click vào thông báo
+        function readMessage(id) {
+            // Đánh dấu đã đọc (backend cần xử lý) và chuyển trang
+            fetch(`/api/messages/${id}/read`, { method: 'PUT' });
+            window.location.href = '/message.html';
+        }
+
+        function goToAnnouncement(id) {
+            // Chuyển đến trang Bảng Tin và có thể scroll đến bài đăng cụ thể
+            window.location.href = `/announcement.html#post-${id}`;
+        }
+        
         function attachEventListeners() {
             document.getElementById('theme-toggle').addEventListener('change', function() {
                 const newTheme = this.checked ? 'dark' : 'light';
@@ -303,19 +497,14 @@
 
                 if (target.classList.contains('delete-btn')) {
                     const isAdmin = currentUser && currentUser.employeeId === 'KT01IT';
-                    if (!isAdmin) { return alert('Bạn không có quyền xóa sản phẩm này.'); }
+                    if (!isAdmin) {
+                        alert('Bạn không có quyền xóa sản phẩm này.');
+                        return;
+                    }
                     const productId = target.dataset.id;
                     if (confirm(`Bạn có chắc muốn xóa sản phẩm mã "${productId}"?`)) {
                         fetch(`/api/products/${encodeURIComponent(productId)}`, { method: 'DELETE' })
-                        .then(res => {
-                            if(res.ok) {
-                                alert('Xóa thành công!');
-                                // Tải lại danh sách sản phẩm thay vì cả trang
-                                initializePage(); // Gọi lại hàm khởi tạo để làm mới dữ liệu
-                            } else {
-                                alert(`Xóa thất bại: ${res.status}`);
-                            }
-                        })
+                        .then(res => res.ok ? (alert('Xóa thành công!'), loadProducts(), updateNotifications()) : alert(`Xóa thất bại: ${res.status}`))
                         .catch(err => alert('Lỗi mạng!'));
                     }
                 }
@@ -323,73 +512,86 @@
                     showReviews(target.dataset.id, target.dataset.name);
                 }
             });
+
+            const modal = document.getElementById('reviewsModal');
+            const closeButton = modal.querySelector('.close-button');
+            closeButton.onclick = () => modal.style.display = 'none';
+            window.onclick = (event) => { if (event.target == modal) modal.style.display = 'none'; };
             
-            // Xử lý đóng modal review
-            const reviewsModal = document.getElementById('reviewsModal');
-            reviewsModal.querySelector('.close-button').onclick = () => reviewsModal.style.display = 'none';
-            window.addEventListener('click', (event) => { 
-                if (event.target == reviewsModal) reviewsModal.style.display = 'none'; 
+            const notificationBell = document.getElementById('notification-bell');
+            const notificationDropdown = document.getElementById('notification-dropdown');
+            notificationBell.addEventListener('click', e => {
+                e.stopPropagation();
+                const isHidden = notificationDropdown.style.display === 'none' || !notificationDropdown.style.display;
+                notificationDropdown.style.display = isHidden ? 'block' : 'none';
+                if (isHidden) {
+                    updateNotifications(); // Cập nhật thông báo khi mở
+                }
             });
+            window.addEventListener('click', e => {
+                if (!notificationBell.contains(e.target) && !notificationDropdown.contains(e.target)) {
+                    notificationDropdown.style.display = 'none';
+                }
+            });
+
+            const addProductLink = document.getElementById('add-product-link');
+            if (addProductLink) {
+                addProductLink.addEventListener('click', function(event) {
+                    const canAddProduct = currentUser && ['KT01IT', 'KT01SL'].includes(currentUser.employeeId);
+                    if (!canAddProduct) {
+                        event.preventDefault();
+                        const permissionModal = document.createElement('div');
+                        permissionModal.innerHTML = `
+                            <div id="permission-denied-modal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 2000;">
+                                <div style="background-color: var(--card-bg-color); color: var(--text-color); padding: 30px; border-radius: 8px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.3); max-width: 400px;">
+                                    <h3 style="margin-top: 0; color: var(--danger-color);">Truy cập bị từ chối</h3>
+                                    <p>Xin lỗi, bạn không có thẩm quyền để vào trang này.</p>
+                                    <button id="close-permission-modal" style="padding: 10px 20px; border-radius: 5px; border: none; background-color: var(--primary-color); color: white; cursor: pointer; margin-top: 15px; font-weight: bold;">Đã hiểu</button>
+                                </div>
+                            </div>
+                        `;
+                        document.body.appendChild(permissionModal);
+                        document.getElementById('close-permission-modal').addEventListener('click', () => {
+                            document.body.removeChild(permissionModal);
+                        });
+                    }
+                });
+            }
         }
         
         function applyNavigationPermissions() {
             const employeePageRoles = ['KT01IT', 'KT01GD', 'KT02GD'];
             const employeeLink = document.getElementById('employee-info-link');
-            if (employeeLink && currentUser && !employeePageRoles.includes(currentUser.employeeId)) {
+            if (employeeLink && !employeePageRoles.includes(currentUser.employeeId)) {
                 employeeLink.style.display = 'none';
             }
         }
 
-        function initializeScanner() {
-            const qrButton = document.getElementById('scan-qr-btn');
-            const barcodeButton = document.getElementById('scan-barcode-btn');
-            const scannerModal = document.getElementById('scanner-modal');
-            const scannerCloseBtn = document.getElementById('scanner-close-btn');
-            const scannerTitle = document.getElementById('scanner-title');
-            const scannerResult = document.getElementById('scanner-result');
-            let html5QrCode = null;
-
-            const startScanner = (type) => {
-                scannerTitle.textContent = type === 'QR' ? 'Quét mã QR Code' : 'Quét Barcode';
-                scannerResult.textContent = 'Hướng camera vào mã...';
-                scannerModal.style.display = 'block';
-                try {
-                    html5QrCode = new Html5Qrcode("scanner-container");
-                    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-                    html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess, (error) => {}).catch(err => {
-                        scannerResult.textContent = 'Lỗi: Không thể khởi động camera. Vui lòng cấp quyền truy cập.';
-                    });
-                } catch(e) {
-                     scannerResult.textContent = 'Lỗi khởi tạo camera. Thư viện chưa sẵn sàng.';
+        async function initializePage() {
+            try {
+                const response = await fetch('/api/me');
+                if (!response.ok) {
+                    window.location.href = '/login.html';
+                    return;
                 }
-            };
+                currentUser = await response.json();
+                
+                applyTheme(currentUser.theme);
+                loadProducts();
+                updateNotifications(); // Chạy lần đầu để kiểm tra badge
+                attachEventListeners();
+                applyNavigationPermissions();
 
-            const stopScanner = () => {
-                if (html5QrCode && html5QrCode.isScanning) {
-                    html5QrCode.stop().catch(err => console.error("Lỗi khi dừng quét:", err));
-                }
-                scannerModal.style.display = 'none';
-            };
-
-            const onScanSuccess = (decodedText, decodedResult) => {
-                scannerResult.textContent = `Đã quét thành công: ${decodedText}`;
-                stopScanner();
-                const foundProduct = allProducts.find(p => p.id === decodedText);
-                if (foundProduct) {
-                    window.open(`/product-view.html?id=${foundProduct.id}`, '_blank');
-                } else {
-                    alert(`Không tìm thấy sản phẩm nào có mã: ${decodedText}`);
-                }
-            };
-            
-            qrButton.addEventListener('click', () => startScanner('QR'));
-            barcodeButton.addEventListener('click', () => startScanner('Barcode'));
-            scannerCloseBtn.addEventListener('click', stopScanner);
-            window.addEventListener('click', (event) => {
-                if (event.target == scannerModal) stopScanner();
-            });
+            } catch (error) {
+                console.error("Lỗi khởi tạo trang:", error);
+                window.location.href = '/login.html';
+            }
         }
 
+        document.addEventListener('DOMContentLoaded', initializePage);
+        // =======================================================
+        // === [THÊM MỚI] TOÀN BỘ LOGIC CỦA TRỢ LÝ AI ==========
+        // =======================================================
         function initializeAIAssistant() {
             const fab = document.getElementById('ai-fab');
             const modal = document.getElementById('ai-chat-modal');
@@ -399,7 +601,7 @@
             const micButton = document.getElementById('ai-mic-button');
 
             fab.addEventListener('click', () => {
-                const isHidden = modal.style.display === 'none' || !modal.style.display;
+                const isHidden = modal.style.display === 'none' || modal.style.display === '';
                 modal.style.display = isHidden ? 'flex' : 'none';
                 if (isHidden && chatLog.children.length === 0) {
                     addAiMessage("Xin chào. Tôi là Trợ lý AI. Tôi có thể hỗ trợ bạn như thế nào?", getInitialOptions());
@@ -410,38 +612,54 @@
                 e.preventDefault();
                 const userQuery = input.value.trim();
                 if (!userQuery) return;
+                
                 addUserMessage(userQuery);
                 input.value = '';
+                
                 handleUserQuery(userQuery);
             });
 
+            // --- LOGIC NHẬN DẠNG GIỌNG NÓI ---
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (SpeechRecognition) {
                 const recognition = new SpeechRecognition();
                 recognition.continuous = false;
                 recognition.lang = 'vi-VN';
                 recognition.interimResults = false;
+
                 micButton.addEventListener('click', () => {
                     micButton.classList.contains('is-listening') ? recognition.stop() : recognition.start();
                 });
-                recognition.onstart = () => { micButton.classList.add('is-listening'); input.placeholder = "Đang lắng nghe..."; };
-                recognition.onend = () => { micButton.classList.remove('is-listening'); input.placeholder = "Nhập yêu cầu của bạn..."; };
+
+                recognition.onstart = () => {
+                    micButton.classList.add('is-listening');
+                    input.placeholder = "Đang lắng nghe...";
+                };
+
+                recognition.onend = () => {
+                    micButton.classList.remove('is-listening');
+                    input.placeholder = "Nhập yêu cầu của bạn...";
+                };
+
                 recognition.onerror = (event) => addAiMessage("Lỗi nhận dạng giọng nói: " + event.error);
+
                 recognition.onresult = (event) => {
                     const transcript = event.results[0][0].transcript;
                     input.value = transcript;
-                    form.dispatchEvent(new Event('submit'));
+                    form.dispatchEvent(new Event('submit')); 
                 };
             } else {
-                micButton.style.display = 'none';
+                micButton.style.display = 'none'; // Ẩn nút nếu không được hỗ trợ
             }
 
+            // --- CÁC HÀM XỬ LÝ TIN NHẮN ---
             function addMessage(content, type) {
                 const messageDiv = document.createElement('div');
                 messageDiv.className = `ai-chat-message ${type}`;
                 messageDiv.innerHTML = content;
                 chatLog.appendChild(messageDiv);
                 chatLog.scrollTop = chatLog.scrollHeight;
+                
                 if (type === 'ai') {
                     messageDiv.querySelectorAll('.ai-chat-options button').forEach(btn => {
                         btn.addEventListener('click', () => {
@@ -454,30 +672,42 @@
             }
             function addUserMessage(text) { addMessage(text, 'user'); }
             function addAiMessage(text, optionsHTML = '') { addMessage(text + (optionsHTML ? `<div class="ai-chat-options">${optionsHTML}</div>` : ''), 'ai'); }
+
             function getInitialOptions() {
-                return [{ text: "Tìm kiếm sản phẩm", query: "help_search" }, { text: "Phân tích dữ liệu", query: "help_analyze" }, { text: "Giải thích chức năng", query: "help_explain" }].map(opt => `<button data-query="${opt.query}">${opt.text}</button>`).join('');
+                return [
+                    { text: "Tìm kiếm sản phẩm", query: "help_search" },
+                    { text: "Phân tích dữ liệu", query: "help_analyze" },
+                    { text: "Giải thích chức năng", query: "help_explain" },
+                ].map(opt => `<button data-query="${opt.query}">${opt.text}</button>`).join('');
             }
 
+            // --- "BỘ NÃO" CỦA AI ---
             function handleUserQuery(query) {
                 query = query.toLowerCase();
+                
+                // 1. Lệnh gợi ý
                 if (query === "help_search") return addAiMessage("Vui lòng nhập yêu cầu tìm kiếm. Ví dụ: 'Tìm sản phẩm outdoor', 'Liệt kê sản phẩm của Khoi', 'Sản phẩm mới nhất'.");
                 if (query === "help_analyze") return addAiMessage("Vui lòng chọn loại phân tích:", [{ text: "Có bao nhiêu sản phẩm?", query: "đếm tất cả sản phẩm" }, { text: "Ai tạo nhiều sản phẩm nhất?", query: "phân tích người tạo" }].map(o => `<button data-query="${o.query}">${o.text}</button>`).join(''));
                 if (query === "help_explain") return addAiMessage("Bạn muốn giải thích về chức năng nào?", [{ text: "Nút 'Xem QR' để làm gì?", query: "giải thích xem qr" }, { text: "Làm sao để xóa sản phẩm?", query: "giải thích xóa" }].map(o => `<button data-query="${o.query}">${o.text}</button>`).join(''));
+
+                // 2. Lệnh phân tích
                 if (query.includes("đếm") && query.includes("sản phẩm")) return addAiMessage(`Hệ thống ghi nhận tổng cộng <strong>${allProducts.length}</strong> sản phẩm.`);
                 if (query.includes("phân tích người tạo") || query.includes("tạo nhiều nhất")) {
-                    if (allProducts.length === 0) return addAiMessage("Chưa có dữ liệu sản phẩm để phân tích.");
-                    const counts = allProducts.reduce((acc, p) => { if(p.created_by_name) acc[p.created_by_name] = (acc[p.created_by_name] || 0) + 1; return acc; }, {});
+                    const counts = allProducts.reduce((acc, p) => { acc[p.created_by_name] = (acc[p.created_by_name] || 0) + 1; return acc; }, {});
                     const topCreator = Object.entries(counts).sort((a,b) => b[1] - a[1])[0];
                     return addAiMessage(`Phân tích cho thấy <strong>${topCreator[0]}</strong> là người tạo nhiều sản phẩm nhất với <strong>${topCreator[1]}</strong> sản phẩm.`);
                 }
+                
+                // 3. Lệnh giải thích
                 if (query.includes("giải thích xem qr")) return addAiMessage("Chức năng 'Xem QR' tạo ra một mã QR Code duy nhất cho mỗi sản phẩm. Người dùng có thể quét mã này bằng thiết bị di động để nhanh chóng truy cập trang chi tiết sản phẩm.");
                 if (query.includes("giải thích xóa")) {
                     let response = "Để xóa một sản phẩm, nhấn vào nút 'Xóa' màu đỏ ở hàng tương ứng. Một hộp thoại xác nhận sẽ hiện ra.";
                     response += (currentUser && currentUser.employeeId === 'KT01IT') ? "<br>Tài khoản của bạn <strong>có quyền</strong> thực hiện hành động này." : "<br>Lưu ý: Chỉ có quản trị viên (ID: KT01IT) mới có quyền thực hiện hành động này.";
                     return addAiMessage(response);
                 }
+
+                // 4. Lệnh tìm kiếm
                 if (query.includes("mới nhất")) {
-                    if (allProducts.length === 0) return addAiMessage("Chưa có dữ liệu sản phẩm để phân tích.");
                     const latest = [...allProducts].sort((a,b) => new Date(b.created_at) - new Date(a.created_at))[0];
                     if(latest) {
                         renderProducts(allProducts, latest.id);
@@ -485,20 +715,25 @@
                     }
                     return addAiMessage("Không tìm thấy sản phẩm nào.");
                 }
+                
                 let match = query.match(/(?:tìm|liệt kê|cho xem)\s(?:sản phẩm|sp)\s(.*)/i);
                 if (match) {
                     const keyword = match[1].trim();
-                    const results = allProducts.filter(p => p.name_vi?.toLowerCase().includes(keyword) || p.id?.toLowerCase().includes(keyword) || p.created_by_name?.toLowerCase().includes(keyword));
+                    const results = allProducts.filter(p => p.name_vi.toLowerCase().includes(keyword) || p.id.toLowerCase().includes(keyword) || p.created_by_name.toLowerCase().includes(keyword));
                     if (results.length > 0) {
                         renderProducts(results);
-                        return addAiMessage(`Đã tìm thấy <strong>${results.length}</strong> sản phẩm khớp với từ khóa '${keyword}'. Danh sách trên bảng đã được cập nhật.`);
+                        let resultText = `Đã tìm thấy <strong>${results.length}</strong> sản phẩm khớp với từ khóa '${keyword}'. Danh sách trên bảng đã được cập nhật.`;
+                        return addAiMessage(resultText);
                     }
                     return addAiMessage(`Không tìm thấy sản phẩm nào khớp với từ khóa '${keyword}'.`);
                 }
-                addAiMessage("Yêu cầu không hợp lệ. Vui lòng thử lại.", getInitialOptions());
+                
+                // Fallback
+                addAiMessage("Yêu cầu không hợp lệ. Vui lòng thử lại hoặc chọn một trong các gợi ý.", getInitialOptions());
             }
         }
-        
+
+        // --- Cập nhật hàm initializePage để gọi AI ---
         async function initializePage() {
             try {
                 const response = await fetch('/api/me');
@@ -508,31 +743,44 @@
                 }
                 currentUser = await response.json();
                 
-                await fetch('/api/products')
-                    .then(res => res.ok ? res.json() : Promise.reject(res))
-                    .then(data => {
-                        allProducts = data.products || data || [];
-                        renderProducts(allProducts);
-                    })
-                    .catch(error => {
-                        document.getElementById('product-table-body').innerHTML = `<tr><td colspan="6" style="text-align:center; color: red;">Không thể tải danh sách sản phẩm.</td></tr>`;
-                    });
+                // Dùng await để đảm bảo loadProducts hoàn thành trước khi khởi tạo AI
+                await new Promise(resolve => {
+                    fetch('/api/products')
+                        .then(res => res.ok ? res.json() : Promise.reject(res))
+                        .then(data => {
+                            allProducts = data.products || data || [];
+                            renderProducts(allProducts);
+                            resolve(); // Báo hiệu đã xong
+                        })
+                        .catch(error => {
+                            document.getElementById('product-table-body').innerHTML = `<tr><td colspan="6" style="text-align:center; color: red;">Không thể tải danh sách sản phẩm.</td></tr>`;
+                            resolve(); // Vẫn resolve để trang không bị treo
+                        });
+                });
                 
-                const theme = localStorage.getItem('theme') || (currentUser.theme || 'dark');
-                applyTheme(theme);
-                
-                // updateNotifications(); 
+                applyTheme(currentUser.theme);
+                // updateNotifications(); // Bạn có thể bật lại nếu cần
                 attachEventListeners();
                 applyNavigationPermissions();
-                initializeAIAssistant();
-                initializeScanner();
+                initializeAIAssistant(); // Khởi tạo AI sau khi có dữ liệu
             } catch (error) {
                 console.error("Lỗi khởi tạo trang:", error);
                 window.location.href = '/login.html';
             }
         }
-        
-        document.addEventListener('DOMContentLoaded', initializePage);
     </script>
+    <button id="ai-fab" title="Trợ lý AI">🤖</button>
+    <div id="ai-chat-modal" style="display: none;">
+        <div class="ai-chat-header">
+            <h3>Trợ lý AI Quản lý Sản phẩm</h3>
+            <p>Sẵn sàng phân tích và hỗ trợ dữ liệu</p>
+        </div>
+        <div class="ai-chat-log" id="ai-chat-log"></div>
+        <form id="ai-chat-form">
+            <button type="button" id="ai-mic-button" title="Ghi âm yêu cầu">🎙️</button>
+            <input type="text" id="ai-chat-input" placeholder="Nhập yêu cầu của bạn..." autocomplete="off">
+            <button type="submit">Gửi</button>
+        </form>
+    </div>
 </body>
 </html>
