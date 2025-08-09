@@ -56,6 +56,73 @@
             background-color: #999;
             cursor: not-allowed;
         }
+
+        /* Styles for uploaded file previews */
+        .file-preview-container {
+            margin-top: 10px;
+            border: 1px solid #e0e0e0;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .file-preview-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+            padding: 5px;
+            background-color: #fff;
+            border: 1px solid #eee;
+            border-radius: 3px;
+        }
+        .file-preview-item img {
+            width: 50px;
+            height: 50px;
+            object-fit: contain;
+            margin-right: 10px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+        }
+        .file-preview-item .file-name {
+            flex-grow: 1;
+            font-weight: bold;
+            color: #333;
+            word-break: break-all; /* Ensures long file names wrap */
+        }
+        .file-preview-item .file-link {
+            color: #007bff;
+            text-decoration: none;
+            margin-left: 10px;
+        }
+        .file-preview-item .file-link:hover {
+            text-decoration: underline;
+        }
+        .file-preview-item .remove-file-btn {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+            margin-left: 10px;
+            font-size: 0.8em;
+        }
+        .file-preview-item .remove-file-btn:hover {
+            background-color: #c82333;
+        }
+        /* For PDF/Other files, hide image and show icon/text */
+        .file-preview-item.pdf-item img, .file-preview-item.other-item img {
+            display: none;
+        }
+        .file-preview-item.pdf-item .file-name::before {
+            content: '📄 '; /* PDF icon */
+            font-size: 1.2em;
+            margin-right: 5px;
+        }
+        .file-preview-item.other-item .file-name::before {
+            content: '📎 '; /* Generic file icon */
+            font-size: 1.2em;
+            margin-right: 5px;
+        }
     </style>
 </head>
 <body>
@@ -68,35 +135,40 @@
         <p>Thay đổi thông tin và nhấn "Lưu Thay Đổi" để cập nhật.</p>
 
         <form id="edit-form" style="display: none;">
-            <div class="form-grid">
-    <div class="form-group full-width"><label>Mã Sản Phẩm / Product ID</label><input type="text" name="id" readonly style="background-color: #e9ecef;"></div>
-    <div class="form-group"><label>Tên Sản Phẩm (VI)</label><input type="text" name="name_vi" required></div>
-    <div class="form-group"><label>Product Name (EN)</label><input type="text" name="name_en" required></div>
-    <div class="form-group"><label>产品名称 (ZH)</label><input type="text" name="name_zh"></div>
-    <div class="form-group"><label>Bộ Sưu Tập (VI)</label><input type="text" name="collection_vi"></div>
-    <div class="form-group"><label>Collection (EN)</label><input type="text" name="collection_en"></div>
-    <div class="form-group"><label>系列 (ZH)</label><input type="text" name="collection_zh"></div>
-</div>
+            <div class="form-section">
+                <h2>Thông Tin Chung</h2>
+                <div class="form-grid">
+                    <div class="form-group full-width">
+                        <label>Mã Sản Phẩm / Product ID (Có thể sửa)</label>
+                        <input type="text" name="id" required>
+                    </div>
+                    <div class="form-group"><label>Tên Sản Phẩm (VI)</label><input type="text" name="name_vi" required></div>
+                    <div class="form-group"><label>Product Name (EN)</label><input type="text" name="name_en" required></div>
+                    <div class="form-group"><label>产品名称 (ZH)</label><input type="text" name="name_zh"></div>
+                    <div class="form-group"><label>Bộ Sưu Tập (VI)</label><input type="text" name="collection_vi"></div>
+                    <div class="form-group"><label>Collection (EN)</label><input type="text" name="collection_en"></div>
+                    <div class="form-group"><label>系列 (ZH)</label><input type="text" name="collection_zh"></div>
+                </div>
             </div>
 
             <div class="form-section">
                 <h2>Chi Tiết Vật Liệu & Sản Xuất</h2>
                 <div class="form-grid">
-    <div class="form-group"><label>Màu sắc (VI)</label><input type="text" name="color_vi"></div>
-    <div class="form-group"><label>Color (EN)</label><input type="text" name="color_en"></div>
-    <div class="form-group"><label>颜色 (ZH)</label><input type="text" name="color_zh"></div>
-    <div class="form-group"><label>Vải (VI)</label><input type="text" name="fabric_vi"></div>
-    <div class="form-group"><label>Fabric (EN)</label><input type="text" name="fabric_en"></div>
-    <div class="form-group"><label>面料 (ZH)</label><input type="text" name="fabric_zh"></div>
-    <div class="form-group"><label>Dây (VI)</label><input type="text" name="wicker_vi"></div>
-    <div class="form-group"><label>Wicker (EN)</label><input type="text" name="wicker_en"></div>
-    <div class="form-group"><label>藤编 (ZH)</label><input type="text" name="wicker_zh"></div>
-    <div class="form-group"><label>Chất liệu (VI)</label><input type="text" name="material_vi"></div>
-    <div class="form-group"><label>Material (EN)</label><input type="text" name="material_en"></div>
-    <div class="form-group"><label>材料 (ZH)</label><input type="text" name="material_zh"></div>
-    <div class="form-group full-width"><label>Biên dạng nhôm</label><input type="text" name="aluminum_profile"></div>
-    <div class="form-group"><label>Nơi sản xuất</label><select name="production_place"><option value="KT">KT</option><option value="Minh Tien">Minh Tiến</option><option value="Other">Khác</option></select></div>
-</div>
+                    <div class="form-group"><label>Màu sắc (VI)</label><input type="text" name="color_vi"></div>
+                    <div class="form-group"><label>Color (EN)</label><input type="text" name="color_en"></div>
+                    <div class="form-group"><label>颜色 (ZH)</label><input type="text" name="color_zh"></div>
+                    <div class="form-group"><label>Vải (VI)</label><input type="text" name="fabric_vi"></div>
+                    <div class="form-group"><label>Fabric (EN)</label><input type="text" name="fabric_en"></div>
+                    <div class="form-group"><label>面料 (ZH)</label><input type="text" name="fabric_zh"></div>
+                    <div class="form-group"><label>Dây (VI)</label><input type="text" name="wicker_vi"></div>
+                    <div class="form-group"><label>Wicker (EN)</label><input type="text" name="wicker_en"></div>
+                    <div class="form-group"><label>藤编 (ZH)</label><input type="text" name="wicker_zh"></div>
+                    <div class="form-group"><label>Chất liệu (VI)</label><input type="text" name="material_vi"></div>
+                    <div class="form-group"><label>Material (EN)</label><input type="text" name="material_en"></div>
+                    <div class="form-group"><label>材料 (ZH)</label><input type="text" name="material_zh"></div>
+                    <div class="form-group full-width"><label>Biên dạng nhôm</label><input type="text" name="aluminum_profile"></div>
+                    <div class="form-group"><label>Nơi sản xuất</label><select name="production_place"><option value="KT">KT</option><option value="Minh Tien">Minh Tiến</option><option value="Other">Khác</option></select></div>
+                </div>
             </div>
             
             <div class="form-section">
@@ -115,12 +187,12 @@
             <div class="form-section">
                 <h2>Thông Tin Thương Mại & Kỹ Thuật</h2>
                 <div class="form-grid">
-    <div class="form-group"><label>Công ty</label><input type="text" name="company"></div>
-    <div class="form-group"><label>Khách hàng</label><input type="text" name="customer"></div>
-    <div class="form-group"><label>Nhà cung cấp</label><input type="text" name="supplier"></div>
-    <div class="form-group"><label>Thông số</label><input type="text" name="specification"></div>
-    <div class="form-group"><label>规格 (ZH)</label><input type="text" name="specification_zh"></div>
-</div>
+                    <div class="form-group"><label>Công ty</label><input type="text" name="company"></div>
+                    <div class="form-group"><label>Khách hàng</label><input type="text" name="customer"></div>
+                    <div class="form-group"><label>Nhà cung cấp</label><input type="text" name="supplier"></div>
+                    <div class="form-group"><label>Thông số</label><input type="text" name="specification"></div>
+                    <div class="form-group"><label>规格 (ZH)</label><input type="text" name="specification_zh"></div>
+                </div>
             </div>
             
             <div class="form-section">
@@ -157,15 +229,26 @@
                     <textarea id="imageUrls" name="imageUrls" rows="5" placeholder="Các link ảnh sẽ tự động xuất hiện ở đây..."></textarea>
                     <button type="button" class="popup-upload-btn" data-target="imageUrls">Upload Ảnh</button>
                 </div>
+                <div id="image-previews" class="file-preview-container" style="display: none;">
+                    <h3>Ảnh đã tải lên:</h3>
+                </div>
+
                 <div class="form-group full-width form-group-with-button">
                     <label for="drawingUrls">Danh sách URL Bản vẽ (PDF)</label>
                     <textarea id="drawingUrls" name="drawingUrls" rows="5" placeholder="Các link bản vẽ sẽ tự động xuất hiện ở đây..."></textarea>
                     <button type="button" class="popup-upload-btn" data-target="drawingUrls">Upload Bản Vẽ</button>
                 </div>
+                <div id="drawing-previews" class="file-preview-container" style="display: none;">
+                    <h3>Bản vẽ đã tải lên:</h3>
+                </div>
+
                 <div class="form-group full-width form-group-with-button">
                     <label for="materialsUrls">Danh sách URL Vật tư</label>
                     <textarea id="materialsUrls" name="materialsUrls" rows="5" placeholder="Các link vật tư sẽ tự động xuất hiện ở đây..."></textarea>
                     <button type="button" class="popup-upload-btn" data-target="materialsUrls">Upload Vật Tư</button>
+                </div>
+                <div id="materials-previews" class="file-preview-container" style="display: none;">
+                    <h3>Vật tư đã tải lên:</h3>
                 </div>
             </div>
             
@@ -181,56 +264,62 @@
     const submitButton = document.getElementById('submit-button');
     const loadingOverlay = document.getElementById('loading');
     let currentUser = null;
+    let originalProductIdValue = ''; // Biến để lưu trữ ID sản phẩm ban đầu
 
     // --- CẤU HÌNH PHÂN QUYỀN ---
-    // Giữ nguyên đối tượng PERMISSIONS để các vai trò khác vẫn hoạt động bình thường
     const PERMISSIONS = {
-    'KT01SL': [
-        // Bổ sung các trường tiếng Trung
-        'name_vi', 'name_en', 'name_zh', 'collection_vi', 'collection_en', 'collection_zh', 'specification_zh',
-        'color_vi', 'color_en', 'color_zh', 'fabric_vi', 'fabric_en', 'fabric_zh', 'wicker_vi', 'wicker_en', 'wicker_zh',
-        'material_vi', 'material_en', 'material_zh', 'aluminum_profile', 'production_place'
-    ],
-    'KT01KT': [
-        // Bổ sung các trường tiếng Trung
-        'color_vi', 'color_en', 'color_zh', 'fabric_vi', 'fabric_en', 'fabric_zh', 'wicker_vi', 'wicker_en', 'wicker_zh',
-        'material_vi', 'material_en', 'material_zh', 'aluminum_profile', 'production_place',
-        'length', 'width', 'height', 'other_details', 'specification_zh',
-        'imageUrls', 'drawingUrls'
-    ],
-    'KT01VT': [
-        'aluminum_supplier', 'wicker_supplier', 'stone_supplier', 'materialsUrls'
-    ],
-    'KT01SX': [
-        'packed_length', 'packed_width', 'packed_height',
-        'box_quantity', 'origin_country', 'cost_price', 'hardware', 'cushion_details',
-        'pillow_details', 'aluminum_weight', 'wicker_weight', 'stone_weight',
-        'weaving_rope_weight', 'lining_rope_weight', 'product_weight', 'packed_weight_total'
-    ]
-};
+        'KT01SL': [
+            'name_vi', 'name_en', 'name_zh', 'collection_vi', 'collection_en', 'collection_zh', 'specification_zh',
+            'color_vi', 'color_en', 'color_zh', 'fabric_vi', 'fabric_en', 'fabric_zh', 'wicker_vi', 'wicker_en', 'wicker_zh',
+            'material_vi', 'material_en', 'material_zh', 'aluminum_profile', 'production_place'
+        ],
+        'KT01KT': [
+            'color_vi', 'color_en', 'color_zh', 'fabric_vi', 'fabric_en', 'fabric_zh', 'wicker_vi', 'wicker_en', 'wicker_zh',
+            'material_vi', 'material_en', 'material_zh', 'aluminum_profile', 'production_place',
+            'length', 'width', 'height', 'other_details', 'specification_zh',
+            'imageUrls', 'drawingUrls' // KT01KT có quyền sửa Image và Drawing URLs
+        ],
+        'KT01VT': [
+            'aluminum_supplier', 'wicker_supplier', 'stone_supplier', 'materialsUrls'
+        ],
+        'KT01SX': [
+            'packed_length', 'packed_width', 'packed_height',
+            'box_quantity', 'origin_country', 'cost_price', 'hardware', 'cushion_details',
+            'pillow_details', 'aluminum_weight', 'wicker_weight', 'stone_weight',
+            'weaving_rope_weight', 'lining_rope_weight', 'product_weight', 'packed_weight_total'
+        ]
+    };
 
-    // --- HÀM ÁP DỤNG PHÂN QUYỀN (ĐÃ CẬP NHẬT) ---
+    // --- HÀM ÁP DỤNG PHÂN QUYỀN (ĐÃ SỬA) ---
     function applyPermissions(user) {
         if (!user || !user.employeeId) return;
 
         const productIdField = form.querySelector('[name="id"]');
         
-        // Chỉ IT và Sales mới được sửa ID sản phẩm
-        if (productIdField && ['KT01IT', 'KT01SL'].includes(user.employeeId)) {
+        // IT có toàn quyền
+        if (user.employeeId === 'KT01IT') {
+            console.log(`User role ${user.employeeId} has full access. Bypassing field restrictions.`);
+            // Cho phép IT chỉnh sửa Product ID
             productIdField.readOnly = false;
             productIdField.style.backgroundColor = 'var(--card-bg-color)';
             productIdField.style.color = 'var(--text-color)';
             productIdField.previousElementSibling.textContent = 'Mã Sản Phẩm / Product ID (Có thể sửa)';
+            return; // Dừng lại, IT có toàn quyền
         }
 
-        // =========================================================================
-        // === THAY ĐỔI QUAN TRỌNG NẰM Ở ĐÂY ===
-        // Nếu user là IT hoặc Sales (KT01SL), cho phép toàn quyền và không cần kiểm tra gì thêm.
-        if (['KT01IT', 'KT01SL'].includes(user.employeeId)) {
-            console.log(`User role ${user.employeeId} has full access. Bypassing field restrictions.`);
-            return; 
+        // Sales (KT01SL) chỉ có quyền sửa ID sản phẩm và các trường được định nghĩa trong PERMISSIONS
+        if (user.employeeId === 'KT01SL') {
+            productIdField.readOnly = false;
+            productIdField.style.backgroundColor = 'var(--card-bg-color)';
+            productIdField.style.color = 'var(--text-color)';
+            productIdField.previousElementSibling.textContent = 'Mã Sản Phẩm / Product ID (Có thể sửa)';
+        } else {
+            // Các vai trò khác không được sửa ID sản phẩm
+            productIdField.readOnly = true;
+            productIdField.style.backgroundColor = '#e9ecef'; // Màu nền xám cho trường readonly
+            productIdField.style.color = '#777'; // Màu chữ nhạt hơn
+            productIdField.previousElementSibling.textContent = 'Mã Sản Phẩm / Product ID'; // Đặt lại nhãn gốc
         }
-        // =========================================================================
 
         const userRole = user.employeeId;
         const allowedFields = new Set(PERMISSIONS[userRole] || []);
@@ -239,9 +328,10 @@
         allFields.forEach(field => {
             let fieldName = field.name;
             if (field.matches('.popup-upload-btn')) {
-                fieldName = field.dataset.target;
+                fieldName = field.dataset.target; // Lấy target từ data-target cho nút upload
             }
 
+            // Bỏ qua trường 'id' vì nó đã được xử lý ở trên riêng cho IT/Sales
             if (fieldName === 'id') return;
 
             if (!allowedFields.has(fieldName)) {
@@ -251,7 +341,105 @@
         });
     }
 
-    // --- CÁC HÀM CÒN LẠI GIỮ NGUYÊN ---
+    // --- HÀM XỬ LÝ HIỂN THỊ FILE TRƯỚC VÀ XÓA FILE (MỚI) ---
+    function getFileNameFromUrl(url) {
+        try {
+            const path = new URL(url).pathname;
+            return decodeURIComponent(path.substring(path.lastIndexOf('/') + 1));
+        } catch (e) {
+            return url.split('/').pop() || 'File';
+        }
+    }
+
+    function renderFilePreviews(urls, containerId, isImage = true) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = '<h3>' + (isImage ? 'Ảnh đã tải lên:' : 'Tệp đã tải lên:') + '</h3>';
+        if (urls && urls.length > 0) {
+            container.style.display = 'block';
+            urls.forEach((file, index) => {
+                const url = typeof file === 'object' ? file.url : file;
+                const name = typeof file === 'object' ? file.name : getFileNameFromUrl(url);
+                const previewItem = document.createElement('div');
+                previewItem.classList.add('file-preview-item');
+                if (!isImage) { // Add specific class for non-image files
+                    previewItem.classList.add('pdf-item'); // Assuming PDFs for drawing/materials
+                }
+
+                if (isImage) {
+                    const img = document.createElement('img');
+                    img.src = url;
+                    img.alt = name;
+                    previewItem.appendChild(img);
+                }
+                
+                const fileNameSpan = document.createElement('span');
+                fileNameSpan.classList.add('file-name');
+                fileNameSpan.textContent = name;
+                previewItem.appendChild(fileNameSpan);
+
+                const fileLink = document.createElement('a');
+                fileLink.classList.add('file-link');
+                fileLink.href = url;
+                fileLink.target = '_blank';
+                fileLink.textContent = 'Xem';
+                previewItem.appendChild(fileLink);
+
+                const removeButton = document.createElement('button');
+                removeButton.classList.add('remove-file-btn');
+                removeButton.textContent = 'Xóa';
+                removeButton.onclick = () => removeFile(url, containerId, isImage);
+                previewItem.appendChild(removeButton);
+
+                container.appendChild(previewItem);
+            });
+        } else {
+            container.style.display = 'none';
+        }
+    }
+
+    function removeFile(urlToRemove, containerId, isImage) {
+        const textareaId = containerId.replace('-previews', '');
+        const textarea = document.getElementById(textareaId);
+        let currentUrls = (textarea.value || '').split('\n').map(link => link.trim()).filter(Boolean);
+
+        if (isImage) {
+            currentUrls = currentUrls.filter(url => url !== urlToRemove);
+        } else {
+            // For drawingUrls and materialsUrls, which are objects {name, url}
+            currentUrls = currentUrls.filter(link => {
+                // If the link is just a string URL, compare directly
+                if (typeof link === 'string') return link !== urlToRemove;
+                // If it's an object {name, url}, compare its url property
+                return typeof link === 'object' ? link.url !== urlToRemove : true;
+            });
+        }
+        
+        textarea.value = currentUrls.join('\n');
+        // Re-render previews immediately
+        const fieldName = textareaId;
+        const processedUrls = processUrlsForPreview(currentUrls, fieldName);
+        renderFilePreviews(processedUrls, containerId, isImage);
+    }
+
+    // Helper to process URLs loaded from product data for preview display
+    function processUrlsForPreview(urls, fieldName) {
+        if (!urls) return [];
+        if (fieldName === 'imageUrls') {
+            // imageUrls are simple strings
+            return urls;
+        } else {
+            // drawingUrls and materialsUrls are objects {name, url}
+            // Ensure they are consistently objects, even if loaded as strings
+            return urls.map(item => {
+                if (typeof item === 'string') {
+                    return { name: getFileNameFromUrl(item), url: item };
+                }
+                return item;
+            });
+        }
+    }
+    // --- KẾT THÚC HÀM XỬ LÝ FILE MỚI ---
+
     document.addEventListener('DOMContentLoaded', async () => {
         const urlParams = new URLSearchParams(window.location.search);
         const productId = urlParams.get('id');
@@ -270,19 +458,23 @@
 
             if (!productResponse.ok) throw new Error(`Lỗi tải sản phẩm: ${productResponse.status}`);
             if (!userResponse.ok) {
-                // Nếu lỗi xác thực, chuyển về trang chủ ngay
-                window.location.href = '/';
+                window.location.href = '/'; // Chuyển về trang chủ nếu lỗi xác thực
                 return;
             }
 
             const product = await productResponse.json();
             currentUser = await userResponse.json();
             
+            // Lưu ID sản phẩm ban đầu
+            originalProductIdValue = product.id; 
+            form.querySelector('[name="id"]').value = product.id; // Đảm bảo ID được hiển thị
+
             for (const key in product) {
                 const field = form.querySelector(`[name="${key}"]`);
                 if (field) {
                     const value = product[key];
                     if (['imageUrls', 'drawingUrls', 'materialsUrls'].includes(key) && Array.isArray(value)) {
+                        // Nếu là mảng đối tượng {name, url}, chuyển về mảng URL để hiển thị trong textarea
                         const urlString = value.map(item => (typeof item === 'object' ? item.url : item)).join('\n');
                         field.value = urlString;
                     } else {
@@ -291,6 +483,11 @@
                 }
             }
             
+            // Hiển thị các file đã tải lên sau khi điền form
+            renderFilePreviews(processUrlsForPreview(product.imageUrls, 'imageUrls'), 'image-previews', true);
+            renderFilePreviews(processUrlsForPreview(product.drawingUrls, 'drawingUrls'), 'drawing-previews', false);
+            renderFilePreviews(processUrlsForPreview(product.materialsUrls, 'materialsUrls'), 'materials-previews', false);
+
             applyPermissions(currentUser);
             
             loadingOverlay.style.display = 'none';
@@ -310,42 +507,47 @@
             const formData = new FormData(this);
             const data = {};
             
+            // Thu thập dữ liệu từ các trường không bị vô hiệu hóa
             formData.forEach((value, key) => {
                 const field = form.querySelector(`[name="${key}"]`);
-                // Chỉ thu thập dữ liệu từ những trường không bị vô hiệu hóa
                 if (field && !field.disabled) {
                     data[key] = value;
                 }
             });
             
-            const originalProductId = form.querySelector('[name="id"]').value;
-            // Dù ID có được sửa hay không, ta luôn dùng ID gốc để xác định sản phẩm cần UPDATE
-            const endpointId = originalProductId; 
+            // Lấy ID sản phẩm hiện tại trong form (có thể đã được sửa bởi IT/Sales)
+            const currentProductIdInForm = form.querySelector('[name="id"]').value;
+            // Endpoint sẽ luôn dùng ID BAN ĐẦU để đảm bảo cập nhật đúng sản phẩm
+            const endpointId = originalProductIdValue; 
 
-            // Nếu người dùng sửa ID, giá trị mới sẽ nằm trong 'data.id'
-            // Nếu không, 'data.id' sẽ là undefined. Ta cần đảm bảo ID luôn có mặt.
-            if (data.id === undefined) {
-                 data.id = originalProductId;
-            }
+            // Đảm bảo ID sản phẩm gửi đi trong body là ID HIỆN TẠI trong form (đã sửa nếu có quyền)
+            // Nếu người dùng không sửa ID, nó vẫn sẽ là originalProductIdValue
+            data.id = currentProductIdInForm; 
 
-            function getFileNameFromUrl(url) {
-                try {
-                    const path = new URL(url).pathname;
-                    return decodeURIComponent(path.substring(path.lastIndexOf('/') + 1));
-                } catch (e) {
-                    return url.split('/').pop() || 'File';
-                }
-            }
-            
-            // Xử lý các trường URL nếu chúng được phép sửa
+            // Xử lý các trường URL:
+            // imageUrls: Gửi đi dưới dạng mảng các đối tượng {name, url}
             if (data.imageUrls !== undefined) {
-                data.imageUrls = (data.imageUrls || '').split('\n').map(link => link.trim()).filter(Boolean);
+                data.imageUrls = (data.imageUrls || '')
+                    .split('\n')
+                    .map(link => link.trim())
+                    .filter(Boolean)
+                    .map(link => ({ name: getFileNameFromUrl(link), url: link }));
             }
+            // drawingUrls: Gửi đi dưới dạng mảng các đối tượng {name, url}
             if (data.drawingUrls !== undefined) {
-                data.drawingUrls = (data.drawingUrls || '').split('\n').map(link => link.trim()).filter(Boolean).map(link => ({ name: getFileNameFromUrl(link), url: link }));
+                data.drawingUrls = (data.drawingUrls || '')
+                    .split('\n')
+                    .map(link => link.trim())
+                    .filter(Boolean)
+                    .map(link => ({ name: getFileNameFromUrl(link), url: link }));
             }
+            // materialsUrls: Gửi đi dưới dạng mảng các đối tượng {name, url}
             if (data.materialsUrls !== undefined) {
-                data.materialsUrls = (data.materialsUrls || '').split('\n').map(link => link.trim()).filter(Boolean).map(link => ({ name: getFileNameFromUrl(link), url: link }));
+                data.materialsUrls = (data.materialsUrls || '')
+                    .split('\n')
+                    .map(link => link.trim())
+                    .filter(Boolean)
+                    .map(link => ({ name: getFileNameFromUrl(link), url: link }));
             }
 
             const response = await fetch(`/api/products/${endpointId}`, {
@@ -358,7 +560,7 @@
                 let errorMessage = `Lỗi ${response.status}`;
                 try {
                     errorMessage = (await response.json()).error || errorMessage;
-                } catch (e) { /* Bỏ qua */ }
+                } catch (e) { /* Bỏ qua nếu không parse được JSON */ }
                 throw new Error(errorMessage);
             }
 
@@ -368,9 +570,24 @@
 
         } catch (error) {
             alert('Có lỗi xảy ra: ' + error.message);
+            console.error('Lỗi khi cập nhật sản phẩm:', error);
             submitButton.disabled = false;
             submitButton.textContent = 'Lưu Thay Đổi';
         }
+    });
+
+    // Thêm event listener cho textarea để render lại preview khi nội dung thay đổi thủ công
+    document.getElementById('imageUrls').addEventListener('input', (event) => {
+        const urls = (event.target.value || '').split('\n').map(link => link.trim()).filter(Boolean);
+        renderFilePreviews(processUrlsForPreview(urls, 'imageUrls'), 'image-previews', true);
+    });
+    document.getElementById('drawingUrls').addEventListener('input', (event) => {
+        const urls = (event.target.value || '').split('\n').map(link => link.trim()).filter(Boolean);
+        renderFilePreviews(processUrlsForPreview(urls, 'drawingUrls'), 'drawing-previews', false);
+    });
+    document.getElementById('materialsUrls').addEventListener('input', (event) => {
+        const urls = (event.target.value || '').split('\n').map(link => link.trim()).filter(Boolean);
+        renderFilePreviews(processUrlsForPreview(urls, 'materialsUrls'), 'materials-previews', false);
     });
 
     document.querySelectorAll('.popup-upload-btn').forEach(button => {
@@ -382,9 +599,42 @@
             const left = (screen.width / 2) - (popupWidth / 2);
             const top = (screen.height / 2) - (popupHeight / 2);
 
-            window.open(url, 'uploadWindow', `width=${popupWidth},height=${popupHeight},top=${top},left=${left},scrollbars=yes`);
+            // Truyền hàm callback vào cửa sổ popup
+            const uploadWindow = window.open(url, 'uploadWindow', `width=${popupWidth},height=${popupHeight},top=${top},left=${left},scrollbars=yes`);
+            if (uploadWindow) {
+                uploadWindow.onbeforeunload = () => {
+                    // Khi popup đóng, đọc lại dữ liệu từ localStorage hoặc trực tiếp từ URL của popup nếu có
+                    // Đơn giản nhất là hướng dẫn người dùng dán URL vào textarea hoặc tự động lấy từ localStorage
+                    // Để đơn giản, tôi sẽ thêm một ví dụ về cách lấy lại dữ liệu sau khi popup đóng
+                    // Lý tưởng nhất là popup sẽ gọi một hàm trong cửa sổ cha để cập nhật
+                    setTimeout(() => { // Cho phép popup có thời gian xử lý trước khi đóng
+                        // Bạn cần có cơ chế để popup gửi dữ liệu về đây.
+                        // Ví dụ: popup có thể lưu URL vào localStorage với một key cụ thể
+                        // Sau đó trang này sẽ đọc lại từ localStorage khi popup đóng.
+                        // Hoặc bạn có thể sử dụng `window.opener.postMessage` từ popup.
+                        // Để đơn giản, tôi sẽ giả định popup cập nhật textarea trực tiếp (cần sửa trong upload.html)
+                        // Hoặc đơn giản hơn là reload lại dữ liệu form sau khi upload (không tối ưu)
+                        // Tạm thời, người dùng sẽ dán thủ công, hoặc bạn sẽ sửa upload.html để nó gọi window.opener.updateTextarea(targetId, newUrl)
+                    }, 500); // Đợi một chút để đảm bảo popup hoàn thành
+                };
+            }
         });
     });
+
+    // Hàm này cần được gọi từ cửa sổ popup (upload.html) sau khi upload thành công
+    window.updateTextarea = function(targetId, newUrl) {
+        const textarea = document.getElementById(targetId);
+        let currentUrls = (textarea.value || '').split('\n').map(link => link.trim()).filter(Boolean);
+        if (newUrl && !currentUrls.includes(newUrl)) {
+            currentUrls.push(newUrl);
+        }
+        textarea.value = currentUrls.join('\n');
+        
+        // Cập nhật lại phần preview
+        const containerId = targetId + '-previews';
+        const isImage = targetId === 'imageUrls';
+        renderFilePreviews(processUrlsForPreview(currentUrls, targetId), containerId, isImage);
+    };
     </script>
 </body>
 </html>
