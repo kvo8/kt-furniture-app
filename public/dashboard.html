@@ -174,7 +174,9 @@
         <p id="news-ticker"></p>
     </div>
 
- 
+    <div class="dashboard-image-container">
+        <img src="https://i.postimg.cc/0Qk1yK9q/unnamed.png" alt="KT Furniture Dashboard Image">
+    </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -258,33 +260,38 @@
             }
 
             // --- PHẦN 3: HIỂN THỊ BẢNG TIN TÀI CHÍNH TỰ ĐỘNG LẬT ---
-            const financialData = [ 
-    '<strong>VN-INDEX:</strong> 1,305.42 pts <span style="color:#33ff99;">(+1.58%)</span>', 
-    '<strong>Giá vàng SJC:</strong> 77.10 triệu/lượng (bán ra) <span style="color:#33ff99;">(+120k)</span>', 
-    '<strong>Tỷ giá USD/VND:</strong> 25,445 <span style="color:#ff5733;">(-5đ)</span>', 
-    '<strong>S&P 500:</strong> 5,550.12 pts <span style="color:#33ff99;">(+0.8%)</span>', 
-    '<strong>Giá dầu Brent:</strong> $86.70/thùng <span style="color:#33ff99;">(+1.4%)</span>', 
-    '<strong>Bitcoin (BTC):</strong> $69,250.00 <span style="color:#33ff99;">(+3.5%)</span>', 
-    '<strong>Cổ phiếu FPT:</strong> 141,800đ/cp <span style="color:#33ff99;">(+2.1%)</span>', 
-    '<strong>Cổ phiếu HPG (Hòa Phát):</strong> 29,350đ/cp <span style="color:#ff5733;">(-0.2%)</span>', 
-    '<strong>Dow Jones:</strong> 39,520.88 pts <span style="color:#33ff99;">(+0.7%)</span>', 
-    '<strong>Lãi suất tiết kiệm (12 tháng):</strong> ~4.85%/năm', 
-    '<strong>Ethereum (ETH):</strong> $3,610.55 <span style="color:#33ff99;">(+4.1%)</span>', 
-    '<strong>Nasdaq Composite:</strong> 17,910.35 pts <span style="color:#33ff99;">(+1.5%)</span>', 
-    '<strong>Dự trữ ngoại hối:</strong> ~112 tỷ USD <span style="color:#33ff99;">(tăng)</span>', 
-    '<strong>Giá vàng 9999:</strong> 74.35 triệu/lượng <span style="color:#33ff99;">(+200k)</span>', 
-    '<strong>Cổ phiếu VNM (Vinamilk):</strong> 67,500đ/cp <span style="color:#33ff99;">(+1.9%)</span>', 
-    '<strong>Cổ phiếu TCB (Techcombank):</strong> 23,100đ/cp <span style="color:#33ff99;">(+1.7%)</span>', 
-    '<strong>GDP Việt Nam (quý 2):</strong> tăng trưởng 6.7% (ước tính)', 
-    '<strong>Giá cà phê Robusta:</strong> 122,100đ/kg <span style="color:#33ff99;">(+1.3%)</span>', 
-    '<strong>Hang Seng Index:</strong> 18,250.44 pts <span style="color:#ff5733;">(-0.5%)</span>', 
-    '<strong>Cổ phiếu VIC (Vingroup):</strong> 42,950đ/cp <span style="color:#33ff99;">(+1.3%)</span>', 
-    '<strong>Lạm phát (CPI):</strong> giữ ở mức ổn định, dưới 4%', 
-    '<strong>Giá Bạc (Silver):</strong> $30.15/ounce <span style="color:#33ff99;">(+2.2%)</span>', 
-    '<strong>Chỉ số Nikkei 225:</strong> 39,550.22 pts <span style="color:#ff5733;">(-0.1%)</span>', 
-    '<strong>Cổ phiếu MWG (Thế Giới Di Động):</strong> 64,500đ/cp <span style="color:#33ff99;">(+1.1%)</span>', 
-    '<strong>Giá gạo 5% tấm (XK):</strong> ~$585/tấn <span style="color:#33ff99;">(tăng nhẹ)</span>', 
-];
+            const financialData = [
+                '<strong>VN-INDEX:</strong> 1,282.15 pts <span style="color:#33ff99;">(+0.75%)</span>',
+                '<strong>Giá vàng SJC:</strong> 76.98 triệu/lượng (bán ra)',
+                '<strong>Tỷ giá USD/VND:</strong> 25,450 <span style="color:#ff5733;">(-25đ)</span>',
+                '<strong>Tỷ giá EUR/VND:</strong> 27,610',
+                '<strong>Tỷ giá JPY/VND:</strong> 162.50',
+                '<strong>S&P 500:</strong> 5,480.40 pts <span style="color:#33ff99;">(+0.90%)</span>',
+                '<strong>Giá dầu Brent:</strong> $85.50/thùng',
+                '<strong>Bitcoin (BTC):</strong> $68,500.75 <span style="color:#33ff99;">(+2.1%)</span>',
+                '<strong>Cổ phiếu FPT:</strong> 135,500đ/cp',
+                '<strong>Cổ phiếu HPG (Hòa Phát):</strong> 28,900đ/cp <span style="color:#ff5733;">(-0.5%)</span>',
+                '<strong>Dow Jones:</strong> 39,112.16 pts <span style="color:#33ff99;">(+0.6%)</span>',
+                '<strong>Lãi suất tiết kiệm (12 tháng):</strong> ~4.8%/năm',
+                '<strong>Ethereum (ETH):</strong> $3,550.30',
+                '<strong>Nasdaq Composite:</strong> 17,689.80 pts <span style="color:#33ff99;">(+1.2%)</span>',
+                '<strong>Vốn hóa thị trường VN:</strong> ~6.8 triệu tỷ VNĐ',
+                '<strong>Giá vàng 9999:</strong> 74.10 triệu/lượng',
+                '<strong>Cổ phiếu VNM (Vinamilk):</strong> 66,200đ/cp',
+                '<strong>Tỷ giá AUD/VND:</strong> 16,950',
+                '<strong>Cổ phiếu TCB (Techcombank):</strong> 22,700đ/cp <span style="color:#33ff99;">(+1.1%)</span>',
+                '<strong>GDP Việt Nam (dự báo):</strong> tăng trưởng ~6.5%',
+                '<strong>Giá cà phê Robusta:</strong> 120,500đ/kg',
+                '<strong>Hang Seng Index:</strong> 18,027.71 pts <span style="color:#ff5733;">(-0.8%)</span>',
+                '<strong>Cổ phiếu VIC (Vingroup):</strong> 42,400đ/cp',
+                '<strong>Lạm phát (CPI):</strong> mục tiêu dưới 4.5%',
+                '<strong>Giá Bạc (Silver):</strong> $29.50/ounce',
+                '<strong>Tỷ giá GBP/VND:</strong> 32,250',
+                '<strong>Cổ phiếu MWG (Thế Giới Di Động):</strong> 63,800đ/cp',
+                '<strong>Chỉ số Nikkei 225:</strong> 39,215.00 pts',
+                '<strong>Giá gạo 5% tấm (XK):</strong> ~$580/tấn',
+                '<strong>Dự trữ ngoại hối:</strong> ~110 tỷ USD'
+            ];
             const tickerElement = document.getElementById('financial-ticker');
             if (tickerElement) {
                 let currentDataIndex = 0;
@@ -301,29 +308,38 @@
             }
 
             // --- PHẦN 4: HIỂN THỊ BẢNG TIN TỨC THỜI SỰ (Code thêm mới) ---
-            const newsHeadlines = [ 
-    'Chính phủ ban hành chính sách mới nhằm thúc đẩy đầu tư vào các khu công nghiệp công nghệ cao.', 
-    'Hội nghị COP30 tại Brazil cam kết đẩy nhanh mục tiêu giảm phát thải carbon toàn cầu.', 
-    'Startup kỳ lân của Việt Nam công bố mở rộng thị trường sang Đông Nam Á.', 
-    'IMF và Ngân hàng Thế giới đưa ra dự báo tích cực về tăng trưởng kinh tế toàn cầu cuối năm.', 
-    'Cục Dự trữ Liên bang Mỹ (Fed) quyết định giữ nguyên lãi suất, thị trường phản ứng tích cực.', 
-    'Hệ thống đường sắt cao tốc Bắc-Nam khởi công giai đoạn đầu, hứa hẹn thay đổi diện mạo giao thông.', 
-    'Giá vàng thế giới liên tục biến động mạnh, nhà đầu tư thận trọng.', 
-    'Công ty dược phẩm X công bố thử nghiệm thành công vắc-xin cho bệnh Y, mở ra hy vọng mới.', 
-    'Thị trường bất động sản phục hồi, giao dịch ở các thành phố lớn tăng mạnh.', 
-    'Đột phá trong công nghệ pin nhiên liệu, tăng hiệu suất và giảm chi phí sản xuất.', 
-    'Cuộc thi khởi nghiệp công nghệ toàn quốc thu hút hơn 5000 dự án tham gia.', 
-    'Bộ Nông nghiệp đề xuất các giải pháp ứng phó với biến đổi khí hậu để đảm bảo an ninh lương thực.', 
-    'Apple ra mắt iPhone thế hệ mới với nhiều cải tiến đột phá về camera và AI.', 
-    'Liên minh Châu Âu (EU) thông qua các quy định mới về nhập khẩu sản phẩm xanh.', 
-    'Đại dịch cúm mùa mới được kiểm soát hiệu quả nhờ các biện pháp y tế cộng đồng.', 
-    'Giá xăng dầu trong nước tiếp tục giảm theo giá dầu thế giới.', 
-    'Vốn đầu tư trực tiếp nước ngoài (FDI) vào Việt Nam tăng mạnh trong quý 2.', 
-    'Các chuyên gia kinh tế dự báo lạm phát sẽ được kiềm chế hiệu quả trong nửa cuối năm.', 
-    'Chỉ số sản xuất công nghiệp (IIP) của Việt Nam tăng trưởng ấn tượng.', 
-    'Thành phố Hồ Chí Minh công bố dự án xây dựng đô thị thông minh mới.', 
-    'Hiệp định thương mại tự do mới giữa Việt Nam và khối ASEAN chính thức có hiệu lực.' 
-];
+            const newsHeadlines = [
+                'Hội nghị thượng đỉnh G7 thảo luận về biến đổi khí hậu và an ninh năng lượng toàn cầu.',
+                'Tập đoàn công nghệ XYZ ra mắt chip AI thế hệ mới, hứa hẹn thay đổi ngành công nghiệp.',
+                'Căng thẳng thương mại gia tăng giữa hai cường quốc kinh tế sau vòng đàm phán thất bại.',
+                'Các nhà khoa học phát hiện một hành tinh mới có điều kiện giống Trái Đất trong hệ sao gần nhất.',
+                'Giá năng lượng tái tạo đạt mức thấp kỷ lục, thúc đẩy quá trình chuyển đổi xanh.',
+                'Thỏa thuận ngừng bắn lịch sử được ký kết tại khu vực Trung Đông sau nhiều tháng xung đột.',
+                'BREAKING: Ngân hàng Trung ương Châu Âu (ECB) bất ngờ tăng lãi suất cơ bản.',
+                'Việt Nam trở thành điểm đến hàng đầu cho các nhà đầu tư công nghệ tại Đông Nam Á.',
+                'Một loại vật liệu siêu bền mới được phát minh, có khả năng tự phục hồi.',
+                'Thị trường xe điện toàn cầu dự kiến tăng trưởng gấp đôi trong vòng 3 năm tới.',
+                'Startup về y tế từ xa huy động thành công 200 triệu USD trong vòng gọi vốn Series C.',
+                'Các quy định mới về quyền riêng tư dữ liệu được đề xuất, ảnh hưởng đến các Big Tech.',
+                'Phát hiện chấn động trong ngành khảo cổ học: tìm thấy một thành phố cổ bị lãng quên.',
+                'Thế vận hội Olympic mùa hè khai mạc với màn trình diễn công nghệ ánh sáng hoành tráng.',
+                'Tình trạng thiếu hụt chip bán dẫn toàn cầu có dấu hiệu hạ nhiệt.',
+                'Liên minh châu Phi (AU) công bố kế hoạch thành lập một khu vực thương mại tự do chung.',
+                'NASA xác nhận kế hoạch đưa người trở lại Mặt Trăng vào cuối thập kỷ này.',
+                'Lạm phát tại Mỹ có dấu hiệu chững lại, mang lại hy vọng cho thị trường chứng khoán.',
+                'Một tác phẩm nghệ thuật kỹ thuật số (NFT) vừa được bán với giá kỷ lục 15 triệu USD.',
+                'Các hãng hàng không công bố kế hoạch sử dụng nhiên liệu bay bền vững (SAF) trên diện rộng.',
+                'Nạn phá rừng Amazon đạt mức báo động, kêu gọi hành động khẩn cấp từ cộng đồng quốc tế.',
+                'Hệ thống giao thông thông minh ứng dụng AI được thử nghiệm thành công tại Singapore.',
+                'Dân số thế giới dự kiến đạt 8.5 tỷ người vào cuối năm nay.',
+                'Một loại vắc-xin cúm phổ thông mới cho thấy hiệu quả cao trong các thử nghiệm lâm sàng.',
+                'Cuộc đua không gian thương mại nóng lên với sự tham gia của nhiều công ty tư nhân mới.',
+                'An ninh mạng trở thành ưu tiên hàng đầu của các chính phủ sau loạt tấn công quy mô lớn.',
+                'Giải Nobel Hòa bình được trao cho một tổ chức hoạt động vì quyền của người tị nạn.',
+                'Kinh tế Ấn Độ được dự báo sẽ vượt qua Nhật Bản để trở thành nền kinh tế lớn thứ ba thế giới.',
+                'Trí tuệ nhân tạo tạo sinh (Generative AI) bắt đầu được ứng dụng trong ngành giáo dục.',
+                'Sự kiện thể thao World Cup Nữ phá vỡ mọi kỷ lục về lượng người xem.'
+            ];
             const newsTickerElement = document.getElementById('news-ticker');
             if (newsTickerElement) {
                 let currentNewsIndex = 0;

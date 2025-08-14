@@ -154,7 +154,6 @@
     let currentLang = 'vi';
     const urlParams = new URLSearchParams(window.location.search);
     const productId = urlParams.get('id');
-    const encodedProductId = encodeURIComponent(productId);
 
     // Đối tượng chứa tất cả các chuỗi văn bản cho đa ngôn ngữ (VI/EN)
     // ĐÃ CẬP NHẬT ĐẦY ĐỦ CÁC TRƯỜNG MỚI
@@ -220,57 +219,7 @@
             errorLoading: 'Error Loading Product Data', noProductId: 'Error: No Product ID provided.',
             loginFailed: 'Login failed', loginSuccess: 'Login successful!',
             dimensions: 'Dimensions (L x W x H)', packed_dimensions: 'Packed (L x W x H)', noFile: 'No file attached.'
-        },
-        zh: { // Bổ sung phần này cho tiếng Trung
-        productName: "产品名称",
-        productCode: '产品编号',
-        company: '公司',
-        collection: '系列',
-        color: '颜色',
-        material: '材料',
-        spec: '规格',
-        profile: '铝型材',
-        customer: '客户',
-        qrTitle: '产品二维码',
-        reviewsTitle: '客户评价',
-        formTitle: '留下您的评价',
-        submitReview: '提交评价',
-        submitReviewSending: '正在提交...',
-        internalTitle: '内部详情',
-        supplier: '供应商',
-        box_quantity: "箱数",
-        origin_country: "原产地",
-        cost_price: "成本价",
-        hardware: "五金件",
-        cushion_details: "坐垫详情",
-        pillow_details: "枕头详情",
-        aluminum_weight: "铝重 (公斤)",
-        wicker_weight: "藤条重 (公斤)",
-        stone_weight: "石材重 (公斤)",
-        weaving_rope_weight: "编织绳重 (公斤)",
-        lining_rope_weight: "内衬绳重 (公斤)",
-        product_weight: "产品总重 (公斤)",
-        packed_weight_total: "包装总重 (公斤)",
-        aluminum_supplier: "铝供应商",
-        wicker_supplier: "藤条供应商",
-        stone_supplier: "石材供应商",
-        powder_coating_supplier: "喷涂供应商",
-        drawing: '图纸',
-        materials: '材料',
-        fabric: '布料',
-        wicker: '藤条',
-        productionPlace: '生产地',
-        otherDetails: '其他详情',
-        noImage: '该产品暂无图片。',
-        noReviews: '该产品暂无评价。',
-        errorLoading: '加载产品数据出错',
-        noProductId: '错误：未提供产品ID。',
-        loginFailed: '登录失败',
-        loginSuccess: '登录成功！',
-        dimensions: '尺寸 (长 x 宽 x 高)',
-        packed_dimensions: '包装尺寸 (长 x 宽 x 高)',
-        noFile: '无附件。'
-    }
+        }
     };
 
     /**
@@ -341,8 +290,7 @@
                 <div class="lang-switcher">
                     <button id="btn-vi" class="${currentLang === 'vi' ? 'active' : ''}">Tiếng Việt</button>
                     <button id="btn-en" class="${currentLang === 'en' ? 'active' : ''}">English</button>
-                <button id="btn-zh" class="${currentLang === 'zh' ? 'active' : ''}">中文</button>
-                    </div>
+                </div>
             </div>
             ${imageHTML}
             <div class="details-grid">
@@ -365,7 +313,7 @@
         `;
         document.getElementById('btn-vi').addEventListener('click', () => switchLanguage('vi'));
         document.getElementById('btn-en').addEventListener('click', () => switchLanguage('en'));
-document.getElementById('btn-zh').addEventListener('click', () => switchLanguage('zh'));
+
         if (Array.isArray(fullProductData.imageUrls) && fullProductData.imageUrls.length > 0) {
             new Swiper('.swiper', {
                 loop: true,
@@ -520,8 +468,7 @@ document.getElementById('btn-zh').addEventListener('click', () => switchLanguage
         
         try {
             // Tải dữ liệu chính của sản phẩm
-            
-const response = await fetch(`/api/products/${encodedProductId}`);
+            const response = await fetch(`/api/products/${productId}`);
             if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
             fullProductData = await response.json();
             
