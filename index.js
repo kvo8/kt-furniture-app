@@ -1,6 +1,6 @@
 // =================================================================
-// === FILE: index.js (PHIÊN BẢN HOÀN CHỈNH - FULL CHỨC NĂNG)     ===
-// === Tích hợp Upload, Quản lý Sản phẩm, Nhân viên, và Bảng Tin ===
+// === FILE: index.js (PHIÊN BẢN CHỈNH SỬA CHO RENDER/PRODUCTION) ===
+// === Lưu ý: File upload cục bộ vẫn hoạt động NHƯNG không bền vững ===
 // =================================================================
 
 // --- PHẦN 1: IMPORT CÁC THƯ VIỆN CẦN THIẾT ---
@@ -12,15 +12,15 @@ const bcrypt = require('bcryptjs');
 const session = require('express-session');
 const multer = require('multer');
 const path = require('path');
-const db = require('./database.js');
-const { Storage } = require('@google-cloud/storage');
+const fs = require('fs'); // Thêm thư viện File System để xử lý file trên máy
+const db = require('./database.js'); // Đảm bảo file database.js đã được cấu hình SSL cho Render
 console.log("Libraries initialized successfully.");
 
 // --- PHẦN 2: KHỞI TẠO VÀ CẤU HÌNH EXPRESS APP ---
 console.log("Configuring Express application...");
 const app = express();
 const saltRounds = 10; // Số vòng lặp để mã hóa mật khẩu, tăng tính bảo mật
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3000; // Sử dụng cổng do Render cung cấp
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 
 // --- 2.1. Cấu hình Middleware Cơ Bản ---
@@ -32,22 +32,18 @@ app.use(express.static('public')); // Phục vụ các file tĩnh (HTML, CSS, JS
 app.use('/uploads', express.static(path.join(__dirname, 'public/uploads'))); // Tạo một đường dẫn ảo cho thư mục uploads
 console.log("Middleware configured successfully.");
 
-// --- 2.2. Cấu hình Google Cloud Storage ---
-// Khởi tạo đối tượng để tương tác với dịch vụ lưu trữ của Google Cloud
-const storageGCS = new Storage();
-// Lấy tên bucket từ biến môi trường, nếu không có thì dùng tên mặc định
-const bucketName = process.env.GCS_BUCKET_NAME || 'kt-cms-file-storage-20250710';
-console.log(`GCS Bucket configured: ${bucketName}`);
+// --- 2.2. (ĐÃ XÓA) Cấu hình Google Cloud Storage ---
+// Giữ nguyên: Phần này đã được xóa bỏ để chuyển sang lưu trữ trên máy local.
 
 // --- 2.3. Cấu hình Session ---
 // Session dùng để lưu trữ thông tin đăng nhập của người dùng
 console.log("Configuring user session management...");
 app.use(session({
-    secret: process.env.SESSION_SECRET || 'a-very-strong-secret-key-for-development', // Chuỗi bí mật để mã hóa session
+    secret: process.env.SESSION_SECRET || 'a-very-strong-secret-key-for-development', // Chuỗi bí mật phải được đặt trong biến môi trường
     resave: false, // Không lưu lại session nếu không có gì thay đổi
     saveUninitialized: true, // Lưu session mới ngay cả khi chưa có dữ liệu
     cookie: {
-        secure: IS_PRODUCTION, // Chỉ gửi cookie qua HTTPS ở môi trường production
+        secure: IS_PRODUCTION, // Chỉ gửi cookie qua HTTPS ở môi trường production (Bắt buộc với Render)
         httpOnly: true, // Ngăn JavaScript phía client truy cập vào cookie
         maxAge: 24 * 60 * 60 * 1000 // Thời gian sống của cookie (24 giờ)
     }
@@ -73,15 +69,33 @@ const fileFilter = (req, file, cb) => {
         cb(new Error('Định dạng file không được hỗ trợ! Chỉ chấp nhận Word, Excel, PDF, và ảnh.'), false);
     }
 };
-// Cấu hình Multer để lưu file vào bộ nhớ tạm thời của server
-const multerMemory = multer({
-    storage: multer.memoryStorage(),
-    limits: { fileSize: 50 * 1024 * 1024 }, // Giới hạn kích thước file là 50MB
-    fileFilter: fileFilter // Áp dụng bộ lọc file đã định nghĩa ở trên
+
+// Cấu hình Multer để LƯU FILE VÀO THƯ MỤC 'public/uploads' trên máy
+const storageDisk = multer.diskStorage({
+    destination: function (req, file, cb) {
+        const uploadPath = 'public/uploads/';
+        // Đảm bảo thư mục tồn tại, nếu chưa có thì tự động tạo
+        // CHÚ Ý: Trên Render, thư mục này là tạm thời và sẽ bị xóa khi server restart.
+        fs.mkdirSync(uploadPath, { recursive: true });
+        cb(null, uploadPath);
+    },
+    filename: function (req, file, cb) {
+        // Tạo ra một tên file mới không bị trùng lặp để tránh ghi đè file
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+    }
 });
+
+// Tạo middleware upload để sử dụng trong các API
+const uploadToDisk = multer({
+    storage: storageDisk,
+    limits: { fileSize: 50 * 1024 * 1024 }, // Giữ nguyên giới hạn 50MB
+    fileFilter: fileFilter
+});
+
 // Cấu hình Multer cho các request chỉ chứa dữ liệu text (không có file)
 const textOnlyUpload = multer().none();
-console.log("Multer configured with explicit file filter and size limits (50MB).");
+console.log("Multer configured for local disk storage with size limits (50MB).");
 
 // --- 2.5. Middleware Tùy Chỉnh ---
 // Middleware để kiểm tra xem người dùng đã đăng nhập hay chưa
@@ -200,26 +214,15 @@ app.delete("/api/users/:id", isLoggedIn, async (req, res, next) => {
 });
 
 // == B. API UPLOAD ==
-// API xử lý việc upload file trực tiếp lên Google Cloud Storage
-app.post('/api/upload-direct', isLoggedIn, multerMemory.single('file'), async (req, res, next) => {
-    try {
-        if (!req.file) {
-            return res.status(400).json({ error: 'Không có file nào được gửi lên.' });
-        }
-        const bucket = storageGCS.bucket(bucketName);
-        const originalName = req.file.originalname.replace(/\s/g, '_');
-        const blobName = `product-files/${Date.now()}-${originalName}`;
-        const blob = bucket.file(blobName);
-        const blobStream = blob.createWriteStream({ resumable: false, contentType: req.file.mimetype });
-        blobStream.on('error', err => next(err));
-        blobStream.on('finish', () => {
-            const publicUrl = `https://storage.googleapis.com/${bucket.name}/${blob.name}`;
-            res.status(200).json({ accessUrl: publicUrl });
-        });
-        blobStream.end(req.file.buffer);
-    } catch (error) {
-        next(error);
+// API xử lý việc upload file và lưu vào thư mục local
+app.post('/api/upload-direct', isLoggedIn, uploadToDisk.single('file'), (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ error: 'Không có file nào được gửi lên.' });
     }
+    // File đã được Multer lưu lại. LƯU Ý: File này là tạm thời trên Render!
+    // Ví dụ: /uploads/file-1668888888-xyz.jpg
+    const accessUrl = `/uploads/${req.file.filename}`;
+    res.status(200).json({ accessUrl: accessUrl });
 });
 
 // == C. CÁC API VỀ SẢN PHẨM ==
@@ -257,7 +260,7 @@ app.get("/api/products/:id", async (req, res, next) => {
     }
 });
 
-// ... (API Thêm và Sửa sản phẩm của bạn vẫn giữ nguyên)
+// API Thêm sản phẩm
 app.post("/api/products", isLoggedIn, textOnlyUpload, async (req, res, next) => {
     console.log("--- Bắt đầu xử lý API: THÊM SẢN PHẨM MỚI (PHIÊN BẢN TỰ ĐỘNG) ---");
     console.log("Dữ liệu thô nhận được từ req.body:", req.body);
@@ -297,6 +300,8 @@ app.post("/api/products", isLoggedIn, textOnlyUpload, async (req, res, next) => 
         next(err);
     }
 });
+
+// API Sửa sản phẩm
 app.put("/api/products/:id", isLoggedIn, textOnlyUpload, async (req, res, next) => {
     console.log(`--- Bắt đầu xử lý API: CẬP NHẬT SẢN PHẨM ID: ${req.params.id} ---`);
     try {
@@ -336,9 +341,16 @@ app.put("/api/products/:id", isLoggedIn, textOnlyUpload, async (req, res, next) 
     }
 });
 
-// ... (API Xóa sản phẩm của bạn vẫn giữ nguyên)
-async function deleteFilesFromGCS(product) {
-    console.log(`Bắt đầu quá trình xóa file GCS cho sản phẩm ID: ${product.id}`);
+// Hàm xóa file được lưu trên máy local
+async function deleteLocalFiles(product) {
+    // === ĐIỀU CHỈNH QUAN TRỌNG CHO RENDER/PRODUCTION ===
+    if (IS_PRODUCTION) {
+        console.log(`[RENDER DEPLOYMENT] Bỏ qua xóa file cục bộ cho sản phẩm ID: ${product.id}. File sẽ tự động bị xóa khi container restart.`);
+        return;
+    }
+    // === KẾT THÚC ĐIỀU CHỈNH ===
+
+    console.log(`Bắt đầu quá trình xóa file local cho sản phẩm ID: ${product.id}`);
     const urlsToDelete = [];
     ['imageUrls', 'drawingUrls', 'materialsUrls'].forEach(field => {
         if (product[field] && typeof product[field] === 'string') {
@@ -346,34 +358,48 @@ async function deleteFilesFromGCS(product) {
                 const parsedUrls = JSON.parse(product[field]);
                 if (Array.isArray(parsedUrls)) {
                     parsedUrls.forEach(item => {
-                        const url = typeof item === 'object' ? item.url : item;
-                        if (url) urlsToDelete.push(url);
+                        const url = (typeof item === 'object' && item.url) ? item.url : item;
+                        if (url) {
+                            urlsToDelete.push(url);
+                        }
                     });
                 }
-            } catch (e) { /* Bỏ qua */ }
+            } catch (e) { 
+                console.error(`Lỗi khi parse JSON cho trường ${field}:`, e);
+            }
         }
     });
+
     if (urlsToDelete.length === 0) {
-        console.log(`Không có file nào trên GCS cần xóa cho sản phẩm ${product.id}.`);
+        console.log(`Không có file nào cần xóa cho sản phẩm ${product.id}.`);
         return;
     }
-    const bucket = storageGCS.bucket(bucketName);
-    const deletionPromises = urlsToDelete.map(async (url) => {
-        try {
-            const fileName = url.split(`/${bucketName}/`)[1];
-            if (fileName) {
-                await bucket.file(fileName).delete();
-                console.log(`SUCCESS: Đã xóa file ${fileName}`);
-            }
-        } catch (error) {
-            if (error.code !== 404) { // Bỏ qua lỗi "không tìm thấy file"
-                console.error(`ERROR: Lỗi khi xóa file tại URL ${url}:`, error.message);
-            }
-        }
+
+    const deletionPromises = urlsToDelete.map(relativeUrl => {
+        return new Promise((resolve) => {
+            // Chuyển đổi từ URL (vd: /uploads/file.jpg) thành đường dẫn file trên hệ thống (vd: public/uploads/file.jpg)
+            const fileName = path.basename(relativeUrl);
+            const filePath = path.join(__dirname, 'public', 'uploads', fileName);
+
+            fs.unlink(filePath, (err) => {
+                if (err && err.code !== 'ENOENT') { // Bỏ qua nếu lỗi là "file không tồn tại"
+                    console.error(`ERROR: Lỗi khi xóa file ${filePath}:`, err.message);
+                } else if (err) {
+                    console.log(`INFO: File không tồn tại để xóa: ${filePath}`);
+                }
+                else {
+                    console.log(`SUCCESS: Đã xóa file ${filePath}`);
+                }
+                resolve(); // Luôn luôn resolve để Promise.all không bị dừng giữa chừng
+            });
+        });
     });
+
     await Promise.all(deletionPromises);
     console.log(`Hoàn tất quá trình xóa file cho sản phẩm ${product.id}.`);
 }
+
+// API Xóa sản phẩm
 app.delete("/api/products/:id", isLoggedIn, async (req, res, next) => {
     const { id } = req.params;
     try {
@@ -382,7 +408,11 @@ app.delete("/api/products/:id", isLoggedIn, async (req, res, next) => {
             return res.status(404).json({ message: 'Không tìm thấy sản phẩm này để xóa.' });
         }
         const productToDelete = selectResult.rows[0];
-        await deleteFilesFromGCS(productToDelete);
+        
+        // Gọi hàm xóa file local mới thay vì hàm xóa trên GCS
+        // HÀM NÀY ĐÃ ĐƯỢC ĐIỀU CHỈNH để bỏ qua việc xóa trong môi trường Production
+        await deleteLocalFiles(productToDelete);
+
         await db.query('DELETE FROM products WHERE id = $1', [id]);
         await logActivity('DELETE_PRODUCT', `Sản phẩm ID: ${id} đã bị xóa.`, req.session.user.name);
         res.status(200).json({ message: 'Sản phẩm và các file liên quan đã được xóa thành công.' });
@@ -392,7 +422,7 @@ app.delete("/api/products/:id", isLoggedIn, async (req, res, next) => {
 });
 
 // == D. CÁC API VỀ REVIEWS ==
-// ... (API Reviews của bạn vẫn giữ nguyên)
+// API Thêm đánh giá
 app.post("/api/reviews", async (req, res, next) => {
     try {
         const { productId, rating, comment, author_name } = req.body;
@@ -407,6 +437,8 @@ app.post("/api/reviews", async (req, res, next) => {
         next(err);
     }
 });
+
+// API Lấy đánh giá của sản phẩm
 app.get("/api/products/:id/reviews", async (req, res, next) => {
     try {
         const sql = "SELECT * FROM reviews WHERE product_id = $1 ORDER BY created_at DESC";
@@ -418,7 +450,7 @@ app.get("/api/products/:id/reviews", async (req, res, next) => {
 });
 
 // == E. CÁC API VỀ TIN NHẮN NỘI BỘ ==
-// ... (API Tin nhắn của bạn vẫn giữ nguyên)
+// API Gửi tin nhắn
 app.post("/api/messages", isLoggedIn, async (req, res, next) => {
     console.log("--- Bắt đầu xử lý yêu cầu GỬI TIN NHẮN MỚI ---");
     try {
@@ -444,6 +476,8 @@ app.post("/api/messages", isLoggedIn, async (req, res, next) => {
         next(err);
     }
 });
+
+// API Lấy danh sách tin nhắn
 app.get("/api/messages", isLoggedIn, async (req, res, next) => {
     try {
         const currentUserId = req.session.user.id;
@@ -454,6 +488,8 @@ app.get("/api/messages", isLoggedIn, async (req, res, next) => {
         next(err);
     }
 });
+
+// API Đánh dấu tin nhắn đã đọc
 app.put("/api/messages/:id/read", isLoggedIn, async (req, res, next) => {
     const messageId = req.params.id;
     const currentUserId = req.session.user.id;
@@ -487,7 +523,6 @@ app.get("/api/activity-log", isLoggedIn, async (req, res, next) => {
 console.log("Defining Announcement Board API endpoints...");
 
 // API 1: Tải tất cả bài đăng trên bảng tin
-// API 1: Tải tất cả bài đăng trên bảng tin (PHIÊN BẢN SỬA LỖI)
 app.get('/api/announcements', isLoggedIn, async (req, res, next) => {
     try {
         // 1. Lấy tất cả bài đăng, tương tự như cũ
@@ -544,40 +579,23 @@ app.get('/api/announcements', isLoggedIn, async (req, res, next) => {
 });
 
 // API 2: Tạo bài đăng mới (có xử lý upload ảnh)
-// Sử dụng multerMemory thay vì multer.single('image') cũ để upload lên GCS
-app.post('/api/announcements', isLoggedIn, multerMemory.single('image'), async (req, res, next) => {
+app.post('/api/announcements', isLoggedIn, uploadToDisk.single('image'), async (req, res, next) => {
     const { content } = req.body;
     const userId = req.session.user.id;
-    let imageUrl = null;
+    let imageUrl = null; // Mặc định là không có ảnh
 
     if (!content) {
         return res.status(400).json({ error: 'Nội dung không được để trống' });
     }
 
     try {
-        // Nếu có file ảnh, upload lên Google Cloud Storage
+        // Nếu có file ảnh được gửi lên, Multer đã tự động lưu nó
         if (req.file) {
-            const bucket = storageGCS.bucket(bucketName);
-            const originalName = req.file.originalname.replace(/\s/g, '_');
-            const blobName = `announcements/${Date.now()}-${originalName}`;
-            const blob = bucket.file(blobName);
-            const blobStream = blob.createWriteStream({
-                resumable: false,
-                contentType: req.file.mimetype
-            });
-
-            // Sử dụng Promise để xử lý stream bất đồng bộ
-            await new Promise((resolve, reject) => {
-                blobStream.on('error', err => reject(err));
-                blobStream.on('finish', () => {
-                    imageUrl = `https://storage.googleapis.com/${bucket.name}/${blob.name}`;
-                    resolve();
-                });
-                blobStream.end(req.file.buffer);
-            });
+            // Lấy đường dẫn tới file đã lưu trên local (tạm thời trên Render)
+            imageUrl = `/uploads/${req.file.filename}`;
         }
         
-        // Sau khi có URL ảnh (hoặc không), lưu vào database
+        // Sau khi có URL ảnh (hoặc không), lưu thông tin vào database
         const query = 'INSERT INTO announcements (user_id, content, image_url) VALUES ($1, $2, $3)';
         await db.query(query, [userId, content, imageUrl]);
         
@@ -588,6 +606,7 @@ app.post('/api/announcements', isLoggedIn, multerMemory.single('image'), async (
         next(error);
     }
 });
+
 
 // API 3: Thêm bình luận mới vào một bài đăng
 app.post('/api/announcements/:id/comments', isLoggedIn, async (req, res, next) => {
@@ -650,12 +669,15 @@ app.get('/api/notifications', isLoggedIn, async (req, res, next) => {
 
 
 // == G. ENDPOINT CHẨN ĐOÁN ==
-const APP_VERSION = "19.0_ANNOUNCEMENT_INTEGRATED";
+const APP_VERSION = "19.0_ANNOUNCEMENT_INTEGRATED_RENDER"; // Đổi tên phiên bản để nhận biết
 app.get("/api/version", (req, res) => {
     res.status(200).json({
         status: "OK",
         version: APP_VERSION,
-        note: "This version includes the Announcement Board API endpoints.",
+        // Cập nhật chú thích để phản ánh môi trường Render
+        note: IS_PRODUCTION 
+            ? "This version runs on RENDER.COM. File storage is temporary (ephemeral)."
+            : "This version runs on LOCALHOST and uses local file storage.",
         server_time: new Date().toISOString()
     });
 });
